@@ -1,3 +1,97 @@
+@import url('/node_modules/@fortawesome/fontawesome-svg-core/styles.css');
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+body {
+    font-family: "Poppins", sans-serif !important;
+}
+
+html {
+    height: 100%;
+    margin: 0;
+    padding: 0;
+    width: 100%;
+}
+
+#nprogress .bar {
+    background: #fe2e6c !important;
+    z-index: 2000 !important;
+}
+
+#nprogress .spinner {
+    z-index: 2000 !important;
+}
+
+.btn-info-fordone {
+    background-color: #3d3b8e;
+    color: whitesmoke;
+    padding: 6px 12px 6px 12px;
+    cursor: pointer;
+    font-size: 16px;
+    border-radius: 0.25rem;
+}
+
+.btn-success-fordone {
+    background-color: #1d845b;
+    color: whitesmoke;
+    padding: 6px 12px 6px 12px;
+    cursor: pointer;
+    font-size: 16px;
+    border-radius: 0.25rem;
+}
+
+.btn-red-fordone {
+    background-color: #a80606;
+    color: whitesmoke;
+    padding: 6px 12px 6px 12px;
+    cursor: pointer;
+    font-size: 16px;
+    border-radius: 0.25rem;
+}
+
+.btn-warning-fordone {
+    background-color: #f18f01;
+    color: whitesmoke;
+    padding: 6px 12px 6px 12px;
+    cursor: pointer;
+    font-size: 16px;
+    border-radius: 0.25rem;
+}
+
+.btn-primary-fordone {
+    background-color: #2754ce;
+    color: whitesmoke;
+    padding: 6px 12px 6px 12px;
+    cursor: pointer;
+    font-size: 16px;
+    border-radius: 0.25rem;
+}
+
+.btn-light-fordone {
+    background-color: #f8f9fa;
+    color: #1f2d3d;
+    padding: 6px 12px 6px 12px;
+    cursor: pointer;
+    font-size: 16px;
+    border-radius: 0.25rem;
+    border-width: 0.5px;
+    border-color: #cacaca;
+}
+
+.btn-info-fordone:hover,
+.btn-success-fordone:hover,
+.btn-light-fordone:hover,
+.btn-red-fordone:hover {
+    cursor: pointer;
+}
+
+.input-fordone {
+    border-radius: 0.25rem;
+    border-width: 1px;
+    border-color: #cacaca;
+}
+
+label {
+    font-weight: 700;
+}
