@@ -19,6 +19,79 @@
       @close="flashHandle"
       :flashObject="flashObject"
     />
+    <div class="table-responsive-mobile overflow-x-auto">
+      <table class="table border-2 mb-2 w-full" ref="tabelUser" id="tabel-user">
+        <thead>
+          <tr class="bg-info-fordone">
+            <th class="first-column">No.</th>
+            <th class="text-center th-order" @click="clickToOrder('username')">
+              PDRB
+            </th>
+            <th class="text-center th-order tabel-width-15" @click="clickToOrder('name')">
+              Tahun
+            </th>
+            <th
+              class="text-center th-order tabel-width-20"
+              @click="clickToOrder('dinas.nama')"
+            >
+              Triwulan
+            </th>
+            <th
+              class="text-center th-order tabel-width-20"
+              @click="clickToOrder('w.label')"
+            >
+              Periode/Putaran
+            </th>
+            <th class="text-center th-order" @click="clickToOrder('noHp')">Tanggal Mulai</th>
+            <th class="text-center th-order" @click="clickToOrder('role')">Tanggal Selesai</th>
+            <th class="text-center th-order deleted tabel-width-8">Edit</th>
+            <th class="text-center th-order deleted">Hapus</th>
+          </tr>
+          <tr class="">
+            <td class="search-header"></td>
+            <td class="search-header">
+              <input
+                v-model.trim="searchUsername"
+                type="text"
+                class="input-fordone w-full"
+              />
+            </td>
+            <td class="search-header">
+              <input v-model.trim="searchNama" type="text" class="input-fordone w-full" />
+            </td>
+            <td class="search-header">
+              <input
+                v-model.trim="searchInstansi"
+                type="text"
+                class="input-fordone w-full"
+              />
+            </td>
+            <td class="search-header">
+              <input
+                v-model.trim="searchWilayah"
+                type="text"
+                class="input-fordone w-full"
+              />
+            </td>
+            <td class="search-header">
+              <input
+                v-model.trim="searchNoHp"
+                type="text"
+                class="input-fordone w-full"
+                placeholder="cari dengan 08..."
+              />
+            </td>
+            <td class="search-header">
+              <input v-model.trim="searchRole" type="text" class="input-fordone w-full" />
+            </td>
+            <td class="search-header deleted"></td>
+            <td class="search-header deleted"></td>
+          </tr>
+        </thead>
+        <tbody>
+        </tbody>
+      </table>
+    </div>
   </GeneralLayout>
 </template>
 
@@ -44,6 +117,9 @@ const flashHandle = () => {
     error: null,
   };
 };
+const clickToOrder = () => {
+  
+}
 </script>
 
 <style scoped></style>
