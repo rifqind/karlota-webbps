@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\HomeController;
+use App\Http\Controllers\LapusController;
 use App\Http\Controllers\PeriodController;
 use App\Http\Controllers\ProfileController;
 use Illuminate\Foundation\Application;
@@ -29,6 +30,13 @@ Route::middleware(['auth', 'verified'])->group(function () {
             ->name('store');
         Route::get('/fetch/{id}', [PeriodController::class, 'fetch'])
             ->name('fetch');
+        Route::delete('/destroy/{id}', [PeriodController::class, 'destroy'])
+            ->name('destroy');
+    });
+
+    Route::prefix('lapus')->name('lapus.')->group(function () {
+        Route::get('/entri', [LapusController::class, 'entri'])
+            ->name('entri');
     });
 });
 

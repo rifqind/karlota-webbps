@@ -91,7 +91,13 @@ class PeriodController extends Controller
             $validated['started_at'] = Carbon::parse($validated['datepicker']['startDate'])->format('Y-m-d');
             $validated['ended_at'] = Carbon::parse($validated['datepicker']['endDate'])->format('Y-m-d');
 
-            $new_data = Period::create($validated);
+            if ($request->id) {
+                $updated_data = Period::findOrFail($request->id);
+                $updated_data->update($validated);
+                DB::commit();
+                return redirect()->route('period.index')->with('message', 'Berhasil mengedit periode putaran tersebut');
+            } else
+                $new_data = Period::create($validated);
             DB::commit();
             return redirect()->route('period.index')->with('message', 'Berhasil menambah periode putaran baru');
         } catch (\Throwable $th) {
@@ -101,5 +107,25 @@ class PeriodController extends Controller
         }
     }
 
-    public function
+    public function fetch(String $id)
+    {
+        $fetched = Period::find($id);
+        return response()->json(['data' => $fetched]);
+    }
+
+    public function destroy(String $id)
+    {
+        try {
+            //code...
+            DB::beginTransaction();
+            $data_to_delete = Period::findOrFail($id);
+            $data_to_delete->delete();
+            DB::commit();
+            return redirect()->route('period.index')->with('message', 'Berhasil menghapus periode putaran tersebut');
+        } catch (\Throwable $th) {
+            //throw $th;
+            DB::rollBack();
+            return redirect()->route('period.index')->with('error', $th->getMessage());
+        }
+    }
 }

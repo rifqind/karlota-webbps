@@ -23,7 +23,7 @@ const hideFlashMessage = function () {
   clearTimeout(timer);
   timer = setTimeout(() => {
     emit("close");
-  }, 2000);
+  }, 3000);
 };
 onUpdated(() => {
   if (props.toggleFlash == true) {

@@ -10,19 +10,36 @@
     </div>
     <nav class="mt-4 px-3">
       <ul>
-        <NavLinkSidebar
-          :navIcon="'fa-solid fa-users'"
-          :href="route('dashboard')"
-          :currentRoute="currentRoute == 'dashboard'"
+        <NavLinkParentSidebar
+          :navIcon="'fa-solid fa-chart-pie'"
+          :menuOpen="menuOpenLapus || currentRoute == 'lapus.entri'"
+          :toggleMenuOpen="toggleMenuOpen"
+          :params="'lapus'"
         >
-          Kelola Pengguna</NavLinkSidebar
-        >
+          <template #label> Lapangan Usaha</template>
+          <template #content>
+            <NavLinkSidebar
+              :navIcon="'fa-solid fa-list-ol'"
+              :href="route('lapus.entri')"
+              :currentRoute="currentRoute == 'lapus.entri'"
+            >
+              Entri PDRB
+            </NavLinkSidebar>
+          </template>
+        </NavLinkParentSidebar>
         <NavLinkSidebar
           :navIcon="'fas fa-table'"
           :href="route('period.index')"
           :currentRoute="currentRoute == 'period.index'"
         >
           Kelola Jadwal</NavLinkSidebar
+        >
+        <NavLinkSidebar
+          :navIcon="'fa-solid fa-users'"
+          :href="route('dashboard')"
+          :currentRoute="currentRoute == 'dashboard'"
+        >
+          Kelola Pengguna</NavLinkSidebar
         >
         <NavLinkSidebar
           :navIcon="'fas fa-user'"
@@ -45,12 +62,22 @@
   </aside>
 </template>
 
-<script setup lang="ts">
+<script setup>
 import { usePage } from "@inertiajs/vue3";
 import NavLinkSidebar from "./NavLinkSidebar.vue";
+import NavLinkParentSidebar from "./NavLinkParentSidebar.vue";
+import { ref } from "vue";
 
 const page = usePage();
 const currentRoute = page.props.route;
+const menuOpenLapus = ref(false);
+const menuOpenPeng = ref(false);
+
+const toggleMenuOpen = (x) => {
+  if (x == "lapus") menuOpenLapus.value = !menuOpenLapus.value;
+  if (x == "peng") menuOpenPeng.value = !menuOpenPeng.value;
+};
+
 const emit = defineEmits(["update:updateSidebarValue"]);
 const props = defineProps({
   isSidebarVisible: {
