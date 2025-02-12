@@ -10,7 +10,8 @@ class Sector extends Model
     use HasFactory;
  
     protected $guarded = ['id'];
-    
+    public $timestamps = false; // Disable timestamps
+
     public function category()
     {
         return $this->belongsTo(Category::class);

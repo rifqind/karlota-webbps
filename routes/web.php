@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\LapusController;
+use App\Http\Controllers\PdrbController;
 use App\Http\Controllers\PeriodController;
 use App\Http\Controllers\ProfileController;
 use Illuminate\Foundation\Application;
@@ -35,7 +36,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     });
 
     Route::prefix('lapus')->name('lapus.')->group(function () {
-        Route::get('/entri', [LapusController::class, 'entri'])
+        Route::get('/entri', [PdrbController::class, 'entri'])
             ->name('entri');
     });
 });

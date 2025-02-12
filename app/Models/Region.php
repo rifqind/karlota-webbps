@@ -12,7 +12,8 @@ class Region extends Model
     protected $guarded = ['id'];
 
     protected $load = ['pdrb'];
-    
+    public $timestamps = false; // Disable timestamps
+
     public function pdrb()
     {
         return $this->hasMany(Pdrb::class);
