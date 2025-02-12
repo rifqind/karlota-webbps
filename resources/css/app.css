@@ -1,10 +1,16 @@
 @import url('/node_modules/@fortawesome/fontawesome-svg-core/styles.css');
+@import 'multiselect-default.css';
+@import 'multiselect-tailwind.css';
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 body {
     font-family: "Poppins", sans-serif !important;
+}
+
+input:focus {
+    @apply focus:ring-0
 }
 
 html {
@@ -24,7 +30,7 @@ html {
 }
 
 .btn-info-fordone {
-    background-color: #3d3b8e;
+    background-color: #175676;
     color: whitesmoke;
     padding: 6px 12px 6px 12px;
     cursor: pointer;
@@ -94,4 +100,113 @@ html {
 
 label {
     font-weight: 700;
+}
+
+.table thead tr th {
+    background-color: #175676;
+    color: whitesmoke;
+}
+
+.table thead tr th.tabel-width-5 {
+    width: 5%;
+}
+
+.table thead tr th.tabel-width-35 {
+    width: 35%;
+}
+
+.table thead tr th.tabel-width-8 {
+    width: 8%;
+}
+
+.table thead tr th.tabel-width-25 {
+    width: 25%;
+}
+
+.table thead tr th.tabel-width-50 {
+    width: 50%;
+}
+
+.table thead tr th.tabel-width-70 {
+    width: 70%;
+}
+
+.table thead tr th.tabel-width-20 {
+    width: 20%;
+}
+
+.table thead tr th.tabel-width-15 {
+    width: 15%;
+}
+
+.table thead tr th.tabel-width-10 {
+    width: 10%;
+}
+
+.table thead tr th.tabel-width-8 {
+    width: 8%;
+}
+
+.table thead tr th.tabel-width-45px {
+    width: 45px;
+}
+
+.table tbody tr td {
+    background-color: white;
+}
+
+.table thead tr th,
+.table tbody tr td {
+    padding-top: 0.75rem;
+    padding-bottom: 0.75rem;
+    padding-left: 0.5rem;
+    padding-right: 0.5rem;
+    border-width: 1px;
+}
+
+.table thead tr td {
+    border-width: 1px;
+}
+
+.th-order {
+    cursor: pointer;
+}
+
+.search-header {
+    padding: 0.75rem 0.75rem 0.75rem 0.75rem;
+}
+
+
+.badge-info {
+    background-color: #175676;
+    color: whitesmoke;
+}
+
+.icon-trash-color {
+    color: #a80606;
+    cursor: pointer;
+}
+
+.edit-pen {
+    color: #175676;
+    cursor: pointer;
+}
+
+.cursor-pointer {
+    cursor: pointer;
+}
+
+.badge {
+    cursor: pointer;
+    display: inline-block;
+    padding: 0.25em 0.4em;
+    font-size: 75%;
+    font-weight: 700;
+    line-height: 1;
+    text-align: center;
+    white-space: nowrap;
+    vertical-align: baseline;
+    border-radius: 0.25rem;
+    transition: color 0.15s ease-in-out, background-color 0.15s ease-in-out,
+        border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
 }

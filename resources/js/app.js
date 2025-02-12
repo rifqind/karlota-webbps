@@ -8,6 +8,7 @@ import "@fontsource/poppins/700.css";
 import { createInertiaApp } from '@inertiajs/vue3';
 import { resolvePageComponent } from 'laravel-vite-plugin/inertia-helpers';
 import { createApp, h } from 'vue';
+import VueTailwindDatepicker from "vue-tailwind-datepicker";
 import { ZiggyVue } from '../../vendor/tightenco/ziggy';
 import { library, config } from "@fortawesome/fontawesome-svg-core";
 import { FontAwesomeIcon } from "@fortawesome/vue-fontawesome";
@@ -135,6 +136,7 @@ createInertiaApp({
         const vueApp = createApp({ render: () => h(App, props) })
             .use(plugin)
             .use(ZiggyVue)
+            .use(VueTailwindDatepicker)
             .component("font-awesome-icon", FontAwesomeIcon)
         return vueApp.mount(el)
     },

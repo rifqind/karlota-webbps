@@ -3,7 +3,9 @@
 namespace App\Http\Controllers;
 
 use App\Models\Period;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 
 class PeriodController extends Controller
@@ -19,8 +21,39 @@ class PeriodController extends Controller
         $query = Period::query();
         $number = 1;
         $dataToCounted = $query
-            ->orderBy('created_at', 'desc')
             ->select('*');
+
+        if ($request->orderAttribute) {
+            $order = $request->orderAttribute;
+            if (sizeof($order) > 2) $query->orderBy($order['label'], $order['value']);
+            else $query->orderBy('created_at', 'desc');
+        } else $query->orderBy('created_at', 'desc');
+
+        if ($request->ArrayFilter) {
+            $filter = $request->ArrayFilter;
+            if (!empty($filter['type'])) {
+                $query->where('type', 'like', '%' . $filter['type'] . '%');
+            }
+            if (!empty($filter['quarter'])) {
+                $query->where('quarter', 'like', '%' .  $filter['quarter'] . '%');
+            }
+            if (!empty($filter['year'])) {
+                $query->where('year', 'like', '%' .  $filter['year'] . '%');
+            }
+            if (!empty($filter['description'])) {
+                $query->where('description', 'like', '%' . $filter['description'] . '%');
+            }
+            if (!empty($filter['status'])) {
+                $query->where('status', 'like', '%' . $filter['status'] . '%');
+            }
+            if (!empty($filter['started_at'])) {
+                $query->where('started_at', 'like', '%' . $filter['started_at'] . '%');
+            }
+            if (!empty($filter['ended_at'])) {
+                $query->where('ended_at', 'like', '%' . $filter['ended_at'] . '%');
+            }
+        }
+
         $countData = $dataToCounted->count();
         $data = $query->paginate($paginated, ['*'], 'page', $currentPage);
         foreach ($data as $key => $value) {
@@ -28,9 +61,45 @@ class PeriodController extends Controller
             $value->number = $number;
             $number++;
         }
+        if ($request->paginated) {
+            return response()->json([
+                'period' => $data,
+                'countData' => $countData
+            ]);
+        }
         return Inertia::render('Period/Index', [
-            'data' => $data,
+            'period' => $data,
             'countData' => $countData
         ]);
     }
+
+    public function store(Request $request)
+    {
+        $validated = $request->validate([
+            'type' => ['required', 'string'],
+            'year' => ['required', 'integer'],
+            'quarter' => ['required', 'integer'],
+            'description' => ['required', 'string'],
+            'datepicker' => ['required', 'array'],
+            'datepicker.startDate' => ['required', 'date'],
+            'datepicker.endDate' => ['required', 'date'],
+        ]);
+
+        try {
+            //code...
+            DB::beginTransaction();
+            $validated['started_at'] = Carbon::parse($validated['datepicker']['startDate'])->format('Y-m-d');
+            $validated['ended_at'] = Carbon::parse($validated['datepicker']['endDate'])->format('Y-m-d');
+
+            $new_data = Period::create($validated);
+            DB::commit();
+            return redirect()->route('period.index')->with('message', 'Berhasil menambah periode putaran baru');
+        } catch (\Throwable $th) {
+            //throw $th;
+            DB::rollBack();
+            return redirect()->route('period.index')->with('error', $th->getMessage());
+        }
+    }
+
+    public function
 }

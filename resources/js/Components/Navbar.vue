@@ -66,7 +66,7 @@ const triggerSidebar = () => {
 
 <style scoped>
 .dropdown-item:hover {
-  background-color: #3d3b8e;
+  background-color: #175676;
   color: whitesmoke;
 }
 </style>

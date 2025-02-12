@@ -27,7 +27,9 @@
         "@fortawesome/free-solid-svg-icons": "^6.6.0",
         "@fortawesome/vue-fontawesome": "^3.0.8",
         "@vueform/multiselect": "^2.6.10",
+        "mini-svg-data-uri": "^1.4.4",
         "nprogress": "^0.2.0",
+        "vue-tailwind-datepicker": "^1.7.3",
         "xlsx": "^0.18.5"
     }
 }

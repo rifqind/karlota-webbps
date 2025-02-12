@@ -186,7 +186,7 @@ const visiblePages = computed(() => {
 
 .pagination > li.active {
   color: whitesmoke;
-  background-color: #3d3b8e;
+  background-color: #175676;
 }
 
 .pagination > li:hover {
@@ -202,7 +202,7 @@ const visiblePages = computed(() => {
 
   .pagination > li.active {
     color: whitesmoke;
-    background-color: #3d3b8e;
+    background-color: #175676;
   }
 
   .pagination > li:hover {

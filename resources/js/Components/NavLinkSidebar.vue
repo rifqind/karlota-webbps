@@ -39,12 +39,12 @@ const props = defineProps({
   padding: 0.5rem 1rem;
 }
 .nav-link.active {
-  background-color: #3d3b8e;
+  background-color: #175676;
   color: #fff;
 }
 .sidebar-dark-success .nav-sidebar > .nav-item > .nav-link.active,
 .sidebar-light-success .nav-sidebar > .nav-item > .nav-link.active {
-  background-color: #3d3b8e;
+  background-color: #175676;
   color: #fff;
 }
 </style>

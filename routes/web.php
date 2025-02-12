@@ -15,6 +15,9 @@ Route::get('/', function () {
         'phpVersion' => PHP_VERSION,
     ]);
 });
+Route::get('/token', function () {
+    return csrf_token();
+})->name('token');
 
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/dashboard', [HomeController::class, 'index'])
@@ -22,6 +25,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::prefix('period')->name('period.')->group(function () {
         Route::get('/index', [PeriodController::class, 'index'])
             ->name('index');
+        Route::post('/store', [PeriodController::class, 'store'])
+            ->name('store');
+        Route::get('/fetch/{id}', [PeriodController::class, 'fetch'])
+            ->name('fetch');
     });
 });
 
