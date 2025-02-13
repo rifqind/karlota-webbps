@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Pdrb;
 use App\Models\Region;
 use App\Models\Subsector;
 use Illuminate\Http\Request;
@@ -19,10 +20,12 @@ class PdrbController extends Controller
         $subsectors = Subsector::where('type', $type)
             ->with(['sector.category'])
             ->get();
-
+        $dataContents = Pdrb::where('dataset_id', 1)
+            ->get();
         return Inertia::render('Pdrb/Entri', [
             'type' => $type,
             'subsectors' => $subsectors,
+            'dataContents' => $dataContents,
             'regions' => $regions
         ]);
     }

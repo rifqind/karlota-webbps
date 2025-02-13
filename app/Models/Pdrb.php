@@ -11,8 +11,12 @@ class Pdrb extends Model
 
     protected $guarded = ['id'];
 
-    protected $with = ['dataset', 'subsector', 'adjustment'];
-    protected $load = ['adjustment'];
+    protected $with = [
+        'dataset',
+        'subsector',
+        //  'adjustment'
+    ];
+    // protected $load = ['adjustment'];
 
     public $timestamps = false;
 
