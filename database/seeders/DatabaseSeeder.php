@@ -25,5 +25,6 @@ class DatabaseSeeder extends Seeder
         $this->call(CategoriesTableSeeder::class);
         $this->call(PdrbsTableSeeder::class);
         $this->call(DatasetsTableSeeder::class);
+        $this->call(RegionsTableSeeder::class);
     }
 }
