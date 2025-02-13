@@ -26,5 +26,6 @@ class DatabaseSeeder extends Seeder
         $this->call(SubsectorsTableSeeder::class);
         $this->call(PdrbsTableSeeder::class);
         $this->call(DatasetsTableSeeder::class);
+        $this->call(PeriodsTableSeeder::class);
     }
 }
