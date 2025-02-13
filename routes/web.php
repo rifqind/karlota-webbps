@@ -33,6 +33,16 @@ Route::middleware(['auth', 'verified'])->group(function () {
             ->name('fetch');
         Route::delete('/destroy/{id}', [PeriodController::class, 'destroy'])
             ->name('destroy');
+
+        //fetching periods for rekons
+        Route::get('/fetchYear', [PeriodController::class, 'fetchYear'])
+            ->name('fetchYear');
+        Route::get('/fetchQuarter', [PeriodController::class, 'fetchQuarter'])
+            ->name('fetchQuarter');
+        Route::get('/fetchPeriod', [PeriodController::class, 'fetchPeriod'])
+            ->name('fetchPeriod');
+        Route::get('/fetchYearBefore', [PeriodController::class, 'fetchYearBefore'])
+            ->name('fetchYearBefore');
     });
 
     Route::prefix('lapus')->name('lapus.')->group(function () {

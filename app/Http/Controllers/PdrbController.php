@@ -16,9 +16,12 @@ class PdrbController extends Controller
         if ($prefix == 'lapus') $type = 'Lapangan Usaha';
         else if ($prefix == 'peng') $type = 'Pengeluaran';
         $regions = Region::getMyRegion();
-        $subsectors = Subsector::where('type', $type)->get();
+        $subsectors = Subsector::where('type', $type)
+            ->with(['sector.category'])
+            ->get();
 
         return Inertia::render('Pdrb/Entri', [
+            'type' => $type,
             'subsectors' => $subsectors,
             'regions' => $regions
         ]);

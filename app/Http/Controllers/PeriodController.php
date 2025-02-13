@@ -128,4 +128,48 @@ class PeriodController extends Controller
             return redirect()->route('period.index')->with('error', $th->getMessage());
         }
     }
+
+    //fetchStage
+    public function fetchYear(Request $request)
+    {
+        $data = Period::selectRaw('DISTINCT year as value, year as label')
+            ->where('type', $request->type)
+            ->orderBy('year', 'DESC')
+            ->get();
+        return response()->json($data);
+    }
+
+    public function fetchQuarter(Request $request)
+    {
+        $data = Period::selectRaw('DISTINCT quarter as value, quarter as label')
+            ->where('type', $request->type)
+            ->where('year', $request->year)
+            ->get();
+        return response()->json($data);
+    }
+
+    public function fetchPeriod(Request $request)
+    {
+        $data = Period::where('type', $request->type)
+            ->where('year', $request->year)
+            ->where('quarter', $request->quarter)
+            ->get(['id as value', 'description as label']);
+        return response()->json($data);
+    }
+
+    public function fetchYearBefore(Request $request)
+    {
+        $data = Period::where('type', $request->type)
+            ->where('year', $request->year - 1)
+            ->orderBy('id', 'desc')
+            ->get()
+            ->map(function ($item) {
+                return [
+                    'label' => $item->year . ' - Triwulan ' . $item->quarter . ' - ' . $item->description . ' (' . $item->status . ')',
+                    'value' => $item->id,
+                ];
+            });
+
+        return response()->json($data);
+    }
 }

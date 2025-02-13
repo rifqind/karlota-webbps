@@ -14,6 +14,8 @@ class Pdrb extends Model
     protected $with = ['dataset', 'subsector', 'adjustment'];
     protected $load = ['adjustment'];
 
+    public $timestamps = false;
+
 
     public function dataset()
     {
@@ -30,7 +32,8 @@ class Pdrb extends Model
         return $this->hasOne(Adjustment::class);
     }
 
-    public function category() {
+    public function category()
+    {
         return $this->subsector->sector->category_id ?? null;
     }
 }
