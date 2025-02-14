@@ -147,8 +147,18 @@
                     <td>
                       <input
                         type="text"
+                        :id="'cell-' + nodeSubsectors.id + '-' + node.label"
                         :value="getData(nodeSubsectors.id, node.label)"
-                        @input=""
+                        @input="
+                          (event) => {
+                            debounceHandleInput(event, nodeSubsectors.id, node.label);
+                          }
+                        "
+                        @paste="
+                          (event) => {
+                            handlePaste(event, nodeSubsectors.id, node.label);
+                          }
+                        "
                         class="w-full input-fordone"
                       />
                     </td>
@@ -176,7 +186,18 @@
                     <td>
                       <input
                         type="text"
+                        :id="'cell-' + nodeSubsectors.id + '-' + node.label"
                         :value="getData(nodeSubsectors.id, node.label)"
+                        @input="
+                          (event) => {
+                            debounceHandleInput(event, nodeSubsectors.id, node.label);
+                          }
+                        "
+                        @paste="
+                          (event) => {
+                            handlePaste(event, nodeSubsectors.id, node.label);
+                          }
+                        "
                         class="w-full input-fordone"
                       />
                     </td>
@@ -208,7 +229,18 @@
                     <td>
                       <input
                         type="text"
+                        :id="'cell-' + nodeSubsectors.id + '-' + node.label"
                         :value="getData(nodeSubsectors.id, node.label)"
+                        @input="
+                          (event) => {
+                            debounceHandleInput(event, nodeSubsectors.id, node.label);
+                          }
+                        "
+                        @paste="
+                          (event) => {
+                            handlePaste(event, nodeSubsectors.id, node.label);
+                          }
+                        "
                         class="w-full input-fordone"
                       />
                     </td>
@@ -222,18 +254,22 @@
                 <p class="mt-1 mb-1">PDRB</p>
               </td>
               <template v-for="(node, index) in quarters">
-                <td :id="'adhb_total-' + node.label" class="total-cell"></td>
+                <td :id="'adhb_total-' + node.label" class="total-cell">
+                  {{ getPDRB(node.label) }}
+                </td>
               </template>
-              <td class="total-cell"></td>
+              <td class="total-cell">{{ getSumPDRB("PDRB") }}</td>
             </tr>
             <tr class="PDRB-footer text-center">
               <td class="desc-col footer-column">
                 <p class="mt-1 mb-1">PDRB Nonmigas</p>
               </td>
               <template v-for="(node, index) in quarters">
-                <td :id="'adhb_total-nonmigas-' + node.label" class="total-cell"></td>
+                <td :id="'adhb_total-nonmigas-' + node.label" class="total-cell">
+                  {{ getPDRBNonMigas(node.label) }}
+                </td>
               </template>
-              <td class="total-cell"></td>
+              <td class="total-cell">{{ getSumPDRB("PDRB-NonMigas") }}</td>
             </tr>
           </tbody>
         </table>
@@ -243,6 +279,7 @@
 </template>
 <script setup>
 import SpinnerBorder from "@/Components/SpinnerBorder.vue";
+import { debounce } from "@/debounce";
 import GeneralLayout from "@/Layouts/GeneralLayout.vue";
 import { Head, useForm, usePage } from "@inertiajs/vue3";
 import Multiselect from "@vueform/multiselect";
@@ -267,6 +304,8 @@ const dataBeforeDrop = ref([]);
 onMounted(() => {
   fetchYear();
 });
+
+// #region Section: FETCH
 const fetchYear = async (value) => {
   try {
     const response = await axios.get(route("period.fetchYear"), {
@@ -323,18 +362,26 @@ const fetchYearBefore = async (value) => {
     console.error(error);
   }
 };
-const triggerSpinner = ref(false);
+// #endregion
 
+const triggerSpinner = ref(false);
 watch(
   () => dataContents.value,
   (value) => {}
 );
 
+// #region Section: GET_DATA
 const getData = (subsectors, quarter) => {
   const theData = dataContents.value.find((x) => {
     return x.quarter == quarter && x.subsector_id == subsectors;
   });
-  return theData.adhb;
+  let formattedResult;
+  formattedResult =
+    theData.adhb == "" || theData.adhb == null
+      ? null
+      : formatNumberGerman(Number(theData.adhb), 0, 9);
+  return formattedResult;
+  // return theData.adhb;
 };
 const lvlOne = ref({});
 const getSumLvlOne = (value, quarter) => {
@@ -351,7 +398,8 @@ const getSumLvlOne = (value, quarter) => {
   if (!lvlOne.value[value]) lvlOne.value[value] = {};
   lvlOne.value[value][quarter] = result;
 
-  return result.toFixed(2);
+  let formattedResult = formatNumberGerman(result);
+  return formattedResult;
 };
 const lvlTwo = ref({});
 const getSumLvlTwo = (value, quarter) => {
@@ -365,7 +413,8 @@ const getSumLvlTwo = (value, quarter) => {
   const result = filteredData.reduce((sum, item) => sum + Number(item.adhb), 0);
   if (!lvlTwo.value[value]) lvlTwo.value[value] = {};
   lvlTwo.value[value][quarter] = result;
-  return result.toFixed(2);
+  let formattedResult = formatNumberGerman(result);
+  return formattedResult;
 };
 
 const getSumTotalFromVal = (value) => {
@@ -373,7 +422,8 @@ const getSumTotalFromVal = (value) => {
   // Sum the values from the filtered data
   const result = filteredData.reduce((sum, item) => sum + Number(item.adhb), 0);
   // console.log(result);
-  return result.toFixed(2);
+  let formattedResult = formatNumberGerman(result);
+  return formattedResult;
 };
 
 const getSumRowCat = (value) => {
@@ -385,7 +435,8 @@ const getSumRowCat = (value) => {
     0
   );
 
-  return totalSum.toFixed(2);
+  let formattedResult = formatNumberGerman(totalSum);
+  return formattedResult;
 };
 
 const getSumRowSector = (value) => {
@@ -397,10 +448,106 @@ const getSumRowSector = (value) => {
     0
   );
 
-  return totalSum.toFixed(2);
+  let formattedResult = formatNumberGerman(totalSum);
+  return formattedResult;
 };
-const handleInput = () => {};
-const handlePaste = () => {};
+
+const lvlPDRB = ref({});
+const getPDRB = (quarter) => {
+  const filteredData = dataContents.value.filter((x) => x.quarter == quarter);
+  const result = filteredData.reduce((sum, item) => sum + Number(item.adhb), 0);
+  if (!lvlPDRB.value["PDRB"]) lvlPDRB.value["PDRB"] = {};
+  lvlPDRB.value["PDRB"][quarter] = result;
+  let formattedResult = formatNumberGerman(result);
+  return formattedResult;
+};
+
+const getPDRBNonMigas = (quarter) => {
+  const filteredData = dataContents.value.filter(
+    (x) => x.quarter == quarter && ![10, 15].includes(x.subsector_id)
+  );
+  const result = filteredData.reduce((sum, item) => sum + Number(item.adhb), 0);
+  if (!lvlPDRB.value["PDRB-NonMigas"]) lvlPDRB.value["PDRB-NonMigas"] = {};
+  lvlPDRB.value["PDRB-NonMigas"][quarter] = result;
+  let formattedResult = formatNumberGerman(result);
+  return formattedResult;
+};
+
+const getSumPDRB = (pdrb) => {
+  if (!lvlPDRB.value[pdrb]) return 0;
+
+  let totalSum = Object.values(lvlPDRB.value[pdrb]).reduce(
+    (sum, pdrbSum) => sum + pdrbSum,
+    0
+  );
+  let formattedResult = formatNumberGerman(totalSum);
+  return formattedResult;
+};
+
+const formatNumberGerman = (num, min = 2, max = 2) => {
+  return new Intl.NumberFormat("de-DE", {
+    minimumFractionDigits: min,
+    maximumFractionDigits: max,
+  }).format(num);
+};
+
+// #endregion
+
+// #region Section: HANDLE_FUNCTION
+const handleInput = (event, subsector, quarter) => {
+  let value = event.target.value;
+  value = String(value).replaceAll(".", "").replace(",", ".");
+  const theIndex = dataContents.value.findIndex((x) => {
+    return x.quarter == quarter && x.subsector_id == subsector;
+  });
+  if (theIndex !== -1) dataContents.value[theIndex].adhb = value;
+};
+const debounceHandleInput = debounce((event, subsector, quarter) => {
+  handleInput(event, subsector, quarter);
+}, 700);
+const handlePaste = (event, subsector, quarter) => {
+  const items = event.clipboardData.items;
+  for (let i = 0; i < items.length; i++) {
+    if (items[i].type === "text/plain") {
+      items[i].getAsString((text) => {
+        const columnIndex = event.target.closest("td").cellIndex;
+        const rowIndex = event.target.closest("tr").rowIndex;
+        const lines = text.trim().split("\n");
+        lines.forEach((line, index) => {
+          const cells = line.trim().split("\t");
+          cells.forEach((cell, subIndex) => {
+            const row = rowIndex + index;
+            const col = columnIndex + subIndex;
+            const table = event.target.closest("table");
+            const tableRow = table.rows[row];
+            if (tableRow) {
+              const tableCell = tableRow.cells[col];
+              if (tableCell) {
+                let input = tableCell.querySelector('input:not([type="hidden"])');
+                if (input) {
+                  const subsector = input.id.split("-")[1];
+                  const quarter = input.id.split("-")[2];
+                  input = cell;
+                  let formatCell = String(cell).replaceAll(".", "").replace(",", ".");
+                  const theIndex = dataContents.value.findIndex((x) => {
+                    return x.quarter == quarter && x.subsector_id == subsector;
+                  });
+                  if (theIndex !== -1) {
+                    dataContents.value[theIndex].adhb = formatCell;
+                  }
+                }
+              }
+            }
+          });
+        });
+      });
+    }
+  }
+};
+const debounceHandlePaste = debounce((event, subsector, quarter) => {
+  handlePaste(event, subsector, quarter);
+}, 700);
+// #endregion
 </script>
 
 <style scoped>
