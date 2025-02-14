@@ -49,6 +49,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/entri', [PdrbController::class, 'entri'])
             ->name('entri');
     });
+    Route::post('/show-pdrb', [PdrbController::class, 'show'])
+        ->name('pdrb.show');
 });
 
 

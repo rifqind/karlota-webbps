@@ -223,6 +223,7 @@ watch(
     dataHere.value = value;
   }
 );
+var observer = null;
 onMounted(() => {
   if (tableRef.value) {
     observer = new MutationObserver(() => {
@@ -235,7 +236,7 @@ onMounted(() => {
     characterData: true,
   });
 });
-const emits = defineEmits(["update:updateDOD"]);
+const emits = defineEmits(["update:updateDOD", "update:updateDataContents"]);
 const quarters = [{ label: "1" }, { label: "2" }, { label: "3" }, { label: "4" }];
 // #region Section: GET_DATA
 const getData = (subsectors, quarter) => {
@@ -366,7 +367,7 @@ const handleInput = (event, subsector, quarter) => {
   const theIndex = dataHere.value.findIndex((x) => {
     return x.quarter == quarter && x.subsector_id == subsector;
   });
-  if (theIndex !== -1) dataHere.value[theIndex].adhb = value;
+  if (theIndex !== -1) dataHere.value[theIndex][props.type] = value;
 };
 const debounceHandleInput = debounce((event, subsector, quarter) => {
   handleInput(event, subsector, quarter);
@@ -399,7 +400,7 @@ const handlePaste = (event, subsector, quarter) => {
                     return x.quarter == quarter && x.subsector_id == subsector;
                   });
                   if (theIndex !== -1) {
-                    dataHere.value[theIndex].adhb = formatCell;
+                    dataHere.value[theIndex][props.type] = formatCell;
                   }
                 }
               }
@@ -410,6 +411,9 @@ const handlePaste = (event, subsector, quarter) => {
     }
   }
 };
+watch(dataHere.value, (value) => {
+  emits("update:updateDataContents", value);
+});
 // #endregion
 
 // #region Section: CAPTURE_DATA

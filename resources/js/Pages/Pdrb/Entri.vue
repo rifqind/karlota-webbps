@@ -58,13 +58,23 @@
             />
             <div class="text-danger text-left" v-if="true" id="error-dinas"></div>
           </div>
-          <div class="btn-info-fordone ml-auto w-[120px]">
+          <div class="mb-3 space-y-2">
+            <label for="year">Kabupaten/Kota<span class="text-danger">*</span></label>
+            <Multiselect
+              v-model="form.regions"
+              :options="page.props.regions"
+              :searchable="true"
+              placeholder="-- Pilih Kabupaten/Kota --"
+            />
+            <div class="text-danger text-left" v-if="true" id="error-dinas"></div>
+          </div>
+          <div class="btn-info-fordone ml-auto w-[120px]" @click.prevent="submit">
             <font-awesome-icon icon="fa fa-save" /> Entri Data
           </div>
         </div>
       </div>
       <div class="overflow-x-scroll mb-2">
-        <table ref="tableRef" class="table shadow-md w-full mb-2" id="tabel-entry">
+        <table class="table shadow-md w-full mb-2" id="tabel-entry">
           <thead>
             <tr>
               <th class="fixed-thead">Komponen</th>
@@ -75,263 +85,80 @@
               <th>Total</th>
             </tr>
           </thead>
-          <!-- #region Section: ADHB-ADHK LAPUS -->
-          <!-- <tbody>
-            <template v-for="(nodeSubsectors, index) in subsectors">
-              <template
-                v-if="
-                  (nodeSubsectors.code != null &&
-                    nodeSubsectors.code == 'a' &&
-                    nodeSubsectors.sector.code == '1' &&
-                    nodeSubsectors.sector.category.type == 'Lapangan Usaha') ||
-                  (nodeSubsectors.code == null &&
-                    nodeSubsectors.sector.code == '1' &&
-                    nodeSubsectors.sector.category.type == 'Lapangan Usaha')
-                "
-              >
-                <tr>
-                  <td class="desc-col fixed-column">
-                    <label class=""
-                      >{{ nodeSubsectors.sector.category.code }}.
-                      {{ nodeSubsectors.sector.category.name }}</label
-                    >
-                  </td>
-                  <template v-for="(node, index) in quarters">
-                    <td class="text-right">
-                      {{ getSumLvlTwo(nodeSubsectors.sector.category_id, node.label) }}
-                    </td>
-                  </template>
-                  <td class="text-right">
-                    {{ getSumRowCat(nodeSubsectors.sector.category_id) }}
-                  </td>
-                </tr>
-              </template>
-              <template
-                v-if="
-                  nodeSubsectors.code != null &&
-                  nodeSubsectors.code == 'a' &&
-                  nodeSubsectors.sector.category.type == 'Lapangan Usaha'
-                "
-              >
-                <tr>
-                  <td class="desc-col fixed-column">
-                    <p class="pl-4">
-                      {{ nodeSubsectors.sector.code }}. {{ nodeSubsectors.sector.name }}
-                    </p>
-                  </td>
-                  <template v-for="(node, index) in quarters">
-                    <td class="text-right pr-2">
-                      {{ getSumLvlOne(nodeSubsectors.sector_id, node.label) }}
-                    </td>
-                  </template>
-                  <td class="text-right">
-                    {{ getSumRowSector(nodeSubsectors.sector.id) }}
-                  </td>
-                </tr>
-              </template>
-              <template
-                v-if="
-                  nodeSubsectors.code != null &&
-                  nodeSubsectors.sector.category.type == 'Lapangan Usaha'
-                "
-              >
-                <tr>
-                  <td class="desc-col fixed-column">
-                    <p
-                      class="pl-5 pr-4"
-                      :for="nodeSubsectors.code + '_' + nodeSubsectors.name"
-                    >
-                      {{ nodeSubsectors.code + ". " + nodeSubsectors.name }}
-                    </p>
-                  </td>
-                  <template v-for="(node, index) in quarters">
-                    <td>
-                      <input
-                        type="text"
-                        :id="'cell-' + nodeSubsectors.id + '-' + node.label"
-                        :value="getData(nodeSubsectors.id, node.label)"
-                        @input="
-                          (event) => {
-                            debounceHandleInput(event, nodeSubsectors.id, node.label);
-                          }
-                        "
-                        @paste="
-                          (event) => {
-                            handlePaste(event, nodeSubsectors.id, node.label);
-                          }
-                        "
-                        class="w-full input-fordone"
-                      />
-                    </td>
-                  </template>
-                  <td class="text-right">{{ getSumTotalFromVal(nodeSubsectors.id) }}</td>
-                </tr>
-              </template>
-              <template
-                v-else-if="
-                  nodeSubsectors.code == null &&
-                  nodeSubsectors.sector.code != null &&
-                  nodeSubsectors.sector.category.type == 'Lapangan Usaha'
-                "
-              >
-                <tr>
-                  <td class="desc-col fixed-column">
-                    <p
-                      class="pl-4 pr-4"
-                      :for="nodeSubsectors.sector.code + '_' + nodeSubsectors.sector.name"
-                    >
-                      {{ nodeSubsectors.sector.code + ". " + nodeSubsectors.sector.name }}
-                    </p>
-                  </td>
-                  <template v-for="(node, index) in quarters">
-                    <td>
-                      <input
-                        type="text"
-                        :id="'cell-' + nodeSubsectors.id + '-' + node.label"
-                        :value="getData(nodeSubsectors.id, node.label)"
-                        @input="
-                          (event) => {
-                            debounceHandleInput(event, nodeSubsectors.id, node.label);
-                          }
-                        "
-                        @paste="
-                          (event) => {
-                            handlePaste(event, nodeSubsectors.id, node.label);
-                          }
-                        "
-                        class="w-full input-fordone"
-                      />
-                    </td>
-                  </template>
-                  <td class="text-right">{{ getSumTotalFromVal(nodeSubsectors.id) }}</td>
-                </tr>
-              </template>
-              <template
-                v-else-if="
-                  nodeSubsectors.code == null &&
-                  nodeSubsectors.sector.code == null &&
-                  nodeSubsectors.sector.category.type == 'Lapangan Usaha'
-                "
-              >
-                <tr>
-                  <td class="desc-col fixed-column">
-                    <label
-                      class="col"
-                      :for="
-                        nodeSubsectors.sector.category.code + '_' + nodeSubsectors.name
-                      "
-                    >
-                      {{
-                        nodeSubsectors.sector.category.code + ". " + nodeSubsectors.name
-                      }}
-                    </label>
-                  </td>
-                  <template v-for="(node, index) in quarters">
-                    <td>
-                      <input
-                        type="text"
-                        :id="'cell-' + nodeSubsectors.id + '-' + node.label"
-                        :value="getData(nodeSubsectors.id, node.label)"
-                        @input="
-                          (event) => {
-                            debounceHandleInput(event, nodeSubsectors.id, node.label);
-                          }
-                        "
-                        @paste="
-                          (event) => {
-                            handlePaste(event, nodeSubsectors.id, node.label);
-                          }
-                        "
-                        class="w-full input-fordone"
-                      />
-                    </td>
-                  </template>
-                  <td class="text-right">{{ getSumTotalFromVal(nodeSubsectors.id) }}</td>
-                </tr>
-              </template>
-            </template>
-            <tr class="PDRB-footer text-center">
-              <td class="desc-col footer-column">
-                <p class="mt-1 mb-1">PDRB</p>
-              </td>
-              <template v-for="(node, index) in quarters">
-                <td :id="'adhb_total-' + node.label" class="total-cell">
-                  {{ getPDRB(node.label) }}
-                </td>
-              </template>
-              <td class="total-cell">{{ getSumPDRB("PDRB") }}</td>
-            </tr>
-            <tr class="PDRB-footer text-center">
-              <td class="desc-col footer-column">
-                <p class="mt-1 mb-1">PDRB Nonmigas</p>
-              </td>
-              <template v-for="(node, index) in quarters">
-                <td :id="'adhb_total-nonmigas-' + node.label" class="total-cell">
-                  {{ getPDRBNonMigas(node.label) }}
-                </td>
-              </template>
-              <td class="total-cell">{{ getSumPDRB("PDRB-NonMigas") }}</td>
-            </tr>
-          </tbody> -->
-          <!-- #endregion -->
+          <!-- #region Section: ADHB -->
           <LapusTable
+            v-if="vifADHBADHK['adhb_now']"
+            v-show="showPdrbAndResult['adhb']"
             :data-contents="dataContents"
             :subsectors="subsectors"
             :type="'adhb'"
             :onDemandType="'adhb_now'"
+            @update:update-d-o-d="updateDOD"
+            @update:updateDataContents="updateDataContents"
           />
+          <!-- #endregion -->
+
+          <!-- #region Section: ADHK -->
+          <LapusTable
+            v-if="vifADHBADHK['adhk_now']"
+            v-show="showPdrbAndResult['adhk']"
+            :data-contents="dataContents"
+            :subsectors="subsectors"
+            :type="'adhk'"
+            :onDemandType="'adhk_now'"
+            @update:update-d-o-d="updateDOD"
+            @update:updateDataContents="updateDataContents"
+          />
+          <!-- #endregion -->
+
+          <!-- #region Section: RESULT -->
+          <LapusResultTable
+            v-show="showPdrbAndResult['result']"
+            :subsectors="subsectors"
+            :type="'distribusi'"
+          />
+          <!-- #endregion -->
         </table>
       </div>
     </div>
   </GeneralLayout>
 </template>
 <script setup>
+import LapusResultTable from "@/Components/LapusResultTable.vue";
 import LapusTable from "@/Components/LapusTable.vue";
 import SpinnerBorder from "@/Components/SpinnerBorder.vue";
-import { debounce } from "@/debounce";
 import GeneralLayout from "@/Layouts/GeneralLayout.vue";
 import { Head, useForm, usePage } from "@inertiajs/vue3";
 import Multiselect from "@vueform/multiselect";
-import { onMounted, onUnmounted, onUpdated, ref, watch } from "vue";
+import { onMounted, ref, watch } from "vue";
 
 const page = usePage();
 const subsectors = ref(page.props.subsectors);
 const dataContents = ref(page.props.dataContents);
 const dataOnDemand = ref({ adhb_now: {}, adhb_prev: {}, adhk_now: {}, adhk_prev: {} });
-const tableRef = ref(null);
-const quarters = [{ label: "1" }, { label: "2" }, { label: "3" }, { label: "4" }];
 const form = useForm({
+  _token: null,
   dataContents: null,
   type: page.props.type,
   year: null,
   quarter: null,
   description: null,
   dataBefore: null,
+  regions: null,
 });
 const yearDrop = ref([]);
 const quarterDrop = ref([]);
 const descDrop = ref([]);
 const dataBeforeDrop = ref([]);
-var observer = null;
 onMounted(() => {
   fetchYear();
-  // if (tableRef.value) {
-  //   observer = new MutationObserver(() => {
-  //     captureTableData();
-  //   });
-  // }
-  // observer.observe(tableRef.value, {
-  //   childList: true,
-  //   subtree: true,
-  //   characterData: true,
-  // });
 });
 const updateDOD = (data) => {
   dataOnDemand.value[data.type] = data.data;
 };
-// onUnmounted(() => {
-//   if (observer) observer.disconnect();
-// });
+const updateDataContents = (data) => {
+  dataContents.value = data;
+};
 // #region Section: FETCH
 const fetchYear = async (value) => {
   try {
@@ -389,6 +216,23 @@ const fetchYearBefore = async (value) => {
     console.error(error);
   }
 };
+const vifADHBADHK = ref({
+  adhb_now: false,
+  adhb_prev: false,
+  adhk_now: false,
+  adhk_prev: false,
+});
+const showPdrbAndResult = ref({
+  adhb: false,
+  adhk: false,
+  result: true,
+});
+const submit = async () => {
+  const response = await axios.get(route("token"));
+  form._token = response.data;
+  if (form.processing) return;
+  form.post(route("pdrb.show"), {});
+};
 // #endregion
 
 const triggerSpinner = ref(false);
@@ -396,203 +240,6 @@ watch(
   () => dataContents.value,
   (value) => {}
 );
-
-// // #region Section: GET_DATA
-// const getData = (subsectors, quarter) => {
-//   const theData = dataContents.value.find((x) => {
-//     return x.quarter == quarter && x.subsector_id == subsectors;
-//   });
-//   let formattedResult;
-//   formattedResult =
-//     theData.adhb == "" || theData.adhb == null
-//       ? null
-//       : formatNumberGerman(Number(theData.adhb), 0, 9);
-//   return formattedResult;
-// };
-// const lvlOne = ref({});
-// const getSumLvlOne = (value, quarter) => {
-//   // Get all subsector IDs related to the given sector_id (value)
-//   let subsectorIds = subsectors.value
-//     .filter((x) => x.sector_id == value)
-//     .map((x) => x.id);
-//   // Get all matching data where quarter matches and subsector_id is in the subsector list
-//   const filteredData = dataContents.value.filter(
-//     (x) => x.quarter == quarter && subsectorIds.includes(x.subsector_id)
-//   );
-//   // Sum the values from the filtered data
-//   const result = filteredData.reduce((sum, item) => sum + Number(item.adhb), 0);
-//   if (!lvlOne.value[value]) lvlOne.value[value] = {};
-//   lvlOne.value[value][quarter] = result;
-
-//   let formattedResult = formatNumberGerman(result);
-//   return formattedResult;
-// };
-// const lvlTwo = ref({});
-// const getSumLvlTwo = (value, quarter) => {
-//   let subsectorIds = subsectors.value
-//     .filter((x) => x.sector.category_id == value)
-//     .map((x) => x.id);
-//   const filteredData = dataContents.value.filter(
-//     (x) => x.quarter == quarter && subsectorIds.includes(x.subsector_id)
-//   );
-//   // Sum the values from the filtered data
-//   const result = filteredData.reduce((sum, item) => sum + Number(item.adhb), 0);
-//   if (!lvlTwo.value[value]) lvlTwo.value[value] = {};
-//   lvlTwo.value[value][quarter] = result;
-//   let formattedResult = formatNumberGerman(result);
-//   return formattedResult;
-// };
-
-// const getSumTotalFromVal = (value) => {
-//   const filteredData = dataContents.value.filter((x) => x.subsector_id == value);
-//   // Sum the values from the filtered data
-//   const result = filteredData.reduce((sum, item) => sum + Number(item.adhb), 0);
-//   // console.log(result);
-//   let formattedResult = formatNumberGerman(result);
-//   return formattedResult;
-// };
-
-// const getSumRowCat = (value) => {
-//   if (!lvlTwo.value[value]) return 0; // If no data, return 0
-
-//   // Get all quarter sums for this category
-//   let totalSum = Object.values(lvlTwo.value[value]).reduce(
-//     (sum, quarterSum) => sum + quarterSum,
-//     0
-//   );
-
-//   let formattedResult = formatNumberGerman(totalSum);
-//   return formattedResult;
-// };
-
-// const getSumRowSector = (value) => {
-//   if (!lvlOne.value[value]) return 0; // If no data, return 0
-
-//   // Get all quarter sums for this category
-//   let totalSum = Object.values(lvlOne.value[value]).reduce(
-//     (sum, quarterSum) => sum + quarterSum,
-//     0
-//   );
-
-//   let formattedResult = formatNumberGerman(totalSum);
-//   return formattedResult;
-// };
-
-// const lvlPDRB = ref({});
-// const getPDRB = (quarter) => {
-//   const filteredData = dataContents.value.filter((x) => x.quarter == quarter);
-//   const result = filteredData.reduce((sum, item) => sum + Number(item.adhb), 0);
-//   if (!lvlPDRB.value["PDRB"]) lvlPDRB.value["PDRB"] = {};
-//   lvlPDRB.value["PDRB"][quarter] = result;
-//   let formattedResult = formatNumberGerman(result);
-//   return formattedResult;
-// };
-
-// const getPDRBNonMigas = (quarter) => {
-//   const filteredData = dataContents.value.filter(
-//     (x) => x.quarter == quarter && ![10, 15].includes(x.subsector_id)
-//   );
-//   const result = filteredData.reduce((sum, item) => sum + Number(item.adhb), 0);
-//   if (!lvlPDRB.value["PDRB-NonMigas"]) lvlPDRB.value["PDRB-NonMigas"] = {};
-//   lvlPDRB.value["PDRB-NonMigas"][quarter] = result;
-//   let formattedResult = formatNumberGerman(result);
-//   return formattedResult;
-// };
-
-// const getSumPDRB = (pdrb) => {
-//   if (!lvlPDRB.value[pdrb]) return 0;
-
-//   let totalSum = Object.values(lvlPDRB.value[pdrb]).reduce(
-//     (sum, pdrbSum) => sum + pdrbSum,
-//     0
-//   );
-//   let formattedResult = formatNumberGerman(totalSum);
-//   return formattedResult;
-// };
-
-// const formatNumberGerman = (num, min = 2, max = 5) => {
-//   return new Intl.NumberFormat("de-DE", {
-//     minimumFractionDigits: min,
-//     maximumFractionDigits: max,
-//   }).format(num);
-// };
-
-// // #endregion
-
-// // #region Section: HANDLE_FUNCTION
-// const handleInput = (event, subsector, quarter) => {
-//   let value = event.target.value;
-//   value = String(value).replaceAll(".", "").replace(",", ".");
-//   const theIndex = dataContents.value.findIndex((x) => {
-//     return x.quarter == quarter && x.subsector_id == subsector;
-//   });
-//   if (theIndex !== -1) dataContents.value[theIndex].adhb = value;
-// };
-// const debounceHandleInput = debounce((event, subsector, quarter) => {
-//   handleInput(event, subsector, quarter);
-// }, 700);
-// const handlePaste = (event, subsector, quarter) => {
-//   const items = event.clipboardData.items;
-//   for (let i = 0; i < items.length; i++) {
-//     if (items[i].type === "text/plain") {
-//       items[i].getAsString((text) => {
-//         const columnIndex = event.target.closest("td").cellIndex;
-//         const rowIndex = event.target.closest("tr").rowIndex;
-//         const lines = text.trim().split("\n");
-//         lines.forEach((line, index) => {
-//           const cells = line.trim().split("\t");
-//           cells.forEach((cell, subIndex) => {
-//             const row = rowIndex + index;
-//             const col = columnIndex + subIndex;
-//             const table = event.target.closest("table");
-//             const tableRow = table.rows[row];
-//             if (tableRow) {
-//               const tableCell = tableRow.cells[col];
-//               if (tableCell) {
-//                 let input = tableCell.querySelector('input:not([type="hidden"])');
-//                 if (input) {
-//                   const subsector = input.id.split("-")[1];
-//                   const quarter = input.id.split("-")[2];
-//                   input = cell;
-//                   let formatCell = String(cell).replaceAll(".", "").replace(",", ".");
-//                   const theIndex = dataContents.value.findIndex((x) => {
-//                     return x.quarter == quarter && x.subsector_id == subsector;
-//                   });
-//                   if (theIndex !== -1) {
-//                     dataContents.value[theIndex].adhb = formatCell;
-//                   }
-//                 }
-//               }
-//             }
-//           });
-//         });
-//       });
-//     }
-//   }
-// };
-// // #endregion
-
-// // #region Section: CAPTURE_DATA
-// const captureTableData = () => {
-//   const tbody = tableRef.value.querySelector("tbody");
-//   const rows = tbody.querySelectorAll("tr");
-//   let tempData = {};
-//   rows.forEach((row) => {
-//     const cells = row.querySelectorAll("td");
-//     let rowData = [];
-//     cells.forEach((cell, index) => {
-//       const input = cell.querySelector("input");
-//       if (input) {
-//         rowData[index] = input.value.trim(); // Get input value
-//       } else {
-//         rowData[index] = cell.innerText.trim(); // Get text content
-//       }
-//     });
-//     if (rowData.length > 1) tempData[rowData[0]] = rowData.slice(1);
-//   });
-//   dataOnDemand.value = tempData;
-// };
-// // #endregion
 </script>
 
 <style scoped>

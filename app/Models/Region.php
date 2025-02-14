@@ -18,13 +18,16 @@ class Region extends Model
     {
         return $this->hasMany(Pdrb::class);
     }
-    
+
     public static function getMyRegion()
     {
-        if (auth()->user()->satker_id == 1){
-            $region = Region::all();
+        if (auth()->user()->satker_id == 1) {
+            $region = Region::select(['id as value', 'name as label'])
+                ->get();
         } else {
-            $region = Region::where('satker_id', auth()->user()->satker_id)->get();
+            $region = Region::where('satker_id', auth()->user()->satker_id)
+                ->select(['id as value', 'name as label'])
+                ->get();
         }
 
         return $region;
@@ -32,7 +35,7 @@ class Region extends Model
 
     public static function getMyRegionId()
     {
-        if (auth()->user()->satker_id == 1){
+        if (auth()->user()->satker_id == 1) {
             $region = Region::all()->pluck('id');
         } else {
             $region = Region::where('satker_id', auth()->user()->satker_id)->pluck('id');
