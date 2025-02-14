@@ -64,7 +64,7 @@
         </div>
       </div>
       <div class="overflow-x-scroll mb-2">
-        <table class="table shadow-md w-full mb-2" id="tabel-entry">
+        <table ref="tableRef" class="table shadow-md w-full mb-2" id="tabel-entry">
           <thead>
             <tr>
               <th class="fixed-thead">Komponen</th>
@@ -75,7 +75,8 @@
               <th>Total</th>
             </tr>
           </thead>
-          <tbody>
+          <!-- #region Section: ADHB-ADHK LAPUS -->
+          <!-- <tbody>
             <template v-for="(nodeSubsectors, index) in subsectors">
               <template
                 v-if="
@@ -271,23 +272,33 @@
               </template>
               <td class="total-cell">{{ getSumPDRB("PDRB-NonMigas") }}</td>
             </tr>
-          </tbody>
+          </tbody> -->
+          <!-- #endregion -->
+          <LapusTable
+            :data-contents="dataContents"
+            :subsectors="subsectors"
+            :type="'adhb'"
+            :onDemandType="'adhb_now'"
+          />
         </table>
       </div>
     </div>
   </GeneralLayout>
 </template>
 <script setup>
+import LapusTable from "@/Components/LapusTable.vue";
 import SpinnerBorder from "@/Components/SpinnerBorder.vue";
 import { debounce } from "@/debounce";
 import GeneralLayout from "@/Layouts/GeneralLayout.vue";
 import { Head, useForm, usePage } from "@inertiajs/vue3";
 import Multiselect from "@vueform/multiselect";
-import { onMounted, ref, watch } from "vue";
+import { onMounted, onUnmounted, onUpdated, ref, watch } from "vue";
 
 const page = usePage();
 const subsectors = ref(page.props.subsectors);
 const dataContents = ref(page.props.dataContents);
+const dataOnDemand = ref({ adhb_now: {}, adhb_prev: {}, adhk_now: {}, adhk_prev: {} });
+const tableRef = ref(null);
 const quarters = [{ label: "1" }, { label: "2" }, { label: "3" }, { label: "4" }];
 const form = useForm({
   dataContents: null,
@@ -301,10 +312,26 @@ const yearDrop = ref([]);
 const quarterDrop = ref([]);
 const descDrop = ref([]);
 const dataBeforeDrop = ref([]);
+var observer = null;
 onMounted(() => {
   fetchYear();
+  // if (tableRef.value) {
+  //   observer = new MutationObserver(() => {
+  //     captureTableData();
+  //   });
+  // }
+  // observer.observe(tableRef.value, {
+  //   childList: true,
+  //   subtree: true,
+  //   characterData: true,
+  // });
 });
-
+const updateDOD = (data) => {
+  dataOnDemand.value[data.type] = data.data;
+};
+// onUnmounted(() => {
+//   if (observer) observer.disconnect();
+// });
 // #region Section: FETCH
 const fetchYear = async (value) => {
   try {
@@ -370,199 +397,205 @@ watch(
   (value) => {}
 );
 
-// #region Section: GET_DATA
-const getData = (subsectors, quarter) => {
-  const theData = dataContents.value.find((x) => {
-    return x.quarter == quarter && x.subsector_id == subsectors;
-  });
-  let formattedResult;
-  formattedResult =
-    theData.adhb == "" || theData.adhb == null
-      ? null
-      : formatNumberGerman(Number(theData.adhb), 0, 9);
-  return formattedResult;
-  // return theData.adhb;
-};
-const lvlOne = ref({});
-const getSumLvlOne = (value, quarter) => {
-  // Get all subsector IDs related to the given sector_id (value)
-  let subsectorIds = subsectors.value
-    .filter((x) => x.sector_id == value)
-    .map((x) => x.id);
-  // Get all matching data where quarter matches and subsector_id is in the subsector list
-  const filteredData = dataContents.value.filter(
-    (x) => x.quarter == quarter && subsectorIds.includes(x.subsector_id)
-  );
-  // Sum the values from the filtered data
-  const result = filteredData.reduce((sum, item) => sum + Number(item.adhb), 0);
-  if (!lvlOne.value[value]) lvlOne.value[value] = {};
-  lvlOne.value[value][quarter] = result;
+// // #region Section: GET_DATA
+// const getData = (subsectors, quarter) => {
+//   const theData = dataContents.value.find((x) => {
+//     return x.quarter == quarter && x.subsector_id == subsectors;
+//   });
+//   let formattedResult;
+//   formattedResult =
+//     theData.adhb == "" || theData.adhb == null
+//       ? null
+//       : formatNumberGerman(Number(theData.adhb), 0, 9);
+//   return formattedResult;
+// };
+// const lvlOne = ref({});
+// const getSumLvlOne = (value, quarter) => {
+//   // Get all subsector IDs related to the given sector_id (value)
+//   let subsectorIds = subsectors.value
+//     .filter((x) => x.sector_id == value)
+//     .map((x) => x.id);
+//   // Get all matching data where quarter matches and subsector_id is in the subsector list
+//   const filteredData = dataContents.value.filter(
+//     (x) => x.quarter == quarter && subsectorIds.includes(x.subsector_id)
+//   );
+//   // Sum the values from the filtered data
+//   const result = filteredData.reduce((sum, item) => sum + Number(item.adhb), 0);
+//   if (!lvlOne.value[value]) lvlOne.value[value] = {};
+//   lvlOne.value[value][quarter] = result;
 
-  let formattedResult = formatNumberGerman(result);
-  return formattedResult;
-};
-const lvlTwo = ref({});
-const getSumLvlTwo = (value, quarter) => {
-  let subsectorIds = subsectors.value
-    .filter((x) => x.sector.category_id == value)
-    .map((x) => x.id);
-  const filteredData = dataContents.value.filter(
-    (x) => x.quarter == quarter && subsectorIds.includes(x.subsector_id)
-  );
-  // Sum the values from the filtered data
-  const result = filteredData.reduce((sum, item) => sum + Number(item.adhb), 0);
-  if (!lvlTwo.value[value]) lvlTwo.value[value] = {};
-  lvlTwo.value[value][quarter] = result;
-  let formattedResult = formatNumberGerman(result);
-  return formattedResult;
-};
+//   let formattedResult = formatNumberGerman(result);
+//   return formattedResult;
+// };
+// const lvlTwo = ref({});
+// const getSumLvlTwo = (value, quarter) => {
+//   let subsectorIds = subsectors.value
+//     .filter((x) => x.sector.category_id == value)
+//     .map((x) => x.id);
+//   const filteredData = dataContents.value.filter(
+//     (x) => x.quarter == quarter && subsectorIds.includes(x.subsector_id)
+//   );
+//   // Sum the values from the filtered data
+//   const result = filteredData.reduce((sum, item) => sum + Number(item.adhb), 0);
+//   if (!lvlTwo.value[value]) lvlTwo.value[value] = {};
+//   lvlTwo.value[value][quarter] = result;
+//   let formattedResult = formatNumberGerman(result);
+//   return formattedResult;
+// };
 
-const getSumTotalFromVal = (value) => {
-  const filteredData = dataContents.value.filter((x) => x.subsector_id == value);
-  // Sum the values from the filtered data
-  const result = filteredData.reduce((sum, item) => sum + Number(item.adhb), 0);
-  // console.log(result);
-  let formattedResult = formatNumberGerman(result);
-  return formattedResult;
-};
+// const getSumTotalFromVal = (value) => {
+//   const filteredData = dataContents.value.filter((x) => x.subsector_id == value);
+//   // Sum the values from the filtered data
+//   const result = filteredData.reduce((sum, item) => sum + Number(item.adhb), 0);
+//   // console.log(result);
+//   let formattedResult = formatNumberGerman(result);
+//   return formattedResult;
+// };
 
-const getSumRowCat = (value) => {
-  if (!lvlTwo.value[value]) return 0; // If no data, return 0
+// const getSumRowCat = (value) => {
+//   if (!lvlTwo.value[value]) return 0; // If no data, return 0
 
-  // Get all quarter sums for this category
-  let totalSum = Object.values(lvlTwo.value[value]).reduce(
-    (sum, quarterSum) => sum + quarterSum,
-    0
-  );
+//   // Get all quarter sums for this category
+//   let totalSum = Object.values(lvlTwo.value[value]).reduce(
+//     (sum, quarterSum) => sum + quarterSum,
+//     0
+//   );
 
-  let formattedResult = formatNumberGerman(totalSum);
-  return formattedResult;
-};
+//   let formattedResult = formatNumberGerman(totalSum);
+//   return formattedResult;
+// };
 
-const getSumRowSector = (value) => {
-  if (!lvlOne.value[value]) return 0; // If no data, return 0
+// const getSumRowSector = (value) => {
+//   if (!lvlOne.value[value]) return 0; // If no data, return 0
 
-  // Get all quarter sums for this category
-  let totalSum = Object.values(lvlOne.value[value]).reduce(
-    (sum, quarterSum) => sum + quarterSum,
-    0
-  );
+//   // Get all quarter sums for this category
+//   let totalSum = Object.values(lvlOne.value[value]).reduce(
+//     (sum, quarterSum) => sum + quarterSum,
+//     0
+//   );
 
-  let formattedResult = formatNumberGerman(totalSum);
-  return formattedResult;
-};
+//   let formattedResult = formatNumberGerman(totalSum);
+//   return formattedResult;
+// };
 
-const lvlPDRB = ref({});
-const getPDRB = (quarter) => {
-  const filteredData = dataContents.value.filter((x) => x.quarter == quarter);
-  const result = filteredData.reduce((sum, item) => sum + Number(item.adhb), 0);
-  if (!lvlPDRB.value["PDRB"]) lvlPDRB.value["PDRB"] = {};
-  lvlPDRB.value["PDRB"][quarter] = result;
-  let formattedResult = formatNumberGerman(result);
-  return formattedResult;
-};
+// const lvlPDRB = ref({});
+// const getPDRB = (quarter) => {
+//   const filteredData = dataContents.value.filter((x) => x.quarter == quarter);
+//   const result = filteredData.reduce((sum, item) => sum + Number(item.adhb), 0);
+//   if (!lvlPDRB.value["PDRB"]) lvlPDRB.value["PDRB"] = {};
+//   lvlPDRB.value["PDRB"][quarter] = result;
+//   let formattedResult = formatNumberGerman(result);
+//   return formattedResult;
+// };
 
-const getPDRBNonMigas = (quarter) => {
-  const filteredData = dataContents.value.filter(
-    (x) => x.quarter == quarter && ![10, 15].includes(x.subsector_id)
-  );
-  const result = filteredData.reduce((sum, item) => sum + Number(item.adhb), 0);
-  if (!lvlPDRB.value["PDRB-NonMigas"]) lvlPDRB.value["PDRB-NonMigas"] = {};
-  lvlPDRB.value["PDRB-NonMigas"][quarter] = result;
-  let formattedResult = formatNumberGerman(result);
-  return formattedResult;
-};
+// const getPDRBNonMigas = (quarter) => {
+//   const filteredData = dataContents.value.filter(
+//     (x) => x.quarter == quarter && ![10, 15].includes(x.subsector_id)
+//   );
+//   const result = filteredData.reduce((sum, item) => sum + Number(item.adhb), 0);
+//   if (!lvlPDRB.value["PDRB-NonMigas"]) lvlPDRB.value["PDRB-NonMigas"] = {};
+//   lvlPDRB.value["PDRB-NonMigas"][quarter] = result;
+//   let formattedResult = formatNumberGerman(result);
+//   return formattedResult;
+// };
 
-const getSumPDRB = (pdrb) => {
-  if (!lvlPDRB.value[pdrb]) return 0;
+// const getSumPDRB = (pdrb) => {
+//   if (!lvlPDRB.value[pdrb]) return 0;
 
-  let totalSum = Object.values(lvlPDRB.value[pdrb]).reduce(
-    (sum, pdrbSum) => sum + pdrbSum,
-    0
-  );
-  let formattedResult = formatNumberGerman(totalSum);
-  return formattedResult;
-};
+//   let totalSum = Object.values(lvlPDRB.value[pdrb]).reduce(
+//     (sum, pdrbSum) => sum + pdrbSum,
+//     0
+//   );
+//   let formattedResult = formatNumberGerman(totalSum);
+//   return formattedResult;
+// };
 
-const formatNumberGerman = (num, min = 2, max = 2) => {
-  return new Intl.NumberFormat("de-DE", {
-    minimumFractionDigits: min,
-    maximumFractionDigits: max,
-  }).format(num);
-};
+// const formatNumberGerman = (num, min = 2, max = 5) => {
+//   return new Intl.NumberFormat("de-DE", {
+//     minimumFractionDigits: min,
+//     maximumFractionDigits: max,
+//   }).format(num);
+// };
 
-// #endregion
+// // #endregion
 
-// #region Section: HANDLE_FUNCTION
-const handleInput = (event, subsector, quarter) => {
-  let value = event.target.value;
-  value = String(value).replaceAll(".", "").replace(",", ".");
-  const theIndex = dataContents.value.findIndex((x) => {
-    return x.quarter == quarter && x.subsector_id == subsector;
-  });
-  if (theIndex !== -1) dataContents.value[theIndex].adhb = value;
-};
-const debounceHandleInput = debounce((event, subsector, quarter) => {
-  handleInput(event, subsector, quarter);
-}, 700);
-const handlePaste = (event, subsector, quarter) => {
-  const items = event.clipboardData.items;
-  for (let i = 0; i < items.length; i++) {
-    if (items[i].type === "text/plain") {
-      items[i].getAsString((text) => {
-        const columnIndex = event.target.closest("td").cellIndex;
-        const rowIndex = event.target.closest("tr").rowIndex;
-        const lines = text.trim().split("\n");
-        lines.forEach((line, index) => {
-          const cells = line.trim().split("\t");
-          cells.forEach((cell, subIndex) => {
-            const row = rowIndex + index;
-            const col = columnIndex + subIndex;
-            const table = event.target.closest("table");
-            const tableRow = table.rows[row];
-            if (tableRow) {
-              const tableCell = tableRow.cells[col];
-              if (tableCell) {
-                let input = tableCell.querySelector('input:not([type="hidden"])');
-                if (input) {
-                  const subsector = input.id.split("-")[1];
-                  const quarter = input.id.split("-")[2];
-                  input = cell;
-                  let formatCell = String(cell).replaceAll(".", "").replace(",", ".");
-                  const theIndex = dataContents.value.findIndex((x) => {
-                    return x.quarter == quarter && x.subsector_id == subsector;
-                  });
-                  if (theIndex !== -1) {
-                    dataContents.value[theIndex].adhb = formatCell;
-                  }
-                }
-              }
-            }
-          });
-        });
-      });
-    }
-  }
-};
-const debounceHandlePaste = debounce((event, subsector, quarter) => {
-  handlePaste(event, subsector, quarter);
-}, 700);
-// #endregion
+// // #region Section: HANDLE_FUNCTION
+// const handleInput = (event, subsector, quarter) => {
+//   let value = event.target.value;
+//   value = String(value).replaceAll(".", "").replace(",", ".");
+//   const theIndex = dataContents.value.findIndex((x) => {
+//     return x.quarter == quarter && x.subsector_id == subsector;
+//   });
+//   if (theIndex !== -1) dataContents.value[theIndex].adhb = value;
+// };
+// const debounceHandleInput = debounce((event, subsector, quarter) => {
+//   handleInput(event, subsector, quarter);
+// }, 700);
+// const handlePaste = (event, subsector, quarter) => {
+//   const items = event.clipboardData.items;
+//   for (let i = 0; i < items.length; i++) {
+//     if (items[i].type === "text/plain") {
+//       items[i].getAsString((text) => {
+//         const columnIndex = event.target.closest("td").cellIndex;
+//         const rowIndex = event.target.closest("tr").rowIndex;
+//         const lines = text.trim().split("\n");
+//         lines.forEach((line, index) => {
+//           const cells = line.trim().split("\t");
+//           cells.forEach((cell, subIndex) => {
+//             const row = rowIndex + index;
+//             const col = columnIndex + subIndex;
+//             const table = event.target.closest("table");
+//             const tableRow = table.rows[row];
+//             if (tableRow) {
+//               const tableCell = tableRow.cells[col];
+//               if (tableCell) {
+//                 let input = tableCell.querySelector('input:not([type="hidden"])');
+//                 if (input) {
+//                   const subsector = input.id.split("-")[1];
+//                   const quarter = input.id.split("-")[2];
+//                   input = cell;
+//                   let formatCell = String(cell).replaceAll(".", "").replace(",", ".");
+//                   const theIndex = dataContents.value.findIndex((x) => {
+//                     return x.quarter == quarter && x.subsector_id == subsector;
+//                   });
+//                   if (theIndex !== -1) {
+//                     dataContents.value[theIndex].adhb = formatCell;
+//                   }
+//                 }
+//               }
+//             }
+//           });
+//         });
+//       });
+//     }
+//   }
+// };
+// // #endregion
+
+// // #region Section: CAPTURE_DATA
+// const captureTableData = () => {
+//   const tbody = tableRef.value.querySelector("tbody");
+//   const rows = tbody.querySelectorAll("tr");
+//   let tempData = {};
+//   rows.forEach((row) => {
+//     const cells = row.querySelectorAll("td");
+//     let rowData = [];
+//     cells.forEach((cell, index) => {
+//       const input = cell.querySelector("input");
+//       if (input) {
+//         rowData[index] = input.value.trim(); // Get input value
+//       } else {
+//         rowData[index] = cell.innerText.trim(); // Get text content
+//       }
+//     });
+//     if (rowData.length > 1) tempData[rowData[0]] = rowData.slice(1);
+//   });
+//   dataOnDemand.value = tempData;
+// };
+// // #endregion
 </script>
 
 <style scoped>
-.fixed-column {
-  position: sticky;
-  width: 400px;
-  left: 0;
-  background-color: white;
-  color: black;
-  z-index: 1;
-  box-shadow: 2px 0 5px -2px rgba(0, 0, 0, 0.2);
-  border-right: 1px solid #ccc;
-  border-left: 1px solid #ccc;
-}
-
 .fixed-thead {
   position: sticky;
   width: 400px;
@@ -575,52 +608,11 @@ const debounceHandlePaste = debounce((event, subsector, quarter) => {
   border-left: 1px solid #ccc;
 }
 
-.total-cell {
-  background-color: #175676;
-  color: whitesmoke;
-}
-
-.footer-column {
-  font-weight: bold;
-  position: sticky;
-  width: 400px;
-  background-color: #175676;
-  color: whitesmoke;
-  left: 0;
-  z-index: 1;
-  box-shadow: 2px 0 5px -2px rgba(0, 0, 0, 0.2);
-  border-right: 1px solid #ccc;
-  border-left: 1px solid #ccc;
-}
-
-.input-fordone {
-  text-align: right;
-}
-
-tbody td {
-  padding: 0.25rem;
-  height: 50px;
-  /* Set a fixed height */
-  line-height: 1.2;
-  /* Adjust line height */
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-tbody tr {
-  height: 50px;
-}
-
 .table {
   table-layout: fixed;
   /* Ensures consistent column width */
   width: 100%;
   border-collapse: collapse;
   /* Avoid extra spacing */
-}
-
-.not-fixed {
-  min-width: 250px;
 }
 </style>
