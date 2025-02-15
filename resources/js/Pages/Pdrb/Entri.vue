@@ -73,6 +73,33 @@
           </div>
         </div>
       </div>
+      <div class="bg-white shadow-md mb-2 rounded-sm border border-gray-200 mb-3">
+        <div class="p-5">
+          <div class="space-x-2">
+            <span @click="showTab('adhb')" :class="setActiveTab('adhb')">ADHB</span>
+            <span @click="showTab('adhk')" :class="setActiveTab('adhk')">ADHK</span>
+            <span @click="showTab('dist')" :class="setActiveTab('dist')">Distribusi</span>
+            <span @click="showTab('g_qtoq')" :class="setActiveTab('g_qtoq')"
+              >Growth (Q-to-Q)</span
+            >
+            <span @click="showTab('g_ytoy')" :class="setActiveTab('g_ytoy')"
+              >Growth (Y-to-Y)</span
+            >
+            <span @click="showTab('g_ctoc')" :class="setActiveTab('g_ctoc')"
+              >Growth (C-to-C)</span
+            >
+            <span @click="showTab('indeks')" :class="setActiveTab('indeks')"
+              >Indeks Implisit</span
+            >
+            <span @click="showTab('gi_qtoq')" :class="setActiveTab('gi_qtoq')"
+              >Laju Implisit (Q-to-Q)</span
+            >
+            <span @click="showTab('gi_ytoy')" :class="setActiveTab('gi_ytoy')"
+              >Laju Implisit (Y-to-Y)</span
+            >
+          </div>
+        </div>
+      </div>
       <div class="overflow-x-scroll mb-2">
         <table class="table shadow-md w-full mb-2" id="tabel-entry">
           <thead>
@@ -256,6 +283,28 @@ watch(
   () => dataContents.value,
   (value) => {}
 );
+
+var def = "btn-info-fordone";
+const activeTab = ref({
+  adhb: def,
+  adhk: def,
+  dist: def,
+  g_qtoq: def,
+  g_ytoy: def,
+  g_ctoc: def,
+  indeks: def,
+  gi_qtoq: def,
+  gi_ytoy: def,
+});
+const setActiveTab = (value) => {
+  return activeTab.value[value];
+};
+const showTab = (tab) => {
+  Object.keys(activeTab.value).forEach((key) => {
+    activeTab.value[key] = def;
+  });
+  activeTab.value[tab] = "btn-success-fordone";
+};
 </script>
 
 <style scoped>
