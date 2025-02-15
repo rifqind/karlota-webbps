@@ -67,6 +67,7 @@
           <template v-for="(node, index) in quarters">
             <td>
               <input
+                :disabled="inputDisabled(node.label)"
                 type="text"
                 :id="'cell-' + nodeSubsectors.id + '-' + node.label"
                 :value="getData(nodeSubsectors.id, node.label)"
@@ -106,6 +107,7 @@
           <template v-for="(node, index) in quarters">
             <td>
               <input
+                :disabled="inputDisabled(node.label)"
                 type="text"
                 :id="'cell-' + nodeSubsectors.id + '-' + node.label"
                 :value="getData(nodeSubsectors.id, node.label)"
@@ -145,6 +147,7 @@
           <template v-for="(node, index) in quarters">
             <td>
               <input
+                :disabled="inputDisabled(node.label)"
                 type="text"
                 :id="'cell-' + nodeSubsectors.id + '-' + node.label"
                 :value="getData(nodeSubsectors.id, node.label)"
@@ -214,6 +217,10 @@ const props = defineProps({
     required: true,
     default: "adhb_now",
   },
+  quarterCap: {
+    type: String,
+    required: true,
+  },
 });
 const dataHere = ref(props.dataContents);
 const tableRef = ref(null);
@@ -238,17 +245,24 @@ onMounted(() => {
 });
 const emits = defineEmits(["update:updateDOD", "update:updateDataContents"]);
 const quarters = [{ label: "1" }, { label: "2" }, { label: "3" }, { label: "4" }];
+const inputDisabled = (quarter) => {
+  let arrayQuarter = Array.from({ length: props.quarterCap }, (_, i) => i + 1);
+  // console.log();
+  return !arrayQuarter.includes(Number(quarter));
+};
 // #region Section: GET_DATA
 const getData = (subsectors, quarter) => {
   const theData = dataHere.value.find((x) => {
     return x.quarter == quarter && x.subsector_id == subsectors;
   });
-  let formattedResult;
-  formattedResult =
-    theData[props.type] == "" || theData[props.type] == null
-      ? null
-      : formatNumberGerman(Number(theData[props.type]), 0, 9);
-  return formattedResult;
+  if (theData) {
+    let formattedResult;
+    formattedResult =
+      theData[props.type] == "" || theData[props.type] == null
+        ? null
+        : formatNumberGerman(Number(theData[props.type]), 0, 9);
+    return formattedResult;
+  }
 };
 const lvlOne = ref({});
 const getSumLvlOne = (value, quarter) => {

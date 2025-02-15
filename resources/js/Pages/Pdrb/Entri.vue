@@ -93,6 +93,7 @@
             :subsectors="subsectors"
             :type="'adhb'"
             :onDemandType="'adhb_now'"
+            :quarter-cap="form.quarter"
             @update:update-d-o-d="updateDOD"
             @update:updateDataContents="updateDataContents"
           />
@@ -106,6 +107,7 @@
             :subsectors="subsectors"
             :type="'adhk'"
             :onDemandType="'adhk_now'"
+            :quarter-cap="form.quarter"
             @update:update-d-o-d="updateDOD"
             @update:updateDataContents="updateDataContents"
           />
@@ -134,7 +136,7 @@ import { onMounted, ref, watch } from "vue";
 
 const page = usePage();
 const subsectors = ref(page.props.subsectors);
-const dataContents = ref(page.props.dataContents);
+const dataContents = ref([]);
 const dataOnDemand = ref({ adhb_now: {}, adhb_prev: {}, adhk_now: {}, adhk_prev: {} });
 const form = useForm({
   _token: null,
@@ -228,10 +230,24 @@ const showPdrbAndResult = ref({
   result: true,
 });
 const submit = async () => {
-  const response = await axios.get(route("token"));
-  form._token = response.data;
-  if (form.processing) return;
-  form.post(route("pdrb.show"), {});
+  try {
+    console.log(form.dataBefore);
+    const response = await axios.get(route("pdrb.show"), {
+      params: {
+        type: page.props.type,
+        year: form.year,
+        quarter: form.quarter,
+        description: form.description,
+        dataBefore: form.dataBefore,
+        regions: form.regions,
+      },
+    });
+    dataContents.value = response.data.current_data;
+    showPdrbAndResult.value.result = false;
+    showPdrbAndResult.value.adhb = true;
+    vifADHBADHK.value.adhb_now = true;
+    vifADHBADHK.value.adhk_now = true;
+  } catch (error) {}
 };
 // #endregion
 

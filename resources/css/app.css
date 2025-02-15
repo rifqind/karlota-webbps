@@ -98,6 +98,20 @@ html {
     border-color: #cacaca;
 }
 
+input:disabled,
+textarea:disabled {
+    background-color: #f3f4f6;
+    /* Light gray background */
+    color: #9ca3af;
+    /* Dark gray text */
+    border-color: #d1d5db;
+    /* Light border */
+    cursor: not-allowed;
+    /* Show a 'not allowed' cursor */
+    opacity: 1;
+    /* Prevents any browser default opacity reduction */
+}
+
 label {
     font-weight: 700;
 }

@@ -153,7 +153,13 @@ class PeriodController extends Controller
         $data = Period::where('type', $request->type)
             ->where('year', $request->year)
             ->where('quarter', $request->quarter)
-            ->get(['id as value', 'description as label']);
+            ->get()
+            ->map(function ($item) {
+                return [
+                    'label' => $item->description . ' (' . $item->status . ')',
+                    'value' => $item->id
+                ];
+            });
         return response()->json($data);
     }
 
