@@ -232,16 +232,18 @@ watch(
 );
 var observer = null;
 onMounted(() => {
-  if (tableRef.value) {
-    observer = new MutationObserver(() => {
-      captureTableData(props.onDemandType);
+  setTimeout(() => {
+    if (tableRef.value) {
+      observer = new MutationObserver((mutations) => {
+        captureTableData(props.onDemandType);
+      });
+    }
+    observer.observe(tableRef.value, {
+      childList: true,
+      subtree: true,
+      characterData: true,
     });
-  }
-  observer.observe(tableRef.value, {
-    childList: true,
-    subtree: true,
-    characterData: true,
-  });
+  }, 100);
 });
 const emits = defineEmits(["update:updateDOD", "update:updateDataContents"]);
 const quarters = [{ label: "1" }, { label: "2" }, { label: "3" }, { label: "4" }];

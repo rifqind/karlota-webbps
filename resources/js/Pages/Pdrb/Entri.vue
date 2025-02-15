@@ -73,30 +73,35 @@
           </div>
         </div>
       </div>
-      <div class="bg-white shadow-md mb-2 rounded-sm border border-gray-200 mb-3">
+      <div
+        v-if="showTabPanel"
+        class="bg-white shadow-md mb-2 rounded-sm border border-gray-200 mb-3"
+      >
         <div class="p-5">
-          <div class="space-x-2">
-            <span @click="showTab('adhb')" :class="setActiveTab('adhb')">ADHB</span>
-            <span @click="showTab('adhk')" :class="setActiveTab('adhk')">ADHK</span>
-            <span @click="showTab('dist')" :class="setActiveTab('dist')">Distribusi</span>
-            <span @click="showTab('g_qtoq')" :class="setActiveTab('g_qtoq')"
-              >Growth (Q-to-Q)</span
-            >
-            <span @click="showTab('g_ytoy')" :class="setActiveTab('g_ytoy')"
-              >Growth (Y-to-Y)</span
-            >
-            <span @click="showTab('g_ctoc')" :class="setActiveTab('g_ctoc')"
-              >Growth (C-to-C)</span
-            >
-            <span @click="showTab('indeks')" :class="setActiveTab('indeks')"
-              >Indeks Implisit</span
-            >
-            <span @click="showTab('gi_qtoq')" :class="setActiveTab('gi_qtoq')"
-              >Laju Implisit (Q-to-Q)</span
-            >
-            <span @click="showTab('gi_ytoy')" :class="setActiveTab('gi_ytoy')"
-              >Laju Implisit (Y-to-Y)</span
-            >
+          <div class="flex flex-wrap gap-2">
+            <button @click="showTab('adhb')" :class="setActiveTab('adhb')">ADHB</button>
+            <button @click="showTab('adhk')" :class="setActiveTab('adhk')">ADHK</button>
+            <button @click="showTab('dist')" :class="setActiveTab('dist')">
+              Distribusi
+            </button>
+            <button @click="showTab('g_qtoq')" :class="setActiveTab('g_qtoq')">
+              Growth (Q-to-Q)
+            </button>
+            <button @click="showTab('g_ytoy')" :class="setActiveTab('g_ytoy')">
+              Growth (Y-to-Y)
+            </button>
+            <button @click="showTab('g_ctoc')" :class="setActiveTab('g_ctoc')">
+              Growth (C-to-C)
+            </button>
+            <button @click="showTab('indeks')" :class="setActiveTab('indeks')">
+              Indeks Implisit
+            </button>
+            <button @click="showTab('gi_qtoq')" :class="setActiveTab('gi_qtoq')">
+              Laju Implisit (Q-to-Q)
+            </button>
+            <button @click="showTab('gi_ytoy')" :class="setActiveTab('gi_ytoy')">
+              Laju Implisit (Y-to-Y)
+            </button>
           </div>
         </div>
       </div>
@@ -114,13 +119,12 @@
           </thead>
           <!-- #region Section: ADHB -->
           <LapusTable
-            v-if="vifADHBADHK['adhb_now']"
             v-show="showPdrbAndResult['adhb']"
             :data-contents="dataContents"
             :subsectors="subsectors"
             :type="'adhb'"
             :onDemandType="'adhb_now'"
-            :quarter-cap="form.quarter"
+            :quarter-cap="quarterCap"
             @update:update-d-o-d="updateDOD"
             @update:updateDataContents="updateDataContents"
           />
@@ -128,13 +132,12 @@
 
           <!-- #region Section: ADHK -->
           <LapusTable
-            v-if="vifADHBADHK['adhk_now']"
             v-show="showPdrbAndResult['adhk']"
             :data-contents="dataContents"
             :subsectors="subsectors"
             :type="'adhk'"
             :onDemandType="'adhk_now'"
-            :quarter-cap="form.quarter"
+            :quarter-cap="quarterCap"
             @update:update-d-o-d="updateDOD"
             @update:updateDataContents="updateDataContents"
           />
@@ -145,7 +148,37 @@
             v-show="showPdrbAndResult['result']"
             :subsectors="subsectors"
             :type="'distribusi'"
+            :quarter-cap="quarterCap"
+            :computed-data="computedData"
           />
+          <!-- #endregion -->
+
+          <!-- #region Section: PREV_DATA -->
+          <!-- #region Section: ADHB -->
+          <LapusTable
+            v-show="false"
+            :data-contents="dataBefore"
+            :subsectors="subsectors"
+            :type="'adhb'"
+            :onDemandType="'adhb_prev'"
+            :quarter-cap="quarterCap"
+            @update:update-d-o-d="updateDOD"
+            @update:updateDataContents="updateDataContents"
+          />
+          <!-- #endregion -->
+
+          <!-- #region Section: ADHK -->
+          <LapusTable
+            v-show="false"
+            :data-contents="dataBefore"
+            :subsectors="subsectors"
+            :type="'adhk'"
+            :onDemandType="'adhk_prev'"
+            :quarter-cap="quarterCap"
+            @update:update-d-o-d="updateDOD"
+            @update:updateDataContents="updateDataContents"
+          />
+          <!-- #endregion -->
           <!-- #endregion -->
         </table>
       </div>
@@ -164,6 +197,10 @@ import { onMounted, ref, watch } from "vue";
 const page = usePage();
 const subsectors = ref(page.props.subsectors);
 const dataContents = ref([]);
+const dataBefore = ref([]);
+const computedData = ref({});
+const quarterCap = ref("4");
+const showTabPanel = ref(false);
 const dataOnDemand = ref({ adhb_now: {}, adhb_prev: {}, adhk_now: {}, adhk_prev: {} });
 const form = useForm({
   _token: null,
@@ -245,12 +282,6 @@ const fetchYearBefore = async (value) => {
     console.error(error);
   }
 };
-const vifADHBADHK = ref({
-  adhb_now: false,
-  adhb_prev: false,
-  adhk_now: false,
-  adhk_prev: false,
-});
 const showPdrbAndResult = ref({
   adhb: false,
   adhk: false,
@@ -258,7 +289,6 @@ const showPdrbAndResult = ref({
 });
 const submit = async () => {
   try {
-    console.log(form.dataBefore);
     const response = await axios.get(route("pdrb.show"), {
       params: {
         type: page.props.type,
@@ -269,11 +299,13 @@ const submit = async () => {
         regions: form.regions,
       },
     });
+    quarterCap.value = form.quarter;
     dataContents.value = response.data.current_data;
+    dataBefore.value = response.data.previous_data;
     showPdrbAndResult.value.result = false;
     showPdrbAndResult.value.adhb = true;
-    vifADHBADHK.value.adhb_now = true;
-    vifADHBADHK.value.adhk_now = true;
+    showTabPanel.value = true;
+    showTab("adhb");
   } catch (error) {}
 };
 // #endregion
@@ -299,11 +331,56 @@ const activeTab = ref({
 const setActiveTab = (value) => {
   return activeTab.value[value];
 };
+
+const resetShowTable = () => {
+  Object.keys(showPdrbAndResult.value).forEach((key) => {
+    showPdrbAndResult.value[key] = false;
+  });
+};
+// #region Section: CHANGE NAV TAB
 const showTab = (tab) => {
   Object.keys(activeTab.value).forEach((key) => {
     activeTab.value[key] = def;
   });
   activeTab.value[tab] = "btn-success-fordone";
+
+  resetShowTable();
+  if (tab == "adhb") {
+    showPdrbAndResult.value.adhb = true;
+  }
+  if (tab == "adhk") {
+    showPdrbAndResult.value.adhk = true;
+  }
+  if (tab == "dist") {
+    showDist();
+    showPdrbAndResult.value.result = true;
+  }
+};
+const showDist = () => {
+  let dataset = dataOnDemand.value["adhb_now"];
+  let arrayPDRB = dataset["PDRB"];
+  let result = {};
+  Object.keys(dataset).forEach((key) => {
+    result[key] = dataset[key].map((value, index) => {
+      let divisor = Number(arrayPDRB[index].replaceAll(".", "").replaceAll(",", ".")); // Get corresponding pdrb value
+      let dividend = Number(value.replaceAll(".", "").replaceAll(",", ".")); // Convert current value to number
+
+      let dist = divisor !== 0 && dividend !== 0 ? (dividend / divisor) * 100 : 0; // Avoid division by zero
+      return formatNumberGerman(dist.toFixed(4), 2, 4);
+      // return dist;
+    });
+  });
+  result = Object.fromEntries(
+    Object.entries(result).map(([key, value]) => [key.trim().replace(/\s+/g, ""), value])
+  );
+  // console.log(result);
+  computedData.value = result;
+};
+const formatNumberGerman = (num, min = 2, max = 5) => {
+  return new Intl.NumberFormat("de-DE", {
+    minimumFractionDigits: min,
+    maximumFractionDigits: max,
+  }).format(num);
 };
 </script>
 

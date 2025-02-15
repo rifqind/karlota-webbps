@@ -57,7 +57,7 @@
             </p>
           </td>
           <template v-for="(node, index) in quarters">
-            <td></td>
+            <td class="text-right"></td>
           </template>
           <td class="text-right"></td>
         </tr>
@@ -79,7 +79,7 @@
             </p>
           </td>
           <template v-for="(node, index) in quarters">
-            <td></td>
+            <td class="text-right"></td>
           </template>
           <td class="text-right"></td>
         </tr>
@@ -101,7 +101,7 @@
             </label>
           </td>
           <template v-for="(node, index) in quarters">
-            <td></td>
+            <td class="text-right"></td>
           </template>
           <td class="text-right"></td>
         </tr>
@@ -137,6 +137,14 @@ const props = defineProps({
     type: Object,
     required: true,
   },
+  computedData: {
+    type: Object,
+    required: true,
+  },
+  quarterCap: {
+    type: String,
+    required: true,
+  },
   //   dataContents: {
   //     type: Object,
   //     required: true,
@@ -148,6 +156,30 @@ const props = defineProps({
   },
 });
 const quarters = [{ label: "1" }, { label: "2" }, { label: "3" }, { label: "4" }];
+const thisData = ref(props.computedData);
+const tableRef = ref(null);
+watch(
+  () => props.computedData,
+  (value) => {
+    thisData.value = value;
+    if (tableRef.value) {
+      const rows = tableRef.value.querySelectorAll("tr");
+
+      rows.forEach((row) => {
+        const firstCell = row.querySelector("td:first-child"); // Get the first column (key)
+        if (!firstCell) return;
+        const key = firstCell.textContent.trim().replace(/\s+/g, ""); // Key from first column
+        if (thisData.value[key]) {
+          const cells = row.querySelectorAll("td:not(:first-child)"); // Get other columns
+          // Update the row with the computed values
+          cells.forEach((cell, index) => {
+            cell.textContent = thisData.value[key][index]; // Format and insert value
+          });
+        }
+      });
+    }
+  }
+);
 </script>
 
 <style scoped>
