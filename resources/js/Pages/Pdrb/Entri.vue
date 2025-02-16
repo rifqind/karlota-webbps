@@ -68,8 +68,11 @@
             />
             <div class="text-danger text-left" v-if="true" id="error-dinas"></div>
           </div>
-          <div class="btn-info-fordone ml-auto w-[120px]" @click.prevent="submit">
-            <font-awesome-icon icon="fa fa-save" /> Entri Data
+          <div
+            class="btn-info-fordone ml-auto w-[105px] text-center"
+            @click.prevent="submit"
+          >
+            Cari Data
           </div>
         </div>
       </div>
@@ -181,6 +184,27 @@
           <!-- #endregion -->
           <!-- #endregion -->
         </table>
+      </div>
+      <div
+        v-if="showTabPanel"
+        class="bg-white shadow-md mb-2 rounded-sm border border-gray-200 mb-3"
+      >
+        <div class="p-5">
+          <div class="flex justify-end space-x-2">
+            <button class="btn-info-fordone">
+              <font-awesome-icon icon="fa fa-save" />
+              Simpan Data
+            </button>
+            <button class="btn-success-fordone">
+              <font-awesome-icon icon="fa fa-check" />
+              Submit Data
+            </button>
+            <button class="btn-red-fordone">
+              <font-awesome-icon icon="fa-solid fa-circle-xmark" />
+              Unsubmit Data
+            </button>
+          </div>
+        </div>
       </div>
     </div>
   </GeneralLayout>
@@ -355,26 +379,258 @@ const showTab = (tab) => {
     showDist();
     showPdrbAndResult.value.result = true;
   }
+  if (tab == "g_qtoq") {
+    showGQtoQ();
+    showPdrbAndResult.value.result = true;
+  }
+  if (tab == "g_ytoy") {
+    showGYtoY();
+    showPdrbAndResult.value.result = true;
+  }
+  if (tab == "g_ctoc") {
+    showGCtoC();
+    showPdrbAndResult.value.result = true;
+  }
+  if (tab == "indeks") {
+    showIndeks();
+    showPdrbAndResult.value.result = true;
+  }
+  if (tab == "gi_qtoq") {
+    showGIQtoQ();
+    showPdrbAndResult.value.result = true;
+  }
+  if (tab == "gi_ytoy") {
+    showGIYtoY();
+    showPdrbAndResult.value.result = true;
+  }
 };
 const showDist = () => {
   let dataset = dataOnDemand.value["adhb_now"];
   let arrayPDRB = dataset["PDRB"];
+  let stake = Number(quarterCap.value); // Current quarter
+  // Helper function to parse numbers safely
+  const parseNumber = (value) =>
+    value ? Number(value.replaceAll(".", "").replaceAll(",", ".")) : 0;
   let result = {};
   Object.keys(dataset).forEach((key) => {
     result[key] = dataset[key].map((value, index) => {
-      let divisor = Number(arrayPDRB[index].replaceAll(".", "").replaceAll(",", ".")); // Get corresponding pdrb value
-      let dividend = Number(value.replaceAll(".", "").replaceAll(",", ".")); // Convert current value to number
-
-      let dist = divisor !== 0 && dividend !== 0 ? (dividend / divisor) * 100 : 0; // Avoid division by zero
-      return formatNumberGerman(dist.toFixed(4), 2, 4);
-      // return dist;
+      // Include index 0 to (stake - 1) and always include index 4
+      if (index < stake || index === 4) {
+        let divisor = parseNumber(arrayPDRB[index]); // Get corresponding PDRB value
+        let dividend = parseNumber(value); // Convert current value to number
+        let dist = divisor !== 0 ? (dividend / divisor) * 100 : 0; // Avoid division by zero
+        return formatNumberGerman(dist.toFixed(4), 2, 4);
+      }
     });
   });
-  result = Object.fromEntries(
-    Object.entries(result).map(([key, value]) => [key.trim().replace(/\s+/g, ""), value])
+  computedData.value = removeSpaceOnKomponen(result);
+};
+
+const showGQtoQ = () => {
+  let current_dataset = dataOnDemand.value["adhk_now"];
+  let previous_dataset = dataOnDemand.value["adhk_prev"];
+  // Clean up spaces
+  current_dataset = removeSpaceOnKomponen(current_dataset);
+  previous_dataset = removeSpaceOnKomponen(previous_dataset);
+  // Get only the 4th index (previous quarter) from `previous_dataset`
+  previous_dataset = Object.fromEntries(
+    Object.entries(previous_dataset).map(([key, arr]) => [key, arr[3]])
   );
-  // console.log(result);
+  let result = {};
+  let stake = Number(quarterCap.value); // Set correct loop range
+  Object.keys(current_dataset).forEach((key) => {
+    result[key] = current_dataset[key]
+      .slice(0, stake) // Ensures only the required indexes are processed
+      .map((value, index) => {
+        let dividend = value ? Number(value.replaceAll(".", "").replaceAll(",", ".")) : 0;
+        let divisor;
+        if (index === 0) {
+          // Use the previous dataset for the first quarter
+          divisor = previous_dataset[key]
+            ? Number(previous_dataset[key].replaceAll(".", "").replaceAll(",", "."))
+            : 0;
+        } else {
+          // Use the previous index from the same dataset
+          divisor = current_dataset[key][index - 1]
+            ? Number(
+                current_dataset[key][index - 1].replaceAll(".", "").replaceAll(",", ".")
+              )
+            : 0;
+        }
+        let growth =
+          divisor !== 0 && dividend !== 0 ? (dividend / divisor) * 100 - 100 : 0;
+        return formatNumberGerman(growth.toFixed(4), 2, 4);
+      });
+  });
+  computedData.value = removeSpaceOnKomponen(result);
+};
+
+const showGYtoY = () => {
+  let current_dataset = removeSpaceOnKomponen(dataOnDemand.value["adhk_now"]);
+  let previous_dataset = removeSpaceOnKomponen(dataOnDemand.value["adhk_prev"]);
+  let stake = quarterCap.value == 4 ? 5 : Number(quarterCap.value); // Set max iteration limit
+
+  let result = {};
+  Object.keys(current_dataset).forEach((key) => {
+    result[key] = current_dataset[key]
+      .slice(0, stake) // Only process relevant indexes
+      .map((value, index) => {
+        let dividend = value ? Number(value.replaceAll(".", "").replaceAll(",", ".")) : 0;
+        let divisor = previous_dataset[key][index]
+          ? Number(previous_dataset[key][index].replaceAll(".", "").replaceAll(",", "."))
+          : 0;
+
+        let growth =
+          divisor !== 0 && dividend !== 0 ? (dividend / divisor) * 100 - 100 : 0;
+        return formatNumberGerman(growth.toFixed(4), 2, 4);
+      });
+  });
+
+  computedData.value = removeSpaceOnKomponen(result);
+};
+
+const showGCtoC = () => {
+  let current_dataset = removeSpaceOnKomponen(dataOnDemand.value["adhk_now"]);
+  let previous_dataset = removeSpaceOnKomponen(dataOnDemand.value["adhk_prev"]);
+  let stake = Number(quarterCap.value); // Max quarter index to loop through
+  // Helper function to convert values to numbers
+  const parseNumber = (value) =>
+    value ? Number(value.replaceAll(".", "").replaceAll(",", ".")) : 0;
+  let result = {};
+  Object.keys(current_dataset).forEach((key) => {
+    result[key] = current_dataset[key].slice(0, stake).map((_, index) => {
+      let dividend = 0,
+        divisor = 0;
+      // Cumulative sum for each index
+      for (let cumulative = 0; cumulative <= index; cumulative++) {
+        dividend += parseNumber(current_dataset[key][cumulative]);
+        divisor += parseNumber(previous_dataset[key][cumulative]);
+      }
+      let growth = divisor !== 0 && dividend !== 0 ? (dividend / divisor) * 100 - 100 : 0;
+      return formatNumberGerman(growth.toFixed(4), 2, 4);
+    });
+  });
+  computedData.value = removeSpaceOnKomponen(result);
+};
+
+const showIndeks = () => {
+  // current = ADHB, previous = ADHK
+  let current_dataset = removeSpaceOnKomponen(dataOnDemand.value["adhb_now"]);
+  let previous_dataset = removeSpaceOnKomponen(dataOnDemand.value["adhk_now"]);
+  let stake = Number(quarterCap.value); // Defines the quarter limit
+  // Helper function to parse numbers
+  const parseNumber = (value) =>
+    value ? Number(value.replaceAll(".", "").replaceAll(",", ".")) : 0;
+  let result = {};
+  Object.keys(current_dataset).forEach((key) => {
+    result[key] = current_dataset[key].slice(0, stake).map((value, index) => {
+      let dividend = parseNumber(value);
+      let divisor = parseNumber(previous_dataset[key][index]);
+      let indeks = divisor !== 0 ? (dividend / divisor) * 100 : 0;
+      return formatNumberGerman(indeks.toFixed(4), 2, 4);
+    });
+  });
+  computedData.value = removeSpaceOnKomponen(result);
+};
+
+const showGIQtoQ = () => {
+  let adhb_current_dataset = removeSpaceOnKomponen(dataOnDemand.value["adhb_now"]);
+  let adhk_current_dataset = removeSpaceOnKomponen(dataOnDemand.value["adhk_now"]);
+  let adhb_previous_dataset = removeSpaceOnKomponen(dataOnDemand.value["adhb_prev"]);
+  let adhk_previous_dataset = removeSpaceOnKomponen(dataOnDemand.value["adhk_prev"]);
+  adhb_previous_dataset = Object.fromEntries(
+    Object.entries(adhb_previous_dataset).map(([key, arr]) => [key, arr[3]])
+  );
+  adhk_previous_dataset = Object.fromEntries(
+    Object.entries(adhk_previous_dataset).map(([key, arr]) => [key, arr[3]])
+  );
+  const parseNumber = (value) =>
+    value ? Number(value.replaceAll(".", "").replaceAll(",", ".")) : 0;
+  let stake = Number(quarterCap.value);
+  let indeks_implisit_previous = {};
+  Object.keys(adhb_previous_dataset).forEach((key) => {
+    let dividend = parseNumber(adhb_previous_dataset[key]);
+    let divisor = parseNumber(adhk_previous_dataset[key]);
+    let indeks = divisor !== 0 && dividend !== 0 ? (dividend / divisor) * 100 : 0;
+    indeks_implisit_previous[key] = formatNumberGerman(indeks.toFixed(4), 2, 4);
+  });
+  let indeks_implisit_current = {};
+  Object.keys(adhb_current_dataset).forEach((key) => {
+    indeks_implisit_current[key] = adhb_current_dataset[key]
+      .slice(0, stake)
+      .map((value, index) => {
+        let dividend = parseNumber(value);
+        let divisor = parseNumber(adhk_current_dataset[key][index]);
+        let indeks = divisor !== 0 ? (dividend / divisor) * 100 : 0;
+        return formatNumberGerman(indeks.toFixed(4), 2, 4);
+      });
+  });
+  let result = {};
+  Object.keys(indeks_implisit_current).forEach((key) => {
+    result[key] = indeks_implisit_current[key].map((value, index) => {
+      let dividend = parseNumber(value);
+      let divisor;
+      if (index === 0) {
+        // Use the previous dataset for the first quarter
+        divisor = parseNumber(indeks_implisit_previous[key]);
+      } else {
+        // Use the previous index from the same dataset
+        divisor = parseNumber(indeks_implisit_current[key][index - 1]);
+      }
+      let growth = divisor !== 0 && dividend !== 0 ? (dividend / divisor) * 100 - 100 : 0;
+      return formatNumberGerman(growth.toFixed(4), 2, 4);
+    });
+  });
   computedData.value = result;
+};
+const showGIYtoY = () => {
+  let adhb_current_dataset = removeSpaceOnKomponen(dataOnDemand.value["adhb_now"]);
+  let adhk_current_dataset = removeSpaceOnKomponen(dataOnDemand.value["adhk_now"]);
+  let adhb_previous_dataset = removeSpaceOnKomponen(dataOnDemand.value["adhb_prev"]);
+  let adhk_previous_dataset = removeSpaceOnKomponen(dataOnDemand.value["adhk_prev"]);
+  const parseNumber = (value) =>
+    value ? Number(value.replaceAll(".", "").replaceAll(",", ".")) : 0;
+  let stake = quarterCap.value == 4 ? 5 : Number(quarterCap.value);
+  let indeks_implisit_previous = {};
+  Object.keys(adhb_previous_dataset).forEach((key) => {
+    indeks_implisit_previous[key] = adhb_previous_dataset[key]
+      .slice(0, stake)
+      .map((value, index) => {
+        let dividend = parseNumber(value);
+        let divisor = parseNumber(adhk_previous_dataset[key][index]);
+        let indeks = divisor !== 0 ? (dividend / divisor) * 100 : 0;
+        return formatNumberGerman(indeks.toFixed(4), 2, 4);
+      });
+  });
+  let indeks_implisit_current = {};
+  Object.keys(adhb_current_dataset).forEach((key) => {
+    indeks_implisit_current[key] = adhb_current_dataset[key]
+      .slice(0, stake)
+      .map((value, index) => {
+        let dividend = parseNumber(value);
+        let divisor = parseNumber(adhk_current_dataset[key][index]);
+        let indeks = divisor !== 0 ? (dividend / divisor) * 100 : 0;
+        return formatNumberGerman(indeks.toFixed(4), 2, 4);
+      });
+  });
+  let result = {};
+  Object.keys(indeks_implisit_current).forEach((key) => {
+    result[key] = indeks_implisit_current[key].map((value, index) => {
+      let dividend = parseNumber(value);
+      let divisor = parseNumber(indeks_implisit_previous[key][index]);
+      let growth = divisor !== 0 && dividend !== 0 ? (dividend / divisor) * 100 - 100 : 0;
+      return formatNumberGerman(growth.toFixed(4), 2, 4);
+    });
+  });
+  computedData.value = result;
+};
+// #endregion
+const removeSpaceOnKomponen = (object) => {
+  let result;
+  result = Object.fromEntries(
+    Object.entries(object).map(([key, value]) => [key.trim().replace(/\s+/g, ""), value])
+  );
+  return result;
 };
 const formatNumberGerman = (num, min = 2, max = 5) => {
   return new Intl.NumberFormat("de-DE", {
