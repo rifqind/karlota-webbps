@@ -67,15 +67,6 @@
       </template>
       <td class="total-cell"></td>
     </tr>
-    <tr class="PDRB-footer text-center">
-      <td class="desc-col footer-column">
-        <p class="mt-1 mb-1">PDRB Nonmigas</p>
-      </td>
-      <template v-for="(node, index) in quarters">
-        <td :id="'adhb_total-nonmigas-' + node.label" class="total-cell"></td>
-      </template>
-      <td class="total-cell"></td>
-    </tr>
   </tbody>
 </template>
 

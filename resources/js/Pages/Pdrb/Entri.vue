@@ -70,11 +70,22 @@
             />
             <div class="text-danger text-left" v-if="true" id="error-dinas"></div>
           </div>
-          <div
-            class="btn-info-fordone ml-auto w-[105px] text-center"
-            @click.prevent="submit"
-          >
-            Cari Data
+          <div class="flex items-center space-x-2 justify-end">
+            <div
+              @click="copyModal = true"
+              class="btn-warning-fordone w-[130px] text-center"
+              v-if="showTabPanel"
+            >
+              <font-awesome-icon icon="fa-solid fa-copy" />
+              Salin Data
+            </div>
+            <div
+              class="btn-info-fordone ml-auto w-[130px] text-center"
+              @click.prevent="submit"
+            >
+              <font-awesome-icon icon="fa-solid fa-magnifying-glass" />
+              Cari Data
+            </div>
           </div>
         </div>
       </div>
@@ -288,6 +299,55 @@
         </div>
       </div>
     </div>
+    <ModalBs
+      :-modal-status="copyModal"
+      @close="closeCopyModal"
+      :modal-size="'min-w-[40vw]'"
+      :title="'Salin Data'"
+    >
+      <template #modalBody>
+        <div class="form-group">
+          <div class="mb-3 space-y-2">
+            <label for="pdrb">Pilih Tahun</label>
+            <Multiselect
+              v-model="form.year"
+              :options="yearDrop"
+              :searchable="true"
+              placeholder="-- Pilih Tahun --"
+              @change="fetchQuarter"
+            />
+          </div>
+          <div class="mb-3 space-y-2">
+            <label for="year">Pilih Triwulan<span class="text-danger">*</span></label>
+            <Multiselect
+              v-model="form.quarter"
+              :options="quarterDrop"
+              :searchable="true"
+              placeholder="-- Pilih Triwulan --"
+              @change="fetchPeriod"
+            />
+            <div class="text-danger text-left" v-if="true" id="error-dinas"></div>
+          </div>
+          <div class="mb-3 space-y-2">
+            <label for="year"
+              >Pilih Periode Putaran<span class="text-danger">*</span></label
+            >
+            <Multiselect
+              v-model="form.description"
+              :options="descDrop"
+              :searchable="true"
+              placeholder="-- Pilih Periode Putaran --"
+            />
+            <div class="text-danger text-left" v-if="true" id="error-dinas"></div>
+          </div>
+        </div>
+      </template>
+      <template #modalFunction>
+        <button type="button" class="btn-success-fordone btn-sm" @click.prevent="copy">
+          Salin
+        </button>
+      </template>
+    </ModalBs>
   </GeneralLayout>
 </template>
 <script setup>
@@ -295,6 +355,7 @@ import FlashFetch from "@/Components/FlashFetch.vue";
 import FloatScrollDown from "@/Components/FloatScrollDown.vue";
 import LapusResultTable from "@/Components/LapusResultTable.vue";
 import LapusTable from "@/Components/LapusTable.vue";
+import ModalBs from "@/Components/ModalBs.vue";
 import PengResultTable from "@/Components/PengResultTable.vue";
 import PengTable from "@/Components/PengTable.vue";
 import SpinnerBorder from "@/Components/SpinnerBorder.vue";
@@ -311,16 +372,25 @@ const dataBefore = ref([]);
 const computedData = ref({});
 const quarterCap = ref("4");
 const showTabPanel = ref(false);
+const copyModal = ref(false);
 const dataOnDemand = ref({ adhb_now: {}, adhb_prev: {}, adhk_now: {}, adhk_prev: {} });
 const form = useForm({
-  _token: null,
   dataContents: null,
+  _token: null,
   type: page.props.type,
   year: null,
   quarter: null,
   description: null,
   dataBefore: null,
   regions: null,
+});
+const copyForm = useForm({
+  _token: null,
+  type: page.props.type,
+  year: null,
+  quarter: null,
+  description: null,
+  regions: form.regions,
 });
 const notifications = ref([]);
 const showNotification = (notification) => {
@@ -431,6 +501,14 @@ const submit = async () => {
 };
 // #endregion
 
+var searchFormDefault = {};
+const openCopyModal = () => {
+  copyModal.value = true;
+  searchFormDefault.value = form;
+  copyForm.year = form.year;
+  copyForm.quarter = form.quarter;
+  copyForm.description = form.description;
+};
 const triggerSpinner = ref(false);
 watch(
   () => dataContents.value,

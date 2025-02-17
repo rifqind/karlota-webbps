@@ -11,17 +11,16 @@
         <tr>
           <td class="desc-col fixed-column">
             <label class=""
-              >{{ nodeSubsectors.sector.category.code }}.
-              {{ nodeSubsectors.sector.category.name }}</label
+              >{{ nodeSubsectors.sector.code }}. {{ nodeSubsectors.sector.name }}</label
             >
           </td>
           <template v-for="(node, index) in quarters">
             <td class="text-right">
-              {{ getSumLvlTwo(nodeSubsectors.sector.category_id, node.label) }}
+              {{ getSumLvlTwo(nodeSubsectors.sector.id, node.label) }}
             </td>
           </template>
           <td class="text-right">
-            {{ getSumRowCat(nodeSubsectors.sector.category_id) }}
+            {{ getSumRowCat(nodeSubsectors.sector.id) }}
           </td>
         </tr>
       </template>
@@ -109,17 +108,6 @@
         </td>
       </template>
       <td class="total-cell">{{ getSumPDRB("PDRB") }}</td>
-    </tr>
-    <tr class="PDRB-footer text-center">
-      <td class="desc-col footer-column">
-        <p class="mt-1 mb-1">PDRB Nonmigas</p>
-      </td>
-      <template v-for="(node, index) in quarters">
-        <td :id="'adhb_total-nonmigas-' + node.label" class="total-cell">
-          {{ getPDRBNonMigas(node.label) }}
-        </td>
-      </template>
-      <td class="total-cell">{{ getSumPDRB("PDRB-NonMigas") }}</td>
     </tr>
   </tbody>
 </template>
@@ -217,13 +205,21 @@ const getSumLvlOne = (value, quarter) => {
 const lvlTwo = ref({});
 const getSumLvlTwo = (value, quarter) => {
   let subsectorIds = props.subsectors
-    .filter((x) => x.sector.category_id == value)
+    .filter((x) => x.sector.id == value)
     .map((x) => x.id);
   const filteredData = dataHere.value.filter(
     (x) => x.quarter == quarter && subsectorIds.includes(x.subsector_id)
   );
+  let result = 0;
   // Sum the values from the filtered data
-  const result = filteredData.reduce((sum, item) => sum + Number(item[props.type]), 0);
+  if (value == 54) {
+    result =
+      filteredData.length >= 2
+        ? Number(filteredData[0][props.type]) - Number(filteredData[1][props.type])
+        : 0;
+  } else {
+    result = filteredData.reduce((sum, item) => sum + Number(item[props.type]), 0);
+  }
   if (!lvlTwo.value[value]) lvlTwo.value[value] = {};
   lvlTwo.value[value][quarter] = result;
   let formattedResult = formatNumberGerman(result);
@@ -267,8 +263,14 @@ const getSumRowSector = (value) => {
 
 const lvlPDRB = ref({});
 const getPDRB = (quarter) => {
-  const filteredData = dataHere.value.filter((x) => x.quarter == quarter);
-  const result = filteredData.reduce((sum, item) => sum + Number(item[props.type]), 0);
+  const filteredData = dataHere.value.filter(
+    (x) => x.quarter == quarter && ![69].includes(x.subsector_id)
+  );
+  let result = filteredData.reduce((sum, item) => sum + Number(item[props.type]), 0);
+  let importData = dataHere.value.filter(
+    (x) => x.quarter == quarter && x.subsector_id == 69
+  );
+  result -= Number(importData[0]?.[props.type] || 0);
   if (!lvlPDRB.value["PDRB"]) lvlPDRB.value["PDRB"] = {};
   lvlPDRB.value["PDRB"][quarter] = result;
   let formattedResult = formatNumberGerman(result);
