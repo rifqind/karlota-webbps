@@ -72,7 +72,7 @@
           </div>
           <div class="flex items-center space-x-2 justify-end">
             <div
-              @click="copyModal = true"
+              @click="openCopyModal"
               class="btn-warning-fordone w-[130px] text-center"
               v-if="showTabPanel"
             >
@@ -415,7 +415,11 @@ const updateDataContents = (data) => {
   dataContents.value = data;
 };
 // #region Section: FETCH
-const fetchYear = async (value) => {
+const fetchYear = async () => {
+  if (!copyModal.value) {
+    form.quarter = null;
+    form.description = null;
+  }
   try {
     const response = await axios.get(route("period.fetchYear"), {
       params: {
@@ -429,32 +433,40 @@ const fetchYear = async (value) => {
   }
 };
 const fetchQuarter = async (value) => {
-  try {
-    const response = await axios.get(route("period.fetchQuarter"), {
-      params: {
-        type: page.props.type,
-        year: value,
-      },
-    });
-    let result = response.data;
-    quarterDrop.value = result;
-  } catch (error) {
-    console.error(error);
+  if (!copyModal.value) {
+    form.quarter = null;
+    form.description = null;
+  }
+  if (value) {
+    try {
+      const response = await axios.get(route("period.fetchQuarter"), {
+        params: {
+          type: page.props.type,
+          year: value,
+        },
+      });
+      let result = response.data;
+      quarterDrop.value = result;
+    } catch (error) {
+      console.error(error);
+    }
   }
 };
 const fetchPeriod = async (value) => {
-  try {
-    const response = await axios.get(route("period.fetchPeriod"), {
-      params: {
-        type: page.props.type,
-        year: form.year,
-        quarter: value,
-      },
-    });
-    let result = response.data;
-    descDrop.value = result;
-  } catch (error) {
-    console.error(error);
+  if (value) {
+    try {
+      const response = await axios.get(route("period.fetchPeriod"), {
+        params: {
+          type: page.props.type,
+          year: form.year,
+          quarter: value,
+        },
+      });
+      let result = response.data;
+      descDrop.value = result;
+    } catch (error) {
+      console.error(error);
+    }
   }
 };
 const fetchYearBefore = async (value) => {
@@ -500,14 +512,16 @@ const submit = async () => {
   } catch (error) {}
 };
 // #endregion
-
 var searchFormDefault = {};
 const openCopyModal = () => {
   copyModal.value = true;
-  searchFormDefault.value = form;
-  copyForm.year = form.year;
-  copyForm.quarter = form.quarter;
-  copyForm.description = form.description;
+  searchFormDefault = JSON.parse(JSON.stringify(form));
+};
+const closeCopyModal = () => {
+  copyModal.value = false;
+  for (const key in searchFormDefault) {
+    form[key] = searchFormDefault[key];
+  }
 };
 const triggerSpinner = ref(false);
 watch(
