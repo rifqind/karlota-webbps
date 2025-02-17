@@ -8,6 +8,7 @@ use App\Models\Period;
 use App\Models\Region;
 use App\Models\Subsector;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 
 class PdrbController extends Controller
@@ -34,7 +35,7 @@ class PdrbController extends Controller
 
     public function show(Request $request)
     {
-        $subsectors = Subsector::pluck('id');
+        $subsectors = Subsector::where('type', $request->type)->pluck('id');
         $validated = $request->validate([
             'type' => ['required', 'string'],
             'year' => ['required', 'integer'],
@@ -46,6 +47,7 @@ class PdrbController extends Controller
         $period_id = $validated['description'];
         $period_before = ($request->dataBefore) ? $validated['dataBefore'] : null;
         $current_period = Period::where('id', $period_id)->first();
+        $notification = [];
         if (!$period_before) {
             if ($current_period->status == 'Aktif') {
                 $previous_period = Period::where('type', $validated['type'])->where('year', $validated['year'] - 1)
@@ -62,23 +64,25 @@ class PdrbController extends Controller
             }
         } else $previous_period = $period_before;
 
+        $periode_before_year = Period::find($previous_period);
         $current_dataset = Dataset::where('period_id', $period_id)
             ->where('region_id', $validated['regions'])
+            ->where('type', $validated['type'])
             ->value('id');
         $previous_dataset = Dataset::where('period_id', $previous_period)
             ->where('region_id', $validated['regions'])
+            ->where('type', $validated['type'])
             ->value('id');
 
         if ($previous_dataset) {
             $previous_data = Pdrb::where('dataset_id', $previous_dataset)
                 ->orderBy('subsector_id')
                 ->get();
-            //noptification
-            //     $message = [
-            //     'type' => 'success',
-            //     'text' => 'Data periode sebelumnya berhasil diunduh, Tahun ' . $previous_period->year . ' ' . $previous_period->description
-            // ];
-            // array_push($notification, $message);
+            $message = [
+                'type' => 'success',
+                'message' => 'Data periode sebelumnya berhasil diunduh, Tahun ' . $periode_before_year->year . ' ' . $periode_before_year->description
+            ];
+            array_push($notification, $message);
         } else {
             $previous_data = [];
             for ($index = 1; $index <= 4; $index++) {
@@ -96,17 +100,21 @@ class PdrbController extends Controller
                 }
             }
 
-            // $message = [
-            //     'type' => 'warning',
-            //     'text' => 'Data periode sebelumnya tidak ada / belum final, summary tidak dapat ditampilkan'
-            // ];
-            // array_push($notification, $message);
+            $message = [
+                'type' => 'error',
+                'message' => 'Data periode sebelumnya tidak ada / belum final, summary tidak dapat ditampilkan'
+            ];
+            array_push($notification, $message);
         }
 
         if ($current_dataset) {
             $current_data = Pdrb::where('dataset_id', $current_dataset)
                 ->orderBy('subsector_id')
                 ->get();
+            $message = [
+                'type' => 'success',
+                'message' => 'Mengambil Data PDRB Periode Ini'
+            ];
         } else {
             //create new datasets
             $current_object_dataset = Dataset::create([
@@ -138,10 +146,142 @@ class PdrbController extends Controller
             $current_data = Pdrb::where('dataset_id', $current_object_dataset->id)
                 ->orderBy('subsector_id')
                 ->get();
+            $current_dataset = $current_object_dataset->id;
+            $message = [
+                'type' => 'success',
+                'message' => 'Inisiasi Data PDRB Periode Ini'
+            ];
+            array_push($notification, $message);
         }
+        $dataset = Dataset::find($current_dataset);
         return  response()->json([
             'current_data' => $current_data,
-            'previous_data' => $previous_data
+            'previous_data' => $previous_data,
+            'notification' => $notification,
+            'dataset' => $dataset
         ]);
+    }
+
+    public function saveEntri(Request $request)
+    {
+        $notification = [];
+        $type = $request->type;
+        if ($type == 'Lapangan Usaha') $route = 'lapus.';
+        else if ($type == 'Pengeluaran') $route = 'peng.';
+        try {
+            //code...
+            DB::beginTransaction();
+            $data = $request->validate([
+                'dataContents' => ['required', 'array'],
+                'dataContents.*.id' => ['required', 'integer', 'exists:pdrbs,id'],
+                'dataContents.*.dataset_id' => ['required', 'integer'],
+                'dataContents.*.year' => ['required', 'integer'],
+                'dataContents.*.quarter' => ['required', 'integer'],
+                'dataContents.*.subsector_id' => ['required', 'integer'],
+                'dataContents.*.adhb' => ['sometimes', 'numeric', 'nullable'],
+                'dataContents.*.adhk' => ['sometimes', 'numeric', 'nullable'],
+            ]);
+            foreach ($data['dataContents'] as $key => $value) {
+                # code...
+                Pdrb::where('id', $value['id'])
+                    ->update([
+                        'dataset_id' => $value['dataset_id'],
+                        'year' => $value['year'],
+                        'quarter' => $value['quarter'],
+                        'subsector_id' => $value['subsector_id'],
+                        'adhb' => $value['adhb'],
+                        'adhk' => $value['adhk'],
+                    ]);
+            }
+            $message = [
+                'type' => 'success',
+                'message' => 'Berhasil Simpan Data PDRB'
+            ];
+            array_push($notification, $message);
+            DB::commit();
+            return redirect()->route($route . 'entri')->with('notification', $notification);
+        } catch (\Throwable $th) {
+            //throw $th;
+            DB::rollBack();
+            $message = [
+                'type' => 'error',
+                'message' => 'Ada Kesalahan dalam Data yang disimpan',
+                'errors' => $th->getMessage()
+            ];
+            array_push($notification, $message);
+            return redirect()->route($route . 'entri')->with('notification', $notification);
+        }
+    }
+
+    public function submitEntri(Request $request)
+    {
+        $notification = [];
+        $type = $request->type;
+        if ($type == 'Lapangan Usaha') $route = 'lapus.';
+        else if ($type == 'Pengeluaran') $route = 'peng.';
+        try {
+            //code...
+            DB::beginTransaction();
+            if ($type == 'Lapangan Usaha') $route = 'lapus.';
+            else if ($type == 'Pengeluaran') $route = 'peng.';
+            $request->validate([
+                'id' => ['required', 'integer']
+            ]);
+            $dataset = Dataset::where('id', $request->id)
+                ->update(['status' => 'Submitted']);
+            $message = [
+                'type' => 'success',
+                'message' => 'Data sudah di-submit'
+            ];
+            array_push($notification, $message);
+            DB::commit();
+            return redirect()->route($route . 'entri')->with('notification', $notification);
+        } catch (\Throwable $th) {
+            //throw $th;
+            DB::rollBack();
+            $message = [
+                'type' => 'error',
+                'message' => 'Ada Kesalahan ketika submit',
+                'errors' => $th->getMessage()
+            ];
+            array_push($notification, $message);
+            return redirect()->route($route . 'entri')->with('notification', $notification);
+        }
+    }
+
+    public function unsubmitEntri(Request $request)
+    {
+        $notification = [];
+        $type = $request->type;
+        if ($type == 'Lapangan Usaha') $route = 'lapus.';
+        else if ($type == 'Pengeluaran') $route = 'peng.';
+        try {
+            //code...
+            DB::beginTransaction();
+            if ($type == 'Lapangan Usaha') $route = 'lapus.';
+            else if ($type == 'Pengeluaran') $route = 'peng.';
+            $request->validate([
+                'id' => ['required', 'integer']
+            ]);
+            $dataset = Dataset::where('id', $request->id)
+                ->update(['status' => 'Entry']);
+            $message = [
+                'type' => 'success',
+                'message' => 'Data kembali ke status Entry'
+            ];
+            array_push($notification, $message);
+            DB::commit();
+            return redirect()->route($route . 'entri')->with('notification', $notification);
+        } catch (\Throwable $th) {
+            //throw $th;
+            DB::rollBack();
+            $message = [
+                'type' => 'error',
+                'message' => 'Ada Kesalahan ketika unsubmit',
+                'errors' => $th->getMessage()
+            ];
+            array_push($notification, $message);
+            return redirect()->route($route . 'entri')->with('notification', $notification);
+        }
     }
 }

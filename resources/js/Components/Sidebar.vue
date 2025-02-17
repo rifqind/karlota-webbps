@@ -27,6 +27,23 @@
             </NavLinkSidebar>
           </template>
         </NavLinkParentSidebar>
+        <NavLinkParentSidebar
+          :navIcon="'fa-solid fa-money-bill-trend-up'"
+          :menuOpen="menuOpenPeng || currentRoute == 'peng.entri'"
+          :toggleMenuOpen="toggleMenuOpen"
+          :params="'peng'"
+        >
+          <template #label> Pengeluaran </template>
+          <template #content>
+            <NavLinkSidebar
+              :navIcon="'fa-solid fa-list-ol'"
+              :href="route('peng.entri')"
+              :currentRoute="currentRoute == 'peng.entri'"
+            >
+              Entri PDRB
+            </NavLinkSidebar>
+          </template>
+        </NavLinkParentSidebar>
         <NavLinkSidebar
           :navIcon="'fas fa-table'"
           :href="route('period.index')"

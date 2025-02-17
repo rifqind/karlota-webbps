@@ -49,8 +49,18 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/entri', [PdrbController::class, 'entri'])
             ->name('entri');
     });
+    Route::prefix('peng')->name('peng.')->group(function () {
+        Route::get('/entri', [PdrbController::class, 'entri'])
+            ->name('entri');
+    });
     Route::get('/show-pdrb', [PdrbController::class, 'show'])
         ->name('pdrb.show');
+    Route::post('/save-entri', [PdrbController::class, 'saveEntri'])
+        ->name('pdrb.save-entri');
+    Route::post('/submit-entri', [PdrbController::class, 'submitEntri'])
+        ->name('pdrb.submit-entri');
+    Route::post('/unsubmit-entri', [PdrbController::class, 'unsubmitEntri'])
+        ->name('pdrb.unsubmit-entri');
 });
 
 

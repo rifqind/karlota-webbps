@@ -348,7 +348,7 @@ const deleteSubmit = async () => {
   if (form.processing) return;
   form.delete(route('period.destroy', { id: form.id }), {
     onBefore: () => {
-      triggerSpinner.value = false;
+      triggerSpinner.value = true;
       deleteModalStatus.value = false;
     },
     onFinish: () => {

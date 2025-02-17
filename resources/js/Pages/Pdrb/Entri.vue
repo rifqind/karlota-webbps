@@ -2,6 +2,8 @@
   <Head title="Entri PDRB" />
   <SpinnerBorder v-if="triggerSpinner" />
   <GeneralLayout>
+    <FlashFetch :notifications="notifications" />
+    <FloatScrollDown />
     <div class="container px-[7.5px] mr-auto ml-auto">
       <div class="bg-white shadow-md mb-2 rounded-sm border border-gray-200 mb-3">
         <div class="flex items-center justify-between py-3 px-4 border-b card-header">
@@ -120,69 +122,136 @@
               <th>Total</th>
             </tr>
           </thead>
-          <!-- #region Section: ADHB -->
-          <LapusTable
-            v-show="showPdrbAndResult['adhb']"
-            :data-contents="dataContents"
-            :subsectors="subsectors"
-            :type="'adhb'"
-            :onDemandType="'adhb_now'"
-            :quarter-cap="quarterCap"
-            @update:update-d-o-d="updateDOD"
-            @update:updateDataContents="updateDataContents"
-          />
-          <!-- #endregion -->
+          <template v-if="page.props.type == 'Lapangan Usaha'">
+            <!-- #region Section: ADHB -->
+            <LapusTable
+              v-show="showPdrbAndResult['adhb']"
+              :data-contents="dataContents"
+              :subsectors="subsectors"
+              :type="'adhb'"
+              :onDemandType="'adhb_now'"
+              :quarter-cap="quarterCap"
+              @update:update-d-o-d="updateDOD"
+              @update:updateDataContents="updateDataContents"
+            />
+            <!-- #endregion -->
 
-          <!-- #region Section: ADHK -->
-          <LapusTable
-            v-show="showPdrbAndResult['adhk']"
-            :data-contents="dataContents"
-            :subsectors="subsectors"
-            :type="'adhk'"
-            :onDemandType="'adhk_now'"
-            :quarter-cap="quarterCap"
-            @update:update-d-o-d="updateDOD"
-            @update:updateDataContents="updateDataContents"
-          />
-          <!-- #endregion -->
+            <!-- #region Section: ADHK -->
+            <LapusTable
+              v-show="showPdrbAndResult['adhk']"
+              :data-contents="dataContents"
+              :subsectors="subsectors"
+              :type="'adhk'"
+              :onDemandType="'adhk_now'"
+              :quarter-cap="quarterCap"
+              @update:update-d-o-d="updateDOD"
+              @update:updateDataContents="updateDataContents"
+            />
+            <!-- #endregion -->
 
-          <!-- #region Section: RESULT -->
-          <LapusResultTable
-            v-show="showPdrbAndResult['result']"
-            :subsectors="subsectors"
-            :type="'distribusi'"
-            :quarter-cap="quarterCap"
-            :computed-data="computedData"
-          />
-          <!-- #endregion -->
+            <!-- #region Section: RESULT -->
+            <LapusResultTable
+              v-show="showPdrbAndResult['result']"
+              :subsectors="subsectors"
+              :type="'distribusi'"
+              :quarter-cap="quarterCap"
+              :computed-data="computedData"
+            />
+            <!-- #endregion -->
 
-          <!-- #region Section: PREV_DATA -->
-          <!-- #region Section: ADHB -->
-          <LapusTable
-            v-show="false"
-            :data-contents="dataBefore"
-            :subsectors="subsectors"
-            :type="'adhb'"
-            :onDemandType="'adhb_prev'"
-            :quarter-cap="quarterCap"
-            @update:update-d-o-d="updateDOD"
-            @update:updateDataContents="updateDataContents"
-          />
-          <!-- #endregion -->
+            <!-- #region Section: PREV_DATA -->
+            <!-- #region Section: ADHB -->
+            <LapusTable
+              v-show="false"
+              :data-contents="dataBefore"
+              :subsectors="subsectors"
+              :type="'adhb'"
+              :onDemandType="'adhb_prev'"
+              :quarter-cap="quarterCap"
+              @update:update-d-o-d="updateDOD"
+              @update:updateDataContents="updateDataContents"
+            />
+            <!-- #endregion -->
 
-          <!-- #region Section: ADHK -->
-          <LapusTable
-            v-show="false"
-            :data-contents="dataBefore"
-            :subsectors="subsectors"
-            :type="'adhk'"
-            :onDemandType="'adhk_prev'"
-            :quarter-cap="quarterCap"
-            @update:update-d-o-d="updateDOD"
-            @update:updateDataContents="updateDataContents"
-          />
-          <!-- #endregion -->
-          <!-- #endregion -->
+            <!-- #region Section: ADHK -->
+            <LapusTable
+              v-show="false"
+              :data-contents="dataBefore"
+              :subsectors="subsectors"
+              :type="'adhk'"
+              :onDemandType="'adhk_prev'"
+              :quarter-cap="quarterCap"
+              @update:update-d-o-d="updateDOD"
+              @update:updateDataContents="updateDataContents"
+            />
+            <!-- #endregion -->
+            <!-- #endregion -->
+          </template>
+          <template v-if="page.props.type == 'Pengeluaran'">
+            <!-- #region Section: ADHB -->
+            <PengTable
+              v-show="showPdrbAndResult['adhb']"
+              :data-contents="dataContents"
+              :subsectors="subsectors"
+              :type="'adhb'"
+              :onDemandType="'adhb_now'"
+              :quarter-cap="quarterCap"
+              @update:update-d-o-d="updateDOD"
+              @update:updateDataContents="updateDataContents"
+            />
+            <!-- #endregion -->
+
+            <!-- #region Section: ADHK -->
+            <PengTable
+              v-show="showPdrbAndResult['adhk']"
+              :data-contents="dataContents"
+              :subsectors="subsectors"
+              :type="'adhk'"
+              :onDemandType="'adhk_now'"
+              :quarter-cap="quarterCap"
+              @update:update-d-o-d="updateDOD"
+              @update:updateDataContents="updateDataContents"
+            />
+            <!-- #endregion -->
+
+            <!-- #region Section: RESULT -->
+            <PengResultTable
+              v-show="showPdrbAndResult['result']"
+              :subsectors="subsectors"
+              :type="'distribusi'"
+              :quarter-cap="quarterCap"
+              :computed-data="computedData"
+            />
+            <!-- #endregion -->
+
+            <!-- #region Section: PREV_DATA -->
+            <!-- #region Section: ADHB -->
+            <PengTable
+              v-show="false"
+              :data-contents="dataBefore"
+              :subsectors="subsectors"
+              :type="'adhb'"
+              :onDemandType="'adhb_prev'"
+              :quarter-cap="quarterCap"
+              @update:update-d-o-d="updateDOD"
+              @update:updateDataContents="updateDataContents"
+            />
+            <!-- #endregion -->
+
+            <!-- #region Section: ADHK -->
+            <PengTable
+              v-show="false"
+              :data-contents="dataBefore"
+              :subsectors="subsectors"
+              :type="'adhk'"
+              :onDemandType="'adhk_prev'"
+              :quarter-cap="quarterCap"
+              @update:update-d-o-d="updateDOD"
+              @update:updateDataContents="updateDataContents"
+            />
+            <!-- #endregion -->
+            <!-- #endregion -->
+          </template>
         </table>
       </div>
       <div
@@ -191,15 +260,27 @@
       >
         <div class="p-5">
           <div class="flex justify-end space-x-2">
-            <button class="btn-info-fordone">
+            <button
+              v-if="dataset.status != 'Submitted'"
+              @click.prevent="saveEntri"
+              class="btn-info-fordone"
+            >
               <font-awesome-icon icon="fa fa-save" />
               Simpan Data
             </button>
-            <button class="btn-success-fordone">
+            <button
+              v-if="dataset.status == 'Entry'"
+              @click.prevent="submitEntri"
+              class="btn-success-fordone"
+            >
               <font-awesome-icon icon="fa fa-check" />
               Submit Data
             </button>
-            <button class="btn-red-fordone">
+            <button
+              v-if="dataset.status == 'Submitted'"
+              @click.prevent="unsubmitEntri"
+              class="btn-red-fordone"
+            >
               <font-awesome-icon icon="fa-solid fa-circle-xmark" />
               Unsubmit Data
             </button>
@@ -210,8 +291,12 @@
   </GeneralLayout>
 </template>
 <script setup>
+import FlashFetch from "@/Components/FlashFetch.vue";
+import FloatScrollDown from "@/Components/FloatScrollDown.vue";
 import LapusResultTable from "@/Components/LapusResultTable.vue";
 import LapusTable from "@/Components/LapusTable.vue";
+import PengResultTable from "@/Components/PengResultTable.vue";
+import PengTable from "@/Components/PengTable.vue";
 import SpinnerBorder from "@/Components/SpinnerBorder.vue";
 import GeneralLayout from "@/Layouts/GeneralLayout.vue";
 import { Head, useForm, usePage } from "@inertiajs/vue3";
@@ -219,6 +304,7 @@ import Multiselect from "@vueform/multiselect";
 import { onMounted, ref, watch } from "vue";
 
 const page = usePage();
+const dataset = ref({});
 const subsectors = ref(page.props.subsectors);
 const dataContents = ref([]);
 const dataBefore = ref([]);
@@ -236,6 +322,15 @@ const form = useForm({
   dataBefore: null,
   regions: null,
 });
+const notifications = ref([]);
+const showNotification = (notification) => {
+  notifications.value = notification;
+  notifications.value.forEach((_, index) => {
+    setTimeout(() => {
+      notifications.value.shift(); // Remove the first notification
+    }, (index + 1) * 1200); // Delay based on index
+  });
+};
 const yearDrop = ref([]);
 const quarterDrop = ref([]);
 const descDrop = ref([]);
@@ -329,6 +424,8 @@ const submit = async () => {
     showPdrbAndResult.value.result = false;
     showPdrbAndResult.value.adhb = true;
     showTabPanel.value = true;
+    dataset.value = response.data.dataset;
+    showNotification(response.data.notification);
     showTab("adhb");
   } catch (error) {}
 };
@@ -376,32 +473,32 @@ const showTab = (tab) => {
     showPdrbAndResult.value.adhk = true;
   }
   if (tab == "dist") {
-    showDist();
     showPdrbAndResult.value.result = true;
+    showDist();
   }
   if (tab == "g_qtoq") {
-    showGQtoQ();
     showPdrbAndResult.value.result = true;
+    showGQtoQ();
   }
   if (tab == "g_ytoy") {
-    showGYtoY();
     showPdrbAndResult.value.result = true;
+    showGYtoY();
   }
   if (tab == "g_ctoc") {
-    showGCtoC();
     showPdrbAndResult.value.result = true;
+    showGCtoC();
   }
   if (tab == "indeks") {
-    showIndeks();
     showPdrbAndResult.value.result = true;
+    showIndeks();
   }
   if (tab == "gi_qtoq") {
-    showGIQtoQ();
     showPdrbAndResult.value.result = true;
+    showGIQtoQ();
   }
   if (tab == "gi_ytoy") {
-    showGIYtoY();
     showPdrbAndResult.value.result = true;
+    showGIYtoY();
   }
 };
 const showDist = () => {
@@ -468,6 +565,12 @@ const showGQtoQ = () => {
 const showGYtoY = () => {
   let current_dataset = removeSpaceOnKomponen(dataOnDemand.value["adhk_now"]);
   let previous_dataset = removeSpaceOnKomponen(dataOnDemand.value["adhk_prev"]);
+  if (isObjectEmpty(previous_dataset)) {
+    let notif = [{ message: "Data Tahun sebelumnya masih kosong", type: "error" }];
+    showNotification(notif);
+    showPdrbAndResult.value.result = false;
+    return;
+  }
   let stake = quarterCap.value == 4 ? 5 : Number(quarterCap.value); // Set max iteration limit
 
   let result = {};
@@ -492,6 +595,12 @@ const showGYtoY = () => {
 const showGCtoC = () => {
   let current_dataset = removeSpaceOnKomponen(dataOnDemand.value["adhk_now"]);
   let previous_dataset = removeSpaceOnKomponen(dataOnDemand.value["adhk_prev"]);
+  if (isObjectEmpty(previous_dataset)) {
+    let notif = [{ message: "Data Tahun sebelumnya masih kosong", type: "error" }];
+    showNotification(notif);
+    showPdrbAndResult.value.result = false;
+    return;
+  }
   let stake = Number(quarterCap.value); // Max quarter index to loop through
   // Helper function to convert values to numbers
   const parseNumber = (value) =>
@@ -538,6 +647,12 @@ const showGIQtoQ = () => {
   let adhk_current_dataset = removeSpaceOnKomponen(dataOnDemand.value["adhk_now"]);
   let adhb_previous_dataset = removeSpaceOnKomponen(dataOnDemand.value["adhb_prev"]);
   let adhk_previous_dataset = removeSpaceOnKomponen(dataOnDemand.value["adhk_prev"]);
+  if (isObjectEmpty(adhb_previous_dataset)) {
+    let notif = [{ message: "Data Tahun sebelumnya masih kosong", type: "error" }];
+    showNotification(notif);
+    showPdrbAndResult.value.result = false;
+    return;
+  }
   adhb_previous_dataset = Object.fromEntries(
     Object.entries(adhb_previous_dataset).map(([key, arr]) => [key, arr[3]])
   );
@@ -588,6 +703,12 @@ const showGIYtoY = () => {
   let adhk_current_dataset = removeSpaceOnKomponen(dataOnDemand.value["adhk_now"]);
   let adhb_previous_dataset = removeSpaceOnKomponen(dataOnDemand.value["adhb_prev"]);
   let adhk_previous_dataset = removeSpaceOnKomponen(dataOnDemand.value["adhk_prev"]);
+  if (isObjectEmpty(adhb_previous_dataset)) {
+    let notif = [{ message: "Data Tahun sebelumnya masih kosong", type: "error" }];
+    showNotification(notif);
+    showPdrbAndResult.value.result = false;
+    return;
+  }
   const parseNumber = (value) =>
     value ? Number(value.replaceAll(".", "").replaceAll(",", ".")) : 0;
   let stake = quarterCap.value == 4 ? 5 : Number(quarterCap.value);
@@ -638,6 +759,76 @@ const formatNumberGerman = (num, min = 2, max = 5) => {
     maximumFractionDigits: max,
   }).format(num);
 };
+const isObjectEmpty = (obj) => {
+  return !obj || Object.keys(obj).length === 0;
+};
+// #region Section: Save & Submit & Unsubmit
+const saveEntri = async () => {
+  const thisForm = useForm({
+    dataContents: dataContents.value,
+    type: page.props.type,
+    _token: null,
+  });
+  const response = await axios.get(route("token"));
+  thisForm._token = response.data;
+  if (thisForm.processing) return;
+  thisForm.post(route("pdrb.save-entri"), {
+    onBefore: () => {
+      triggerSpinner.value = true;
+    },
+    onFinish: () => {
+      triggerSpinner.value = false;
+    },
+    onSuccess: (response) => {
+      showNotification(response.props.notification);
+    },
+  });
+};
+const submitEntri = async () => {
+  const thisForm = useForm({
+    id: dataset.value.id,
+    type: page.props.type,
+  });
+  const response = await axios.get(route("token"));
+  thisForm._token = response.data;
+  if (thisForm.processing) return;
+  thisForm.post(route("pdrb.submit-entri"), {
+    onBefore: () => {
+      triggerSpinner.value = true;
+    },
+    onFinish: () => {
+      triggerSpinner.value = false;
+    },
+    onSuccess: (response) => {
+      showNotification(response.props.notification);
+      if (response.props.notification[0].type == "success")
+        dataset.value.status = "Submitted";
+    },
+  });
+};
+const unsubmitEntri = async () => {
+  const thisForm = useForm({
+    id: dataset.value.id,
+    type: page.props.type,
+  });
+  const response = await axios.get(route("token"));
+  thisForm._token = response.data;
+  if (thisForm.processing) return;
+  thisForm.post(route("pdrb.unsubmit-entri"), {
+    onBefore: () => {
+      triggerSpinner.value = true;
+    },
+    onFinish: () => {
+      triggerSpinner.value = false;
+    },
+    onSuccess: (response) => {
+      showNotification(response.props.notification);
+      if (response.props.notification[0].type == "success")
+        dataset.value.status = "Entry";
+    },
+  });
+};
+// #endregion
 </script>
 
 <style scoped>
