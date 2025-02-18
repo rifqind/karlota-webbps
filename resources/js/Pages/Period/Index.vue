@@ -170,6 +170,7 @@ import Pagination from "@/Components/Pagination.vue";
 import ModalBs from "@/Components/ModalBs.vue";
 import Multiselect from "@vueform/multiselect";
 import SpinnerBorder from "@/Components/SpinnerBorder.vue";
+import { triggerSpinner } from "@/axiosSetup";
 
 const page = usePage();
 var dataObject = page.props.period.data;
@@ -178,7 +179,7 @@ const createModalStatus = ref(false);
 const deleteModalStatus = ref(false)
 const toggleFlash = ref(false);
 const flashObject = ref(page.props.flash);
-const triggerSpinner = ref(false);
+// const triggerSpinner = ref(false);
 const searchPDRB = ref(null);
 const searchTahun = ref(null);
 const searchTriwulan = ref(null);
@@ -325,11 +326,11 @@ const submit = async function () {
   if (form.processing) return;
   form.post(route("period.store"), {
     onBefore: () => {
-      triggerSpinner.value = false;
+      // triggerSpinner.value = false;
       createModalStatus.value = false;
     },
     onFinish: () => {
-      triggerSpinner.value = false;
+      // triggerSpinner.value = false;
     },
     onSuccess: () => {
       if (flashObject.value) toggleFlash.value = true;
@@ -348,11 +349,11 @@ const deleteSubmit = async () => {
   if (form.processing) return;
   form.delete(route('period.destroy', { id: form.id }), {
     onBefore: () => {
-      triggerSpinner.value = true;
+      // triggerSpinner.value = true;
       deleteModalStatus.value = false;
     },
     onFinish: () => {
-      triggerSpinner.value = false;
+      // triggerSpinner.value = false;
     },
     onSuccess: () => {
       if (flashObject.value) toggleFlash.value = true;

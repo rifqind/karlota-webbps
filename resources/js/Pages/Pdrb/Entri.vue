@@ -24,7 +24,9 @@
               placeholder="-- Pilih Tahun --"
               @change="fetchQuarter"
             />
-            <div class="text-danger text-left" v-if="true" id="error-dinas"></div>
+            <div class="text-danger text-left" v-if="true" id="error-dinas">
+              {{ formError.year }}
+            </div>
           </div>
           <div class="mb-3 space-y-2">
             <label for="year">Pilih Triwulan<span class="text-danger">*</span></label>
@@ -35,7 +37,9 @@
               placeholder="-- Pilih Triwulan --"
               @change="fetchPeriod"
             />
-            <div class="text-danger text-left" v-if="true" id="error-dinas"></div>
+            <div class="text-danger text-left" v-if="true" id="error-dinas">
+              {{ formError.quarter }}
+            </div>
           </div>
           <div class="mb-3 space-y-2">
             <label for="year"
@@ -48,7 +52,9 @@
               placeholder="-- Pilih Periode Putaran --"
               @change="fetchYearBefore"
             />
-            <div class="text-danger text-left" v-if="true" id="error-dinas"></div>
+            <div class="text-danger text-left" v-if="true" id="error-dinas">
+              {{ formError.description }}
+            </div>
           </div>
           <div class="mb-3 space-y-2">
             <label for="year">Pilih Data Tahun Sebelumnya</label>
@@ -68,7 +74,9 @@
               :searchable="true"
               placeholder="-- Pilih Kabupaten/Kota --"
             />
-            <div class="text-danger text-left" v-if="true" id="error-dinas"></div>
+            <div class="text-danger text-left" v-if="true" id="error-dinas">
+              {{ formError.regions }}
+            </div>
           </div>
           <div class="flex items-center space-x-2 justify-end">
             <div
@@ -86,6 +94,9 @@
               <font-awesome-icon icon="fa-solid fa-magnifying-glass" />
               Cari Data
             </div>
+          </div>
+          <div class="text-center mt-3" v-if="warningToUser">
+            User melakukan perubahan dataset, dan data belum dicari
           </div>
         </div>
       </div>
@@ -351,6 +362,7 @@
   </GeneralLayout>
 </template>
 <script setup>
+import { triggerSpinner } from "@/axiosSetup";
 import FlashFetch from "@/Components/FlashFetch.vue";
 import FloatScrollDown from "@/Components/FloatScrollDown.vue";
 import LapusResultTable from "@/Components/LapusResultTable.vue";
@@ -384,14 +396,13 @@ const form = useForm({
   dataBefore: null,
   regions: null,
 });
-const copyForm = useForm({
-  _token: null,
-  type: page.props.type,
+const formError = ref({
   year: null,
   quarter: null,
   description: null,
-  regions: form.regions,
+  regions: null,
 });
+const warningToUser = ref(false);
 const notifications = ref([]);
 const showNotification = (notification) => {
   notifications.value = notification;
@@ -407,6 +418,7 @@ const descDrop = ref([]);
 const dataBeforeDrop = ref([]);
 onMounted(() => {
   fetchYear();
+  setWarningToUser(true);
 });
 const updateDOD = (data) => {
   dataOnDemand.value[data.type] = data.data;
@@ -414,6 +426,20 @@ const updateDOD = (data) => {
 const updateDataContents = (data) => {
   dataContents.value = data;
 };
+const setWarningToUser = (mounted) => {
+  if (mounted) warningToUser.value = false;
+};
+watch(form, (changedForm) => {
+  if (
+    changedForm.year !== currentSearchSet.value.year ||
+    changedForm.quarter !== currentSearchSet.value.quarter ||
+    changedForm.description !== currentSearchSet.value.description ||
+    changedForm.dataBefore !== currentSearchSet.value.dataBefore ||
+    changedForm.regions !== currentSearchSet.value.regions
+  )
+    warningToUser.value = true;
+});
+const currentSearchSet = ref({});
 // #region Section: FETCH
 const fetchYear = async () => {
   if (!copyModal.value) {
@@ -453,6 +479,9 @@ const fetchQuarter = async (value) => {
   }
 };
 const fetchPeriod = async (value) => {
+  if (!copyModal.value) {
+    form.description = null;
+  }
   if (value) {
     try {
       const response = await axios.get(route("period.fetchPeriod"), {
@@ -489,6 +518,7 @@ const showPdrbAndResult = ref({
   result: true,
 });
 const submit = async () => {
+  // triggerSpinner.value = true;
   try {
     const response = await axios.get(route("pdrb.show"), {
       params: {
@@ -507,11 +537,34 @@ const submit = async () => {
     showPdrbAndResult.value.adhb = true;
     showTabPanel.value = true;
     dataset.value = response.data.dataset;
+    currentSearchSet.value = JSON.parse(JSON.stringify(form));
+    warningToUser.value = false;
+    formError.value = {
+      year: null,
+      quarter: null,
+      description: null,
+      regions: null,
+    };
     showNotification(response.data.notification);
     showTab("adhb");
-  } catch (error) {}
+  } catch (error) {
+    // Display notification if available
+    if (error.response.data.notification) {
+      showNotification(error.response.data.notification);
+    }
+
+    // Handle validation errors if they exist
+    if (error.response.data.errors) {
+      formError.value = Object.keys(error.response.data.errors).reduce((acc, key) => {
+        acc[key] = error.response.data.errors[key][0];
+        return acc;
+      }, {});
+    }
+  }
+  // triggerSpinner.value = false;
 };
 // #endregion
+// #region Section: COPY
 var searchFormDefault = {};
 const openCopyModal = () => {
   copyModal.value = true;
@@ -522,8 +575,61 @@ const closeCopyModal = () => {
   for (const key in searchFormDefault) {
     form[key] = searchFormDefault[key];
   }
+  modalError.value = {
+    year: null,
+    quarter: null,
+    description: null,
+  };
 };
-const triggerSpinner = ref(false);
+const modalError = ref({
+  year: null,
+  quarter: null,
+  description: null,
+});
+const copy = async () => {
+  // triggerSpinner.value = true;
+  try {
+    const response = await axios.get(route("pdrb.copy-entri"), {
+      params: {
+        type: page.props.type,
+        year: form.year,
+        quarter: form.quarter,
+        description: form.description,
+        regions: form.regions,
+      },
+    });
+    modalError.value = {
+      year: null,
+      quarter: null,
+      description: null,
+    };
+    const updatedDataContents = dataContents.value.map((item) => {
+      const matched = response.data.current_data.find(
+        (current) =>
+          current.subsector_id === item.subsector_id && current.quarter === item.quarter
+      );
+
+      return matched ? { ...item, adhb: matched.adhb, adhk: matched.adhk } : item;
+    });
+    dataContents.value = updatedDataContents;
+    showNotification(response.data.notification);
+    showTab("adhb");
+    closeCopyModal();
+  } catch (error) {
+    if (error.response.data.notification) {
+      showNotification(error.response.data.notification);
+    }
+    if (error.response.data.errors) {
+      modalError.value = Object.keys(error.response.data.errors).reduce((acc, key) => {
+        acc[key] = error.response.data.errors[key][0];
+        return acc;
+      }, {});
+    }
+  }
+  // triggerSpinner.value = false;
+};
+// #endregion
+// const triggerSpinner = ref(false);
 watch(
   () => dataContents.value,
   (value) => {}
@@ -866,10 +972,10 @@ const saveEntri = async () => {
   if (thisForm.processing) return;
   thisForm.post(route("pdrb.save-entri"), {
     onBefore: () => {
-      triggerSpinner.value = true;
+      // triggerSpinner.value = true;
     },
     onFinish: () => {
-      triggerSpinner.value = false;
+      // triggerSpinner.value = false;
     },
     onSuccess: (response) => {
       showNotification(response.props.notification);
@@ -886,10 +992,10 @@ const submitEntri = async () => {
   if (thisForm.processing) return;
   thisForm.post(route("pdrb.submit-entri"), {
     onBefore: () => {
-      triggerSpinner.value = true;
+      // triggerSpinner.value = true;
     },
     onFinish: () => {
-      triggerSpinner.value = false;
+      // triggerSpinner.value = false;
     },
     onSuccess: (response) => {
       showNotification(response.props.notification);
@@ -908,10 +1014,10 @@ const unsubmitEntri = async () => {
   if (thisForm.processing) return;
   thisForm.post(route("pdrb.unsubmit-entri"), {
     onBefore: () => {
-      triggerSpinner.value = true;
+      // triggerSpinner.value = true;
     },
     onFinish: () => {
-      triggerSpinner.value = false;
+      // triggerSpinner.value = false;
     },
     onSuccess: (response) => {
       showNotification(response.props.notification);

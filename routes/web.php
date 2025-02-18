@@ -61,6 +61,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
         ->name('pdrb.submit-entri');
     Route::post('/unsubmit-entri', [PdrbController::class, 'unsubmitEntri'])
         ->name('pdrb.unsubmit-entri');
+    Route::get('/copy-entri', [PdrbController::class, 'copyEntri'])
+        ->name('pdrb.copy-entri');
 });
 
 
