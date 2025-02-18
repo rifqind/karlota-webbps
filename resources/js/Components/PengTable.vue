@@ -139,6 +139,11 @@ const props = defineProps({
     type: String,
     required: true,
   },
+  datasetStatus: {
+    type: String,
+    required: true,
+    default: "Entry",
+  },
 });
 const dataHere = ref(props.dataContents);
 const tableRef = ref(null);
@@ -166,6 +171,7 @@ onMounted(() => {
 const emits = defineEmits(["update:updateDOD", "update:updateDataContents"]);
 const quarters = [{ label: "1" }, { label: "2" }, { label: "3" }, { label: "4" }];
 const inputDisabled = (quarter) => {
+  if (props.datasetStatus == "Submitted") return true;
   let arrayQuarter = Array.from({ length: props.quarterCap }, (_, i) => i + 1);
   // console.log();
   return !arrayQuarter.includes(Number(quarter));

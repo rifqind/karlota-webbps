@@ -48,10 +48,14 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::prefix('lapus')->name('lapus.')->group(function () {
         Route::get('/entri', [PdrbController::class, 'entri'])
             ->name('entri');
+        Route::get('/adjustment', [PdrbController::class, 'adjustment'])
+            ->name('adjustment');
     });
     Route::prefix('peng')->name('peng.')->group(function () {
         Route::get('/entri', [PdrbController::class, 'entri'])
             ->name('entri');
+        Route::get('/adjustment', [PdrbController::class, 'adjustment'])
+            ->name('adjustment');
     });
     Route::get('/show-pdrb', [PdrbController::class, 'show'])
         ->name('pdrb.show');

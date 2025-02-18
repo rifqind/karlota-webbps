@@ -25,6 +25,13 @@
             >
               Entri PDRB
             </NavLinkSidebar>
+            <NavLinkSidebar
+              :navIcon="'fa-solid fa-list-ol'"
+              :href="route('lapus.adjustment')"
+              :currentRoute="currentRoute == 'lapus.adjustment'"
+            >
+              Adjustment
+            </NavLinkSidebar>
           </template>
         </NavLinkParentSidebar>
         <NavLinkParentSidebar

@@ -148,6 +148,7 @@
             <!-- #region Section: ADHB -->
             <LapusTable
               v-show="showPdrbAndResult['adhb']"
+              :dataset-status="dataset.status"
               :data-contents="dataContents"
               :subsectors="subsectors"
               :type="'adhb'"
@@ -162,6 +163,7 @@
             <LapusTable
               v-show="showPdrbAndResult['adhk']"
               :data-contents="dataContents"
+              :dataset-status="dataset.status"
               :subsectors="subsectors"
               :type="'adhk'"
               :onDemandType="'adhk_now'"
@@ -185,6 +187,7 @@
             <!-- #region Section: ADHB -->
             <LapusTable
               v-show="false"
+              :dataset-status="dataset.status"
               :data-contents="dataBefore"
               :subsectors="subsectors"
               :type="'adhb'"
@@ -198,6 +201,7 @@
             <!-- #region Section: ADHK -->
             <LapusTable
               v-show="false"
+              :dataset-status="dataset.status"
               :data-contents="dataBefore"
               :subsectors="subsectors"
               :type="'adhk'"
@@ -213,6 +217,7 @@
             <!-- #region Section: ADHB -->
             <PengTable
               v-show="showPdrbAndResult['adhb']"
+              :dataset-status="dataset.status"
               :data-contents="dataContents"
               :subsectors="subsectors"
               :type="'adhb'"
@@ -227,6 +232,7 @@
             <PengTable
               v-show="showPdrbAndResult['adhk']"
               :data-contents="dataContents"
+              :dataset-status="dataset.status"
               :subsectors="subsectors"
               :type="'adhk'"
               :onDemandType="'adhk_now'"
@@ -251,6 +257,7 @@
             <PengTable
               v-show="false"
               :data-contents="dataBefore"
+              :dataset-status="dataset.status"
               :subsectors="subsectors"
               :type="'adhb'"
               :onDemandType="'adhb_prev'"
@@ -264,6 +271,7 @@
             <PengTable
               v-show="false"
               :data-contents="dataBefore"
+              :dataset-status="dataset.status"
               :subsectors="subsectors"
               :type="'adhk'"
               :onDemandType="'adhk_prev'"
