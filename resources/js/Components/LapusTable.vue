@@ -464,7 +464,7 @@ const captureTableData = (type) => {
 <style scoped>
 .fixed-column {
   position: sticky;
-  width: 400px;
+  min-width: 400px;
   left: 0;
   background-color: white;
   color: black;

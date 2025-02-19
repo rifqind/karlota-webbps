@@ -164,6 +164,9 @@ label {
 .table thead tr th.tabel-width-45px {
     width: 45px;
 }
+.table thead tr th.tabel-width-200px {
+    width: 200px;
+}
 
 .table tbody tr td {
     background-color: white;

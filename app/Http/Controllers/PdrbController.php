@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Adjustment;
 use App\Models\Dataset;
 use App\Models\Pdrb;
 use App\Models\Period;
@@ -352,7 +353,8 @@ class PdrbController extends Controller
         }
     }
 
-    public function adjustment(Request $request) {
+    public function adjustment(Request $request)
+    {
         $prefix = request()->route()->getPrefix();
         if ($prefix == 'lapus') $type = 'Lapangan Usaha';
         else if ($prefix == 'peng') $type = 'Pengeluaran';
@@ -365,5 +367,231 @@ class PdrbController extends Controller
             'subsectors' => $subsectors,
             'regions' => $regions
         ]);
+    }
+
+    public function getAdjustment(Request $request)
+    {
+        $validated = $request->validate([
+            'type' => ['required', 'string'],
+            'year' => ['required', 'integer'],
+            'quarter' => ['required', 'integer'],
+            'description' => ['required', 'integer'],
+            'dataBefore' => ['sometimes', 'integer', 'nullable'],
+            'subsectors' => ['required', 'string'],
+        ]);
+        $regions = Region::getMyRegion();
+        $type = $validated['type'];
+        $period_id = $validated['description'];
+        $period_before = ($request->dataBefore) ? $validated['dataBefore'] : null;
+        $notification = [];
+        $current_period = Period::where('id', $validated['description'])->first();
+        if (!$period_before) {
+            if ($current_period->status == 'Aktif') {
+                $previous_period = Period::where('type', $type)
+                    ->where('year', $validated['year'] - 1)
+                    ->where('quarter', 4)
+                    ->latest('id')
+                    ->value('id');
+            } else {
+                $previous_period = Period::where('type', $type)
+                    ->where('year', $validated['year'] - 1)
+                    ->where('quarter', 4)
+                    ->where('status', '<>', 'Aktif')
+                    ->latest('id')
+                    ->value('id');
+            }
+        } else $previous_period = $period_before;
+
+        $exploded_subsectors = explode('-', $validated['subsectors']);
+        $typeOfSubsector = $exploded_subsectors[0];
+        $categoryId = $exploded_subsectors[1];
+        $sectorId = $exploded_subsectors[2];
+        $subsectorId = $exploded_subsectors[3];
+
+        $periode_before_year = Period::find($previous_period);
+        $current_dataset = Dataset::where('period_id', $period_id)
+            ->where('type', $validated['type'])
+            ->pluck('id');
+        $previous_dataset = Dataset::where('period_id', $previous_period)
+            ->where('type', $validated['type'])
+            ->pluck('id');
+
+        foreach ($regions as $key => $reg) {
+            # code...
+            $cek_previous = Dataset::where('period_id', $previous_period)
+                ->where('region_id', $reg->value)
+                ->where('type', $type)
+                ->first();
+            if (!$cek_previous) {
+                $message = [
+                    'type' => 'error',
+                    'message' => 'Data ' . $reg->label . ' periode sebelumnya tidak ada',
+                ];
+                array_push($notification, $message);
+            } else {
+                $message = [
+                    'type' => 'success',
+                    'message' => 'Data ' . $reg->label . ' periode sebelumnya berhasil diambil',
+                ];
+                array_push($notification, $message);
+            }
+        }
+        $previous_data = collect(); // Ensure $previous_data is always initialized
+        $current_data = collect();
+
+        if ($typeOfSubsector == 'subsector') {
+            if ($previous_dataset->isNotEmpty()) {
+                $previous_for = Pdrb::whereIn('dataset_id', $previous_dataset)
+                    ->where('subsector_id', $subsectorId)
+                    ->pluck('id');
+                $adjustment = Adjustment::whereIn('pdrb_id', $previous_for)
+                    ->pluck('id');
+                $previous_data = Pdrb::leftJoin('adjustments as adj', 'adj.pdrb_id', '=', 'pdrbs.id')
+                    ->join('datasets as d', 'd.id', '=', 'pdrbs.dataset_id')
+                    ->whereIn('pdrbs.dataset_id', $previous_dataset)
+                    ->where('pdrbs.subsector_id', $subsectorId)
+                    ->orderBy('d.region_id', 'asc')
+                    ->select(
+                        'pdrbs.id',
+                        'pdrbs.dataset_id',
+                        'pdrbs.year',
+                        'pdrbs.quarter',
+                        'pdrbs.subsector_id',
+                        'pdrbs.adhb',
+                        'pdrbs.adhk',
+                        'adj.adhb as adj_adhb',
+                        'adj.adhk as adj_adhk',
+                        'd.region_id as region_id'
+                    )
+                    ->get()
+                    ->map(function ($item) {
+                        return [
+                            'id' => $item->id,
+                            'dataset_id' => $item->dataset_id,
+                            'year' => $item->year,
+                            'quarter' => $item->quarter,
+                            'subsector_id' => $item->subsector_id,
+                            'adhb' => $item->adhb,
+                            'adhk' => $item->adhk,
+                            'adj_adhb' => $item->adj_adhb ?? null,
+                            'adj_adhk' => $item->adj_adhk ?? null,
+                            'region_id' => $item->region_id
+                        ];
+                    });
+            }
+
+            if ($current_dataset->isNotEmpty()) {
+                $current_for = Pdrb::whereIn('dataset_id', $current_dataset)
+                    ->where('subsector_id', $subsectorId)
+                    ->pluck('id');
+                $adjustment = Adjustment::whereIn('pdrb_id', $current_for)
+                    ->pluck('id');
+                $current_data = Pdrb::leftJoin('adjustments as adj', 'adj.pdrb_id', '=', 'pdrbs.id')
+                    ->join('datasets as d', 'd.id', '=', 'pdrbs.dataset_id')
+                    ->whereIn('pdrbs.dataset_id', $current_dataset)
+                    ->where('pdrbs.subsector_id', $subsectorId)
+                    ->orderBy('d.region_id', 'asc')
+                    ->select(
+                        'pdrbs.id',
+                        'pdrbs.dataset_id',
+                        'pdrbs.year',
+                        'pdrbs.quarter',
+                        'pdrbs.subsector_id',
+                        'pdrbs.adhb',
+                        'pdrbs.adhk',
+                        'adj.adhb as adj_adhb',
+                        'adj.adhk as adj_adhk',
+                        'd.region_id as region_id'
+                    )
+                    ->get()
+                    ->map(function ($item) {
+                        return [
+                            'id' => $item->id,
+                            'dataset_id' => $item->dataset_id,
+                            'year' => $item->year,
+                            'quarter' => $item->quarter,
+                            'subsector_id' => $item->subsector_id,
+                            'adhb' => $item->adhb,
+                            'adhk' => $item->adhk,
+                            'adj_adhb' => $item->adj_adhb ?? null,
+                            'adj_adhk' => $item->adj_adhk ?? null,
+                            'region_id' => $item->region_id
+                        ];
+                    });
+            }
+        } else if ($typeOfSubsector == 'sector') {
+            if ($previous_dataset->isNotEmpty()) {
+                $subsectorForSearch = Subsector::where('sector_id', $sectorId)->pluck('id');
+                $previous_for = Pdrb::whereIn('dataset_id', $previous_dataset)
+                    ->where('subsector_id', $subsectorId)
+                    ->pluck('id');
+                $adjustment = Adjustment::whereIn('pdrb_id', $previous_for)
+                    ->pluck('id');
+                $previous_data = Pdrb::leftJoin('adjustments as adj', 'adj.pdrb_id', '=', 'pdrbs.id')
+                    ->join('datasets as d', 'd.id', '=', 'pdrbs.dataset_id')
+                    ->whereIn('pdrbs.dataset_id', $previous_dataset)
+                    ->whereIn('pdrbs.subsector_id', $subsectorForSearch)
+                    ->orderBy('d.region_id', 'asc')
+                    ->groupBy('d.region_id', 'pdrbs.year', 'pdrbs.quarter')
+                    ->selectRaw(
+                        'pdrbs.year,
+                        pdrbs.quarter,
+                        SUM(pdrbs.adhb) as adhb,
+                        SUM(pdrbs.adhk) as adhk,
+                        SUM(adj.adhb) as adj_adhb,
+                        SUM(adj.adhk) as adj_adhk,
+                        d.region_id as region_id'
+                    )
+                    ->get()
+                    ->map(function ($item) use ($sectorId) {
+                        return [
+                            'year' => $item->year,
+                            'quarter' => $item->quarter,
+                            'sector_id' => $sectorId,
+                            'adhb' => $item->adhb,
+                            'adhk' => $item->adhk,
+                            'adj_adhb' => $item->adj_adhb ?? null,
+                            'adj_adhk' => $item->adj_adhk ?? null,
+                            'region_id' => $item->region_id
+                        ];
+                    });
+                if ($current_dataset->isNotEmpty()) {
+                    $subsectorForSearch = Subsector::where('sector_id', $sectorId)->pluck('id');
+                    $current_for = Pdrb::whereIn('dataset_id', $current_dataset)
+                        ->where('subsector_id', $subsectorId)
+                        ->pluck('id');
+                    $adjustment = Adjustment::whereIn('pdrb_id', $current_for)
+                        ->pluck('id');
+                    $current_data = Pdrb::leftJoin('adjustments as adj', 'adj.pdrb_id', '=', 'pdrbs.id')
+                        ->join('datasets as d', 'd.id', '=', 'pdrbs.dataset_id')
+                        ->whereIn('pdrbs.dataset_id', $current_dataset)
+                        ->whereIn('pdrbs.subsector_id', $subsectorForSearch)
+                        ->orderBy('d.region_id', 'asc')
+                        ->groupBy('d.region_id', 'pdrbs.year', 'pdrbs.quarter')
+                        ->selectRaw(
+                            'pdrbs.year,
+                        pdrbs.quarter,
+                        SUM(pdrbs.adhb) as adhb,
+                        SUM(pdrbs.adhk) as adhk,
+                        SUM(adj.adhb) as adj_adhb,
+                        SUM(adj.adhk) as adj_adhk,
+                        d.region_id as region_id'
+                        )
+                        ->get()
+                        ->map(function ($item) use ($sectorId) {
+                            return [
+                                'year' => $item->year,
+                                'quarter' => $item->quarter,
+                                'sector_id' => $sectorId,
+                                'adhb' => $item->adhb,
+                                'adhk' => $item->adhk,
+                                'adj_adhb' => $item->adj_adhb ?? null,
+                                'adj_adhk' => $item->adj_adhk ?? null,
+                                'region_id' => $item->region_id
+                            ];
+                        });
+                }
+            }
+        }
     }
 }

@@ -57,6 +57,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/adjustment', [PdrbController::class, 'adjustment'])
             ->name('adjustment');
     });
+
+    //Entri
     Route::get('/show-pdrb', [PdrbController::class, 'show'])
         ->name('pdrb.show');
     Route::post('/save-entri', [PdrbController::class, 'saveEntri'])
@@ -67,6 +69,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
         ->name('pdrb.unsubmit-entri');
     Route::get('/copy-entri', [PdrbController::class, 'copyEntri'])
         ->name('pdrb.copy-entri');
+
+    //Adjustment
+    Route::get('/get-adjustment', [PdrbController::class, 'getAdjustment'])
+        ->name('pdrb.get-adjustment');
 });
 
 

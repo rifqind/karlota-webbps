@@ -67,16 +67,13 @@
             <div class="text-danger text-left" v-if="true" id="error-dinas"></div>
           </div>
           <div class="mb-3 space-y-2">
-            <label for="year">Kabupaten/Kota<span class="text-danger">*</span></label>
+            <label for="subsectors">Pilih Data:</label>
             <Multiselect
-              v-model="form.regions"
-              :options="page.props.regions"
+              v-model="form.subsectors"
+              :options="subsectorDrop"
               :searchable="true"
-              placeholder="-- Pilih Kabupaten/Kota --"
+              placeholder="-- Pilih Data --"
             />
-            <div class="text-danger text-left" v-if="true" id="error-dinas">
-              {{ formError.regions }}
-            </div>
           </div>
           <div class="flex items-center space-x-2 justify-end">
             <div
@@ -92,12 +89,51 @@
           </div>
         </div>
       </div>
+      <div class="overflow-x-scroll mb-2">
+        <table class="table shadow-md w-full mb-2" id="tabel-entry">
+          <thead>
+            <tr>
+              <th class="fixed-thead" rowspan="2">Wilayah</th>
+              <th colspan="3">ADHB</th>
+              <th colspan="3">ADHK</th>
+              <th colspan="2">Q-to-Q</th>
+              <th colspan="2">Y-on-Y</th>
+              <th colspan="2">C-to-C</th>
+              <th colspan="2">Laju Imp Q-to-Q</th>
+              <th colspan="2">SOG Y-on-Y thd Total</th>
+              <th colspan="2">Kontribusi thd Total</th>
+            </tr>
+            <tr>
+              <th class="min-w-[150px]">Inisial</th>
+              <th class="min-w-[150px]">Adjustment</th>
+              <th class="min-w-[150px]">Berjalan</th>
+              <th class="min-w-[150px]">Inisial</th>
+              <th class="min-w-[150px]">Adjustment</th>
+              <th class="min-w-[150px]">Berjalan</th>
+              <th class="min-w-[120px]">Inisial</th>
+              <th class="min-w-[120px]">Berjalan</th>
+              <th class="min-w-[120px]">Inisial</th>
+              <th class="min-w-[120px]">Berjalan</th>
+              <th class="min-w-[120px]">Inisial</th>
+              <th class="min-w-[120px]">Berjalan</th>
+              <th class="min-w-[120px]">Inisial</th>
+              <th class="min-w-[120px]">Berjalan</th>
+              <th class="min-w-[120px]">Inisial</th>
+              <th class="min-w-[120px]">Berjalan</th>
+              <th class="min-w-[120px]">Inisial</th>
+              <th class="min-w-[120px]">Berjalan</th>
+            </tr>
+          </thead>
+          <AdjustmentTable :regions="page.props.regions" />
+        </table>
+      </div>
     </div>
   </GeneralLayout>
 </template>
 
 <script setup>
 import { triggerSpinner } from "@/axiosSetup";
+import AdjustmentTable from "@/Components/AdjustmentTable.vue";
 import FlashFetch from "@/Components/FlashFetch.vue";
 import FloatScrollDown from "@/Components/FloatScrollDown.vue";
 import SpinnerBorder from "@/Components/SpinnerBorder.vue";
@@ -107,7 +143,6 @@ import Multiselect from "@vueform/multiselect";
 import { onMounted, ref } from "vue";
 
 const page = usePage();
-const subsectors = ref(page.props.subsectors);
 const form = useForm({
   _token: null,
   type: page.props.type,
@@ -115,13 +150,13 @@ const form = useForm({
   quarter: null,
   description: null,
   dataBefore: null,
-  regions: null,
+  subsectors: null,
 });
 const formError = ref({
   year: null,
   quarter: null,
   description: null,
-  regions: null,
+  subsectors: null,
 });
 const warningToUser = ref(false);
 const notifications = ref([]);
@@ -137,9 +172,91 @@ const yearDrop = ref([]);
 const quarterDrop = ref([]);
 const descDrop = ref([]);
 const dataBeforeDrop = ref([]);
+const subsectorDrop = ref([]);
 onMounted(() => {
   fetchYear();
+  // #region Section: subsector select
+  let tempData = [];
+  page.props.subsectors.forEach((element) => {
+    let data, label;
+    if (
+      (element.code != null &&
+        element.code == "a" &&
+        element.sector.code == "1" &&
+        element.sector.category.type == "Lapangan Usaha") ||
+      (element.code == null &&
+        element.sector.code == "1" &&
+        element.sector.category.type == "Lapangan Usaha")
+    ) {
+      label = element.sector.category.code + ". " + element.sector.category.name;
+      data =
+        "category-" +
+        element.sector.category.id +
+        "-" +
+        element.sector.id +
+        "-" +
+        element.id;
+      tempData.push({ value: data, label: label });
+    }
+    if (
+      element.code != null &&
+      element.code == "a" &&
+      element.sector.category.type == "Lapangan Usaha"
+    ) {
+      label = element.sector.code + ". " + element.sector.name;
+      data =
+        "sector-" +
+        element.sector.category.id +
+        "-" +
+        element.sector.id +
+        "-" +
+        element.id;
+      tempData.push({ value: data, label: label });
+    }
+    if (element.code != null && element.sector.category.type == "Lapangan Usaha") {
+      label = element.code + ". " + element.name;
+      data =
+        "subsector-" +
+        element.sector.category.id +
+        "-" +
+        element.sector.id +
+        "-" +
+        element.id;
+      tempData.push({ value: data, label: label });
+    } else if (
+      element.code == null &&
+      element.sector.code != null &&
+      element.sector.category.type == "Lapangan Usaha"
+    ) {
+      data =
+        "subsector-" +
+        element.sector.category.id +
+        "-" +
+        element.sector.id +
+        "-" +
+        element.id;
+      label = element.sector.code + ". " + element.sector.name;
+      tempData.push({ value: data, label: label });
+    } else if (
+      element.code == null &&
+      element.sector.code == null &&
+      element.sector.category.type == "Lapangan Usaha"
+    ) {
+      data =
+        "subsector-" +
+        element.sector.category.id +
+        "-" +
+        element.sector.id +
+        "-" +
+        element.id;
+      label = element.sector.category.code + ". " + element.name;
+      tempData.push({ value: data, label: label });
+    }
+  });
+  subsectorDrop.value = tempData;
+  // #endregion
 });
+// #region Section: FETCHING
 const fetchYear = async () => {
   form.quarter = null;
   form.description = null;
@@ -207,14 +324,14 @@ const fetchYearBefore = async (value) => {
 };
 const submit = async () => {
   try {
-    const response = await axios.get(route("pdrb.show"), {
+    const response = await axios.get(route("pdrb.get-adjustment"), {
       params: {
         type: page.props.type,
         year: form.year,
         quarter: form.quarter,
         description: form.description,
         dataBefore: form.dataBefore,
-        regions: form.regions,
+        subsectors: form.subsectors,
       },
     });
     showNotification(response.data.notification);
@@ -232,6 +349,29 @@ const submit = async () => {
     }
   }
 };
+// #endregion
 </script>
 
-<style lang="scss" scoped></style>
+<style scoped>
+.table {
+  font-size: 13px;
+}
+.fixed-thead {
+  position: sticky;
+  min-width: 400px;
+  left: 0;
+  background-color: #175676;
+  color: whitesmoke;
+  z-index: 1;
+  box-shadow: 2px 0 5px -2px rgba(0, 0, 0, 0.2);
+  border-right: 1px solid #ccc;
+  border-left: 1px solid #ccc;
+}
+.table {
+  /* table-layout: fixed; */
+  /* Ensures consistent column width */
+  width: 100%;
+  border-collapse: collapse;
+  /* Avoid extra spacing */
+}
+</style>
