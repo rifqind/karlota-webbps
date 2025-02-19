@@ -9,6 +9,8 @@ class Adjustment extends Model
 {
     use HasFactory;
 
+    public $timestamps = false;
+
     public function pdrb()
     {
         return $this->belongsTo(Pdrb::class);

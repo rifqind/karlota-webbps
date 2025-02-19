@@ -165,7 +165,7 @@ const showNotification = (notification) => {
   notifications.value.forEach((_, index) => {
     setTimeout(() => {
       notifications.value.shift(); // Remove the first notification
-    }, (index + 1) * 1200); // Delay based on index
+    }, (index + 1) * 700); // Delay based on index
   });
 };
 const yearDrop = ref([]);
