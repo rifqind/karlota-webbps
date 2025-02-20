@@ -12,7 +12,11 @@
       <ul>
         <NavLinkParentSidebar
           :navIcon="'fa-solid fa-chart-pie'"
-          :menuOpen="menuOpenLapus || currentRoute == 'lapus.entri'"
+          :menuOpen="
+            menuOpenLapus ||
+            currentRoute == 'lapus.entri' ||
+            currentRoute == 'lapus.adjustment'
+          "
           :toggleMenuOpen="toggleMenuOpen"
           :params="'lapus'"
         >

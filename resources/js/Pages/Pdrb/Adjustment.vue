@@ -89,6 +89,26 @@
           </div>
         </div>
       </div>
+      <div
+        v-if="showTabPanel"
+        class="bg-white shadow-md mb-2 rounded-sm border border-gray-200 mb-3"
+      >
+        <div class="p-5">
+          <div class="flex flex-wrap gap-2">
+            <button @click="showTab('q1')" :class="setActiveTab('q1')">Triwulan I</button>
+            <button @click="showTab('q2')" :class="setActiveTab('q2')">
+              Triwulan II
+            </button>
+            <button @click="showTab('q3')" :class="setActiveTab('q3')">
+              Triwulan III
+            </button>
+            <button @click="showTab('q4')" :class="setActiveTab('q4')">
+              Triwulan IV
+            </button>
+            <button @click="showTab('t')" :class="setActiveTab('t')">Tahunan</button>
+          </div>
+        </div>
+      </div>
       <div class="overflow-x-scroll mb-2">
         <table class="table shadow-md w-full mb-2" id="tabel-entry">
           <thead>
@@ -124,7 +144,11 @@
               <th class="min-w-[120px]">Berjalan</th>
             </tr>
           </thead>
-          <AdjustmentTable :regions="page.props.regions" />
+          <AdjustmentTable
+            :regions="page.props.regions"
+            :data-contents="dataContents"
+            :quarter-cap="quarterCap"
+          />
         </table>
       </div>
     </div>
@@ -158,6 +182,28 @@ const formError = ref({
   description: null,
   subsectors: null,
 });
+var def = "btn-info-fordone";
+const activeTab = ref({
+  q1: def,
+  q2: def,
+  q3: def,
+  q4: def,
+  t: def,
+});
+const setActiveTab = (value) => {
+  return activeTab.value[value];
+};
+const showTab = (tab) => {
+  Object.keys(activeTab.value).forEach((key) => {
+    activeTab.value[key] = def;
+  });
+  activeTab.value[tab] = "btn-success-fordone";
+  quarterCap.value = tab.replace("q", "");
+};
+const showTabPanel = ref(false);
+const quarterCap = ref(4);
+const dataContents = ref([]);
+const dataBefore = ref([]);
 const warningToUser = ref(false);
 const notifications = ref([]);
 const showNotification = (notification) => {
@@ -165,8 +211,12 @@ const showNotification = (notification) => {
   notifications.value.forEach((_, index) => {
     setTimeout(() => {
       notifications.value.shift(); // Remove the first notification
-    }, (index + 1) * 700); // Delay based on index
+    }, (index + 0.5) * 200); // Delay based on index
   });
+};
+const dataOnDemand = ref({ 1: {}, 2: {}, 3: {}, 4: {}, t: {} });
+const updateDataOnDemand = (data) => {
+  dataOnDemand.value[data.quarter] = data.data;
 };
 const yearDrop = ref([]);
 const quarterDrop = ref([]);
@@ -334,7 +384,12 @@ const submit = async () => {
         subsectors: form.subsectors,
       },
     });
+    quarterCap.value = form.quarter;
+    showTabPanel.value = true;
+    showTab(`q${quarterCap.value}`);
     showNotification(response.data.notification);
+    dataContents.value = response.data.current_data;
+    dataBefore.value = response.data.previous_data;
   } catch (error) {
     // Display notification if available
     if (error.response.data.notification) {
