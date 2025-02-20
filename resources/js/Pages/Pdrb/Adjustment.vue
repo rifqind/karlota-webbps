@@ -145,9 +145,44 @@
             </tr>
           </thead>
           <AdjustmentTable
+            v-show="showAdjustment[1]"
             :regions="page.props.regions"
             :data-contents="dataContents"
-            :quarter-cap="quarterCap"
+            :quarter-cap="'1'"
+            :data-adjustment="dataOnDemand[1]"
+            :data-on-demand="dataOnDemand"
+            :data-before="dataBefore"
+            @update:update-data-on-demand="updateDataOnDemand"
+          />
+          <AdjustmentTable
+            v-show="showAdjustment[2]"
+            :regions="page.props.regions"
+            :data-contents="dataContents"
+            :quarter-cap="'2'"
+            :data-adjustment="dataOnDemand[2]"
+            :data-on-demand="dataOnDemand"
+            :data-before="dataBefore"
+            @update:update-data-on-demand="updateDataOnDemand"
+          />
+          <AdjustmentTable
+            v-show="showAdjustment[3]"
+            :regions="page.props.regions"
+            :data-contents="dataContents"
+            :quarter-cap="'3'"
+            :data-adjustment="dataOnDemand[3]"
+            :data-on-demand="dataOnDemand"
+            :data-before="dataBefore"
+            @update:update-data-on-demand="updateDataOnDemand"
+          />
+          <AdjustmentTable
+            v-show="showAdjustment[4]"
+            :regions="page.props.regions"
+            :data-contents="dataContents"
+            :quarter-cap="'4'"
+            :data-adjustment="dataOnDemand[4]"
+            :data-on-demand="dataOnDemand"
+            :data-before="dataBefore"
+            @update:update-data-on-demand="updateDataOnDemand"
           />
         </table>
       </div>
@@ -194,14 +229,24 @@ const setActiveTab = (value) => {
   return activeTab.value[value];
 };
 const showTab = (tab) => {
+  Object.keys(showAdjustment.value).forEach((key) => {
+    showAdjustment.value[key] = false;
+  });
   Object.keys(activeTab.value).forEach((key) => {
     activeTab.value[key] = def;
   });
   activeTab.value[tab] = "btn-success-fordone";
-  quarterCap.value = tab.replace("q", "");
+  showAdjustment.value[tab.replaceAll("q", "")] = true;
 };
+const showAdjustment = ref({
+  1: false,
+  2: false,
+  3: false,
+  4: false,
+  t: false,
+});
 const showTabPanel = ref(false);
-const quarterCap = ref(4);
+const quarterCap = ref("4");
 const dataContents = ref([]);
 const dataBefore = ref([]);
 const warningToUser = ref(false);
@@ -413,7 +458,7 @@ const submit = async () => {
 }
 .fixed-thead {
   position: sticky;
-  min-width: 400px;
+  min-width: 250px;
   left: 0;
   background-color: #175676;
   color: whitesmoke;

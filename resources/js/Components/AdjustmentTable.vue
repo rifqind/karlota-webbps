@@ -10,6 +10,7 @@
             <td>
               <input
                 type="text"
+                :key="key + nodeRegion.region + quarterCap"
                 :value="getData(key, nodeRegion.region)"
                 @input="
                   (event) => {
@@ -32,6 +33,7 @@
 
 <script setup>
 import { debounce } from "@/debounce";
+import { current } from "tailwindcss/colors";
 import { onMounted, ref, watch } from "vue";
 
 const props = defineProps({
@@ -46,21 +48,50 @@ const props = defineProps({
   quarterCap: {
     type: String,
     required: true,
-    default: "4",
+  },
+  dataAdjustment: {
+    type: Object,
+    required: true,
+  },
+  dataOnDemand: {
+    type: Object,
+    required: true,
+  },
+  dataBefore: {
+    type: Object,
+    required: true,
   },
 });
 const emits = defineEmits(["update:updateDataOnDemand"]);
-const adjustmentVal = ref([]);
+const adjustmentVal = ref(props.dataAdjustment);
 const dataHere = ref(props.dataContents);
+const dataHereBefore = ref(props.dataBefore);
 watch(
   () => props.dataContents,
   (value) => {
     dataHere.value = value;
   }
 );
-watch(adjustmentVal.value, (value) => {
-  emits("update:updateDataOnDemand", { data: value, quarter: props.quarterCap });
-});
+watch(
+  () => props.dataBefore,
+  (value) => {
+    dataHereBefore.value = value;
+  }
+);
+watch(
+  () => props.dataAdjustment,
+  (value) => {
+    adjustmentVal.value = value;
+  },
+  { deep: true }
+);
+watch(
+  adjustmentVal,
+  (value) => {
+    emits("update:updateDataOnDemand", { data: value, quarter: props.quarterCap });
+  },
+  { deep: true }
+);
 const createAdjVal = (region) => ({
   region,
   adjVal: {
@@ -99,7 +130,6 @@ onMounted(() => {
       arrayVal.push(createAdjVal(element.value));
     }
   });
-
   adjustmentVal.value = arrayVal; // Assign to reactive state
 });
 
@@ -149,6 +179,22 @@ const showThisVal = (region, type) => {
     if (region == "Total Kabupaten/Kota") return getTotalKabkotBerjalan(type);
     if (region == "Selisih") return getSelisih(type);
     if (region == "Diskrepansi") return getDiskrepansi(type);
+  } else if (type == "qtoq_initial") {
+    if (!isNaN(Number(region))) return gQtoQ(region, "adhk_initial");
+  } else if (type == "qtoq_berjalan") {
+    if (!isNaN(Number(region))) return gQtoQ(region, "adhk_berjalan");
+  } else if (type == "yony_initial") {
+    if (!isNaN(Number(region))) return gYonY(region, "adhk_initial");
+  } else if (type == "yony_berjalan") {
+    if (!isNaN(Number(region))) return gYonY(region, "adhk_berjalan");
+  } else if (type == "ctoc_initial") {
+    if (!isNaN(Number(region))) return gCtoC(region, "adhk_initial");
+  } else if (type == "ctoc_berjalan") {
+    if (!isNaN(Number(region))) return gCtoC(region, "adhk_berjalan");
+  } else if (type == "lajuimpqtoq_initial") {
+    if (!isNaN(Number(region))) return gIQtoQ(region, "adhb_initial", "adhk_initial");
+  } else if (type == "lajuimpqtoq_berjalan") {
+    if (!isNaN(Number(region))) return gIQtoQ(region, "adhb_berjalan", "adhk_initial");
   }
 };
 const getTotalKabkot = (typeOfData, region, type) => {
@@ -237,6 +283,118 @@ const formatNumberGerman = (num, min = 2, max = 5) => {
     maximumFractionDigits: max,
   }).format(num);
 };
+// #region Section: Calculate
+const gQtoQ = (region, type) => {
+  let quarter = Number(props.quarterCap);
+  let current = null,
+    previous = null,
+    dividend = 0,
+    divisor = 0;
+  // Check if the current quarter data exists and find the matching region
+  if (props.dataOnDemand[quarter] && Array.isArray(props.dataOnDemand[quarter])) {
+    current = props.dataOnDemand[quarter].find((x) => x.region == region) ?? null;
+  }
+  // Get the dividend safely
+  dividend = Number(current?.adjVal?.[type]) ?? 0;
+  if (quarter - 1 !== 0) {
+    // Ensure previous quarter data exists before searching
+    if (
+      props.dataOnDemand[quarter - 1] &&
+      Array.isArray(props.dataOnDemand[quarter - 1])
+    ) {
+      previous = props.dataOnDemand[quarter - 1].find((x) => x.region == region) ?? null;
+    }
+    divisor = Number(previous?.adjVal?.[type]) ?? 0;
+  } else {
+    // If there's no previous quarter, fetch from `dataHereBefore`
+    previous =
+      dataHereBefore.value.find((x) => x.quarter == "4" && x.region_id == region) ?? null;
+    divisor = Number(previous?.adhk) ?? 0;
+  }
+  let growth = divisor !== 0 && dividend !== 0 ? (dividend / divisor) * 100 - 100 : 0;
+  return formatNumberGerman(growth.toFixed(4), 2, 4);
+};
+const gYonY = (region, type) => {
+  let quarter = Number(props.quarterCap);
+  let current = null,
+    previous = null,
+    dividend = 0,
+    divisor = 0;
+  if (props.dataOnDemand[quarter] && Array.isArray(props.dataOnDemand[quarter])) {
+    current = props.dataOnDemand[quarter].find((x) => x.region == region) ?? null;
+  }
+  dividend = Number(current?.adjVal?.[type]) ?? 0;
+  previous =
+    dataHereBefore.value.find(
+      (x) => x.quarter == props.quarterCap && x.region_id == region
+    ) ?? null;
+  divisor = Number(previous?.adhk) ?? 0;
+  let growth = divisor !== 0 && dividend !== 0 ? (dividend / divisor) * 100 - 100 : 0;
+  return formatNumberGerman(growth.toFixed(4), 2, 4);
+};
+const gCtoC = (region, type) => {
+  let quarter = Number(props.quarterCap);
+  let current = null,
+    previous = null,
+    dividend = 0,
+    divisor = 0;
+  for (let index = 1; index <= quarter; index++) {
+    if (props.dataOnDemand[index] && Array.isArray(props.dataOnDemand[index])) {
+      current = props.dataOnDemand[index].find((x) => x.region == region) ?? null;
+    }
+    dividend += Number(current?.adjVal?.[type]) ?? 0;
+    previous =
+      dataHereBefore.value.find(
+        (x) => x.quarter == String(index) && x.region_id == region
+      ) ?? null;
+    divisor += Number(previous?.adhk) ?? 0;
+  }
+  let growth = divisor !== 0 && dividend !== 0 ? (dividend / divisor) * 100 - 100 : 0;
+  return formatNumberGerman(growth.toFixed(4), 2, 4);
+};
+const gIQtoQ = (region, adhb, adhk) => {
+  let quarter = Number(props.quarterCap);
+  let current = null,
+    previous = null,
+    adhbCurrent = null,
+    adhkCurrent = null,
+    adhbPrevious = null,
+    adhkPrevious = null,
+    dividend = 0,
+    divisor = 0,
+    idxCurrent = 0,
+    idxPrevious = 0;
+  if (props.dataOnDemand[quarter] && Array.isArray(props.dataOnDemand[quarter])) {
+    current = props.dataOnDemand[quarter].find((x) => x.region == region) ?? null;
+  }
+  adhbCurrent = Number(current?.adjVal?.[adhb]) ?? 0;
+  adhkCurrent = Number(current?.adjVal?.[adhk]) ?? 0;
+  idxCurrent =
+    adhbCurrent !== 0 && adhkCurrent !== 0 ? (adhbCurrent / adhkCurrent) * 100 : 0;
+  if (quarter - 1 !== 0) {
+    if (
+      props.dataOnDemand[quarter - 1] &&
+      Array.isArray(props.dataOnDemand[quarter - 1])
+    ) {
+      previous = props.dataOnDemand[quarter - 1].find((x) => x.region == region) ?? null;
+    }
+    adhbPrevious = Number(previous?.adjVal?.[adhb]) ?? 0;
+    adhkPrevious = Number(previous?.adjVal?.[adhk]) ?? 0;
+    idxPrevious =
+      adhbPrevious !== 0 && adhkPrevious !== 0 ? (adhbPrevious / adhkPrevious) * 100 : 0;
+  } else {
+    previous =
+      dataHereBefore.value.find((x) => x.quarter == "4" && x.region_id == region) ?? null;
+    adhbPrevious = Number(previous?.adhb) ?? 0;
+    adhkPrevious = Number(previous?.adhk) ?? 0;
+    idxPrevious =
+      adhbPrevious !== 0 && adhkPrevious !== 0 ? (adhbPrevious / adhkPrevious) * 100 : 0;
+  }
+  let growth =
+    idxPrevious !== 0 && idxCurrent !== 0 ? (idxCurrent / idxPrevious) * 100 - 100 : 0;
+  return formatNumberGerman(growth.toFixed(4), 2, 4);
+};
+// #endregion
 </script>
 
 <style scoped>
@@ -255,6 +413,7 @@ const formatNumberGerman = (num, min = 2, max = 5) => {
 tbody tr td:not(:nth-child(1)) {
   text-align: right;
 }
+
 input {
   text-align: right;
 }
