@@ -184,6 +184,16 @@
             :data-before="dataBefore"
             @update:update-data-on-demand="updateDataOnDemand"
           />
+          <AdjustmentTahunTable
+            v-show="showAdjustment['t']"
+            :regions="page.props.regions"
+            :data-contents="dataContents"
+            :quarter-cap="'t'"
+            :data-adjustment="dataOnDemand['t']"
+            :data-on-demand="dataOnDemand"
+            :data-before="dataBefore"
+            @update:update-data-on-demand="updateDataOnDemand"
+          />
         </table>
       </div>
     </div>
@@ -193,6 +203,7 @@
 <script setup>
 import { triggerSpinner } from "@/axiosSetup";
 import AdjustmentTable from "@/Components/AdjustmentTable.vue";
+import AdjustmentTahunTable from "@/Components/AdjustmentTahunTable.vue";
 import FlashFetch from "@/Components/FlashFetch.vue";
 import FloatScrollDown from "@/Components/FloatScrollDown.vue";
 import SpinnerBorder from "@/Components/SpinnerBorder.vue";

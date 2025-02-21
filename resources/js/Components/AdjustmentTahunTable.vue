@@ -10,13 +10,8 @@
             <td>
               <input
                 type="text"
-                :key="key + nodeRegion.region + quarterCap"
-                :value="getData(key, nodeRegion.region)"
-                @input="
-                  (event) => {
-                    debounceHandleInput(event, key, nodeRegion.region);
-                  }
-                "
+                :key="key + nodeRegion.region + 't'"
+                disabled
                 v-if="regIndex >= 4"
                 class="input-fordone w-full"
               />
@@ -32,7 +27,6 @@
 </template>
 
 <script setup>
-import { debounce } from "@/debounce";
 import { onMounted, ref, watch } from "vue";
 
 const props = defineProps({
@@ -42,10 +36,6 @@ const props = defineProps({
   },
   dataContents: {
     type: Object,
-    required: true,
-  },
-  quarterCap: {
-    type: String,
     required: true,
   },
   dataAdjustment: {
@@ -87,7 +77,7 @@ watch(
 watch(
   adjustmentVal,
   (value) => {
-    emits("update:updateDataOnDemand", { data: value, quarter: props.quarterCap });
+    emits("update:updateDataOnDemand", { data: value, quarter: "t" });
   },
   { deep: true }
 );
@@ -145,9 +135,7 @@ const showLabel = (region) => {
   }
 };
 const showThisVal = (region, type) => {
-  const theData = dataHere.value.find((x) => {
-    return x.region_id == region && x.quarter == props.quarterCap;
-  });
+  const theData = dataHere.value.filter((x) => x.region_id == region);
   if (type == "adhb_initial") {
     if (region == "Total Kabupaten/Kota") {
       let formattedResult = getTotalKabkot("adhb", region, type);
@@ -157,10 +145,9 @@ const showThisVal = (region, type) => {
     if (region == "Diskrepansi") return getDiskrepansi(type);
     if (theData) {
       let formattedResult;
-      formattedResult =
-        theData["adhb"] == "" || theData["adhb"] == null ? null : theData["adhb"];
-      setAdjustmentVal(region, type, Number(formattedResult));
-      return formatNumberGerman(Number(formattedResult), 0, 9);
+      formattedResult = theData.reduce((sum, item) => sum + Number(item?.adhb) ?? 0, 0);
+      setAdjustmentVal(region, type, formattedResult);
+      return formatNumberGerman(formattedResult, 0, 9);
     }
   } else if (type == "adhk_initial") {
     if (region == "Total Kabupaten/Kota") return getTotalKabkot("adhk", region, type);
@@ -168,22 +155,15 @@ const showThisVal = (region, type) => {
     if (region == "Diskrepansi") return getDiskrepansi(type);
     if (theData) {
       let formattedResult;
-      formattedResult =
-        theData["adhk"] == "" || theData["adhk"] == null ? null : theData["adhk"];
-      setAdjustmentVal(region, type, Number(formattedResult));
-      return formatNumberGerman(Number(formattedResult), 0, 9);
+      formattedResult = theData.reduce((sum, item) => sum + Number(item?.adhk) ?? 0, 0);
+      setAdjustmentVal(region, type, formattedResult);
+      return formatNumberGerman(formattedResult, 0, 9);
     }
   } else if (type == "adhb_berjalan" || type == "adhk_berjalan") {
     if (!isNaN(Number(region))) return getBerjalan(region, type);
     if (region == "Total Kabupaten/Kota") return getTotalKabkotBerjalan(type);
     if (region == "Selisih") return getSelisih(type);
     if (region == "Diskrepansi") return getDiskrepansi(type);
-  } else if (type == "qtoq_initial") {
-    if (!isNaN(Number(region))) return gQtoQ(region, "adhk_initial", type);
-    if (region == "Total Kabupaten/Kota") return gQtoQ(region, "adhk_initial", type);
-  } else if (type == "qtoq_berjalan") {
-    if (!isNaN(Number(region))) return gQtoQ(region, "adhk_berjalan", type);
-    if (region == "Total Kabupaten/Kota") return gQtoQ(region, "adhk_berjalan", type);
   } else if (type == "yony_initial") {
     if (!isNaN(Number(region))) return gYonY(region, "adhk_initial", type);
     if (region == "Total Kabupaten/Kota") return gYonY(region, "adhk_initial", type);
@@ -196,16 +176,6 @@ const showThisVal = (region, type) => {
   } else if (type == "ctoc_berjalan") {
     if (!isNaN(Number(region))) return gCtoC(region, "adhk_berjalan", type);
     if (region == "Total Kabupaten/Kota") return gCtoC(region, "adhk_berjalan", type);
-  } else if (type == "lajuimpqtoq_initial") {
-    if (!isNaN(Number(region)))
-      return gIQtoQ(region, "adhb_initial", "adhk_initial", type);
-    if (region == "Total Kabupaten/Kota")
-      return gIQtoQ(region, "adhb_initial", "adhk_initial", type);
-  } else if (type == "lajuimpqtoq_berjalan") {
-    if (!isNaN(Number(region)))
-      return gIQtoQ(region, "adhb_berjalan", "adhk_berjalan", type);
-    if (region == "Total Kabupaten/Kota")
-      return gIQtoQ(region, "adhb_berjalan", "adhk_berjalan", type);
   } else if (type == "kontribusi_initial") {
     if (!isNaN(Number(region))) return getKontribusi("adhb_initial", region, type);
     if (region == "Total Kabupaten/Kota")
@@ -217,9 +187,7 @@ const showThisVal = (region, type) => {
   }
 };
 const getTotalKabkot = (typeOfData, region, type) => {
-  const filteredData = dataHere.value.filter(
-    (x) => x.quarter == props.quarterCap && x.region_id !== 1
-  );
+  const filteredData = dataHere.value.filter((x) => x.region_id !== 1);
   const result = filteredData.reduce((sum, item) => sum + Number(item[typeOfData]), 0);
   const theIndex = adjustmentVal.value.findIndex((x) => {
     return x.region == region;
@@ -254,46 +222,29 @@ const getDiskrepansi = (type) => {
   return formatNumberGerman(diskrepansi, 2, 4);
 };
 const getBerjalan = (region, type) => {
-  const data = adjustmentVal.value.find((x) => {
-    return x.region == region;
-  });
+  let adhb = 0,
+    adhk = 0;
+  for (let index = 1; index <= 4; index++) {
+    const data = props.dataOnDemand[index].find((x) => x.region == region);
+    if (type === "adhb_berjalan") {
+      adhb += Number(data?.adjVal?.[type]) || 0; // Use || instead of ??
+    } else if (type === "adhk_berjalan") {
+      adhk += Number(data?.adjVal?.[type]) || 0;
+    }
+  }
   if (type == "adhb_berjalan") {
-    const berjalan = data.adjVal["adhb_initial"] + data.adjVal["adhb_adjust"];
-    setAdjustmentVal(region, type, berjalan);
-    return formatNumberGerman(berjalan, 0, 9);
+    setAdjustmentVal(region, type, adhb);
+    return formatNumberGerman(adhb, 0, 9);
   } else if (type == "adhk_berjalan") {
-    const berjalan = data.adjVal["adhk_initial"] + data.adjVal["adhk_adjust"];
-    setAdjustmentVal(region, type, berjalan);
-    return formatNumberGerman(berjalan, 0, 9);
+    setAdjustmentVal(region, type, adhk);
+    return formatNumberGerman(adhk, 0, 9);
   }
 };
-const getData = (key, region) => {
-  const theData = adjustmentVal.value.find((x) => {
-    return x.region == region;
-  });
-  if (theData) {
-    let formattedResult;
-    formattedResult =
-      theData.adjVal[key] == "" || theData.adjVal[key] == null
-        ? null
-        : formatNumberGerman(Number(theData.adjVal[key]), 0, 9);
-    return formattedResult;
-  }
-};
-const handleInput = (event, key, region) => {
-  let value = event.target.value;
-  value = String(value).replaceAll(".", "").replace(",", ".");
-  const theIndex = adjustmentVal.value.findIndex((x) => x.region == region);
-  if (theIndex !== -1) adjustmentVal.value[theIndex].adjVal[key] = Number(value);
-};
-const debounceHandleInput = debounce((event, key, region) => {
-  handleInput(event, key, region);
-}, 700);
 const setAdjustmentVal = (region, type, result) => {
-  const theIndex = adjustmentVal.value.findIndex((x) => {
-    return x.region == region;
-  });
-  if (theIndex !== -1) adjustmentVal.value[theIndex].adjVal[type] = result;
+  const theIndex = adjustmentVal.value.findIndex((x) => x.region == region);
+  if (theIndex !== -1) {
+    adjustmentVal.value[theIndex].adjVal[type] = result;
+  }
 };
 // #endregion
 const formatNumberGerman = (num, min = 2, max = 5) => {
@@ -303,63 +254,28 @@ const formatNumberGerman = (num, min = 2, max = 5) => {
   }).format(num);
 };
 // #region Section: Calculate
-const gQtoQ = (region, type, typeAdjust) => {
-  let quarter = Number(props.quarterCap);
+const gYonY = (region, type, typeAdjust) => {
   let current = null,
     previous = null,
     dividend = 0,
     divisor = 0;
-  if (props.dataOnDemand[quarter] && Array.isArray(props.dataOnDemand[quarter])) {
-    current = props.dataOnDemand[quarter].find((x) => x.region == region) ?? null;
-  }
-  // Get the dividend safely
-  dividend = Number(current?.adjVal?.[type]) ?? 0;
-  if (quarter - 1 !== 0) {
-    if (
-      props.dataOnDemand[quarter - 1] &&
-      Array.isArray(props.dataOnDemand[quarter - 1])
-    ) {
-      previous = props.dataOnDemand[quarter - 1].find((x) => x.region == region) ?? null;
+  for (let index = 1; index <= 4; index++) {
+    if (props.dataOnDemand[index] && Array.isArray(props.dataOnDemand[index])) {
+      current = props.dataOnDemand[index].find((x) => x.region == region) ?? null;
     }
-    divisor = Number(previous?.adjVal?.[type]) ?? 0;
-  } else {
+    dividend += Number(current?.adjVal?.[type]) ?? 0;
     if (!isNaN(Number(region))) {
       previous =
-        dataHereBefore.value.find((x) => x.quarter == "4" && x.region_id == region) ??
-        null;
-      divisor = Number(previous?.adhk) ?? 0;
+        dataHereBefore.value.find(
+          (x) => x.quarter == String(index) && x.region_id == region
+        ) ?? null;
+      divisor += Number(previous?.adhk) ?? 0;
     } else {
       const filteredData = dataHereBefore.value.filter(
-        (x) => x.quarter == "4" && x.region_id !== 1
+        (x) => x.quarter == String(index) && x.region_id !== 1
       );
-      divisor = filteredData.reduce((sum, item) => sum + (Number(item?.adhk) ?? 0), 0);
+      divisor += filteredData.reduce((sum, item) => sum + (Number(item?.adhk) ?? 0), 0);
     }
-  }
-  let growth = divisor !== 0 && dividend !== 0 ? (dividend / divisor) * 100 - 100 : 0;
-  setAdjustmentVal(region, typeAdjust, growth);
-  return formatNumberGerman(growth.toFixed(4), 2, 4);
-};
-const gYonY = (region, type, typeAdjust) => {
-  let quarter = Number(props.quarterCap);
-  let current = null,
-    previous = null,
-    dividend = 0,
-    divisor = 0;
-  if (props.dataOnDemand[quarter] && Array.isArray(props.dataOnDemand[quarter])) {
-    current = props.dataOnDemand[quarter].find((x) => x.region == region) ?? null;
-  }
-  dividend = Number(current?.adjVal?.[type]) ?? 0;
-  if (!isNaN(Number(region))) {
-    previous =
-      dataHereBefore.value.find(
-        (x) => x.quarter == props.quarterCap && x.region_id == region
-      ) ?? null;
-    divisor = Number(previous?.adhk) ?? 0;
-  } else {
-    const filteredData = dataHereBefore.value.filter(
-      (x) => x.quarter == props.quarterCap && x.region_id !== 1
-    );
-    divisor = filteredData.reduce((sum, item) => sum + (Number(item?.adhk) ?? 0), 0);
   }
   let growth = divisor !== 0 && dividend !== 0 ? (dividend / divisor) * 100 - 100 : 0;
   setAdjustmentVal(region, typeAdjust, growth);
@@ -391,64 +307,6 @@ const gCtoC = (region, type, typeAdjust) => {
   }
   let growth = divisor !== 0 && dividend !== 0 ? (dividend / divisor) * 100 - 100 : 0;
   setAdjustmentVal(region, typeAdjust, growth);
-  return formatNumberGerman(growth.toFixed(4), 2, 4);
-};
-const gIQtoQ = (region, adhb, adhk, type) => {
-  let quarter = Number(props.quarterCap);
-  let current = null,
-    previous = null,
-    adhbCurrent = null,
-    adhkCurrent = null,
-    adhbPrevious = null,
-    adhkPrevious = null,
-    dividend = 0,
-    divisor = 0,
-    idxCurrent = 0,
-    idxPrevious = 0;
-  if (props.dataOnDemand[quarter] && Array.isArray(props.dataOnDemand[quarter])) {
-    current = props.dataOnDemand[quarter].find((x) => x.region == region) ?? null;
-  }
-  adhbCurrent = Number(current?.adjVal?.[adhb]) ?? 0;
-  adhkCurrent = Number(current?.adjVal?.[adhk]) ?? 0;
-  idxCurrent =
-    adhbCurrent !== 0 && adhkCurrent !== 0 ? (adhbCurrent / adhkCurrent) * 100 : 0;
-  if (quarter - 1 !== 0) {
-    if (
-      props.dataOnDemand[quarter - 1] &&
-      Array.isArray(props.dataOnDemand[quarter - 1])
-    ) {
-      previous = props.dataOnDemand[quarter - 1].find((x) => x.region == region) ?? null;
-    }
-    adhbPrevious = Number(previous?.adjVal?.[adhb]) ?? 0;
-    adhkPrevious = Number(previous?.adjVal?.[adhk]) ?? 0;
-    idxPrevious =
-      adhbPrevious !== 0 && adhkPrevious !== 0 ? (adhbPrevious / adhkPrevious) * 100 : 0;
-  } else {
-    if (!isNaN(Number(region))) {
-      previous =
-        dataHereBefore.value.find((x) => x.quarter == "4" && x.region_id == region) ??
-        null;
-      adhbPrevious = Number(previous?.adhb) ?? 0;
-      adhkPrevious = Number(previous?.adhk) ?? 0;
-    } else {
-      const filteredData = dataHereBefore.value.filter(
-        (x) => x.quarter == "4" && x.region_id !== 1
-      );
-      adhbPrevious = filteredData.reduce(
-        (sum, item) => sum + (Number(item?.adhb) ?? 0),
-        0
-      );
-      adhkPrevious = filteredData.reduce(
-        (sum, item) => sum + (Number(item?.adhk) ?? 0),
-        0
-      );
-    }
-    idxPrevious =
-      adhbPrevious !== 0 && adhkPrevious !== 0 ? (adhbPrevious / adhkPrevious) * 100 : 0;
-  }
-  let growth =
-    idxPrevious !== 0 && idxCurrent !== 0 ? (idxCurrent / idxPrevious) * 100 - 100 : 0;
-  setAdjustmentVal(region, type, growth);
   return formatNumberGerman(growth.toFixed(4), 2, 4);
 };
 const getKontribusi = (type, region, typeAdjust) => {
