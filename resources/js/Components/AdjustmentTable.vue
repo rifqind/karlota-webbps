@@ -10,11 +10,12 @@
             <td>
               <input
                 type="text"
+                :id="key + nodeRegion.region + quarterCap"
                 :key="key + nodeRegion.region + quarterCap"
                 :value="getData(key, nodeRegion.region)"
                 @input="
                   (event) => {
-                    debounceHandleInput(event, key, nodeRegion.region);
+                    debounceHandleInput(event, key, nodeRegion.region, quarterCap);
                   }
                 "
                 v-if="regIndex >= 4"
@@ -34,7 +35,6 @@
 <script setup>
 import { debounce } from "@/debounce";
 import { onMounted, ref, watch } from "vue";
-
 const props = defineProps({
   regions: {
     type: Array,
@@ -61,7 +61,7 @@ const props = defineProps({
     required: true,
   },
 });
-const emits = defineEmits(["update:updateDataOnDemand"]);
+const emits = defineEmits(["update:updateDataOnDemand", "update:updateDataContents"]);
 const adjustmentVal = ref(props.dataAdjustment);
 const dataHere = ref(props.dataContents);
 const dataHereBefore = ref(props.dataBefore);
@@ -280,14 +280,23 @@ const getData = (key, region) => {
     return formattedResult;
   }
 };
-const handleInput = (event, key, region) => {
+const handleInput = (event, key, region, quarter) => {
   let value = event.target.value;
   value = String(value).replaceAll(".", "").replace(",", ".");
   const theIndex = adjustmentVal.value.findIndex((x) => x.region == region);
+  const dataContentIndex = dataHere.value.findIndex(
+    (x) => x.region_id == region && x.quarter == quarter
+  );
   if (theIndex !== -1) adjustmentVal.value[theIndex].adjVal[key] = Number(value);
+  let type;
+  if (key == "adhb_adjust") type = "adj_adhb";
+  else if (key == "adhk_adjust") type = "adj_adhk";
+  if (dataContentIndex !== -1) {
+    dataHere.value[dataContentIndex][type] = Number(value);
+  }
 };
-const debounceHandleInput = debounce((event, key, region) => {
-  handleInput(event, key, region);
+const debounceHandleInput = debounce((event, key, region, quarter) => {
+  handleInput(event, key, region, quarter);
 }, 700);
 const setAdjustmentVal = (region, type, result) => {
   const theIndex = adjustmentVal.value.findIndex((x) => {
@@ -295,6 +304,9 @@ const setAdjustmentVal = (region, type, result) => {
   });
   if (theIndex !== -1) adjustmentVal.value[theIndex].adjVal[type] = result;
 };
+watch(dataHere.value, (value) => {
+  emits("update:updateDataContents", value);
+});
 // #endregion
 const formatNumberGerman = (num, min = 2, max = 5) => {
   return new Intl.NumberFormat("de-DE", {

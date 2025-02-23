@@ -153,6 +153,7 @@
             :data-on-demand="dataOnDemand"
             :data-before="dataBefore"
             @update:update-data-on-demand="updateDataOnDemand"
+            @update:update-data-contents="updateDataContents"
           />
           <AdjustmentTable
             v-show="showAdjustment[2]"
@@ -163,6 +164,7 @@
             :data-on-demand="dataOnDemand"
             :data-before="dataBefore"
             @update:update-data-on-demand="updateDataOnDemand"
+            @update:update-data-contents="updateDataContents"
           />
           <AdjustmentTable
             v-show="showAdjustment[3]"
@@ -173,6 +175,7 @@
             :data-on-demand="dataOnDemand"
             :data-before="dataBefore"
             @update:update-data-on-demand="updateDataOnDemand"
+            @update:update-data-contents="updateDataContents"
           />
           <AdjustmentTable
             v-show="showAdjustment[4]"
@@ -183,6 +186,7 @@
             :data-on-demand="dataOnDemand"
             :data-before="dataBefore"
             @update:update-data-on-demand="updateDataOnDemand"
+            @update:update-data-contents="updateDataContents"
           />
           <AdjustmentTahunTable
             v-show="showAdjustment['t']"
@@ -273,6 +277,9 @@ const showNotification = (notification) => {
 const dataOnDemand = ref({ 1: {}, 2: {}, 3: {}, 4: {}, t: {} });
 const updateDataOnDemand = (data) => {
   dataOnDemand.value[data.quarter] = data.data;
+};
+const updateDataContents = (data) => {
+  dataContents.value = data;
 };
 const yearDrop = ref([]);
 const quarterDrop = ref([]);

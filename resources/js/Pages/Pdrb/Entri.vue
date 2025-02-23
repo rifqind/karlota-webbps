@@ -979,12 +979,6 @@ const saveEntri = async () => {
   thisForm._token = response.data;
   if (thisForm.processing) return;
   thisForm.post(route("pdrb.save-entri"), {
-    onBefore: () => {
-      // triggerSpinner.value = true;
-    },
-    onFinish: () => {
-      // triggerSpinner.value = false;
-    },
     onSuccess: (response) => {
       showNotification(response.props.notification);
     },
@@ -994,17 +988,13 @@ const submitEntri = async () => {
   const thisForm = useForm({
     id: dataset.value.id,
     type: page.props.type,
+    _token: null,
+    dataContents: dataContents.value,
   });
   const response = await axios.get(route("token"));
   thisForm._token = response.data;
   if (thisForm.processing) return;
   thisForm.post(route("pdrb.submit-entri"), {
-    onBefore: () => {
-      // triggerSpinner.value = true;
-    },
-    onFinish: () => {
-      // triggerSpinner.value = false;
-    },
     onSuccess: (response) => {
       showNotification(response.props.notification);
       if (response.props.notification[0].type == "success")
@@ -1016,17 +1006,12 @@ const unsubmitEntri = async () => {
   const thisForm = useForm({
     id: dataset.value.id,
     type: page.props.type,
+    _token: null,
   });
   const response = await axios.get(route("token"));
   thisForm._token = response.data;
   if (thisForm.processing) return;
   thisForm.post(route("pdrb.unsubmit-entri"), {
-    onBefore: () => {
-      // triggerSpinner.value = true;
-    },
-    onFinish: () => {
-      // triggerSpinner.value = false;
-    },
     onSuccess: (response) => {
       showNotification(response.props.notification);
       if (response.props.notification[0].type == "success")

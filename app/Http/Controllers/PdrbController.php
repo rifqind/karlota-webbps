@@ -242,13 +242,33 @@ class PdrbController extends Controller
             if ($type == 'Lapangan Usaha') $route = 'lapus.';
             else if ($type == 'Pengeluaran') $route = 'peng.';
             $request->validate([
-                'id' => ['required', 'integer']
+                'id' => ['required', 'integer'],
+                'dataContents' => ['required', 'array'],
+                'dataContents.*.id' => ['required', 'integer', 'exists:pdrbs,id'],
+                'dataContents.*.dataset_id' => ['required', 'integer'],
+                'dataContents.*.year' => ['required', 'integer'],
+                'dataContents.*.quarter' => ['required', 'integer'],
+                'dataContents.*.subsector_id' => ['required', 'integer'],
+                'dataContents.*.adhb' => ['sometimes', 'numeric', 'nullable'],
+                'dataContents.*.adhk' => ['sometimes', 'numeric', 'nullable'],
             ]);
             $dataset = Dataset::where('id', $request->id)
                 ->update(['status' => 'Submitted']);
+            foreach ($request->dataContents as $key => $value) {
+                # code...
+                Pdrb::where('id', $value['id'])
+                    ->update([
+                        'dataset_id' => $value['dataset_id'],
+                        'year' => $value['year'],
+                        'quarter' => $value['quarter'],
+                        'subsector_id' => $value['subsector_id'],
+                        'adhb' => $value['adhb'],
+                        'adhk' => $value['adhk'],
+                    ]);
+            }
             $message = [
                 'type' => 'success',
-                'message' => 'Data sudah di-submit'
+                'message' => 'Data sudah disubmit dan disimpan'
             ];
             array_push($notification, $message);
             DB::commit();
