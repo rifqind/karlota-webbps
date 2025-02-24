@@ -1,7 +1,7 @@
 <template>
   <Head title="Adjustment" />
   <SpinnerBorder v-if="triggerSpinner" />
-  <GeneralLayout>
+  <GeneralLayout :entri="mountThis">
     <FlashFetch :notifications="notifications" />
     <FloatScrollDown />
     <div class="container px-[7.5px] mr-auto ml-auto">
@@ -95,17 +95,21 @@
       >
         <div class="p-5">
           <div class="flex flex-wrap gap-2">
-            <button @click="showTab('q1')" :class="setActiveTab('q1')">Triwulan I</button>
-            <button @click="showTab('q2')" :class="setActiveTab('q2')">
+            <button v-if="listTab[1]" @click="showTab('q1')" :class="setActiveTab('q1')">
+              Triwulan I
+            </button>
+            <button v-if="listTab[2]" @click="showTab('q2')" :class="setActiveTab('q2')">
               Triwulan II
             </button>
-            <button @click="showTab('q3')" :class="setActiveTab('q3')">
+            <button v-if="listTab[3]" @click="showTab('q3')" :class="setActiveTab('q3')">
               Triwulan III
             </button>
-            <button @click="showTab('q4')" :class="setActiveTab('q4')">
+            <button v-if="listTab[4]" @click="showTab('q4')" :class="setActiveTab('q4')">
               Triwulan IV
             </button>
-            <button @click="showTab('t')" :class="setActiveTab('t')">Tahunan</button>
+            <button v-if="listTab['t']" @click="showTab('t')" :class="setActiveTab('t')">
+              Tahunan
+            </button>
           </div>
         </div>
       </div>
@@ -281,6 +285,13 @@ const showAdjustment = ref({
   4: false,
   t: false,
 });
+const listTab = ref({
+  1: false,
+  2: false,
+  3: false,
+  4: false,
+  t: false,
+});
 const showTabPanel = ref(false);
 const quarterCap = ref("4");
 const dataContents = ref([]);
@@ -312,10 +323,12 @@ const quarterDrop = ref([]);
 const descDrop = ref([]);
 const dataBeforeDrop = ref([]);
 const subsectorDrop = ref([]);
+const mountThis = ref(false);
 onMounted(() => {
   fetchYear();
   // #region Section: subsector select
   let tempData = [];
+  mountThis.value = true;
   page.props.subsectors.forEach((element) => {
     let data, label;
     if (
@@ -389,6 +402,46 @@ onMounted(() => {
         "-" +
         element.id;
       label = element.sector.category.code + ". " + element.name;
+      tempData.push({ value: data, label: label });
+    }
+    if (
+      element.code != null &&
+      element.code == "a" &&
+      element.sector.category.type == "Pengeluaran"
+    ) {
+      label = element.sector.code + ". " + element.sector.name;
+      data =
+        "sector-" +
+        element.sector.category.id +
+        "-" +
+        element.sector.id +
+        "-" +
+        element.id;
+      tempData.push({ value: data, label: label });
+    }
+    if (element.code != null && element.sector.category.type == "Pengeluaran") {
+      label = element.code + ". " + element.name;
+      data =
+        "subsector-" +
+        element.sector.category.id +
+        "-" +
+        element.sector.id +
+        "-" +
+        element.id;
+      tempData.push({ value: data, label: label });
+    } else if (
+      element.code == null &&
+      element.sector.code != null &&
+      element.sector.category.type == "Pengeluaran"
+    ) {
+      data =
+        "subsector-" +
+        element.sector.category.id +
+        "-" +
+        element.sector.id +
+        "-" +
+        element.id;
+      label = element.sector.code + ". " + element.sector.name;
       tempData.push({ value: data, label: label });
     }
   });
@@ -482,6 +535,12 @@ const submit = async () => {
         subsectors: form.subsectors,
       },
     });
+    for (let index = 1; index <= Number(quarterCap.value); index++) {
+      if (index == 4) {
+        listTab.value.t = true;
+      }
+      listTab.value[index] = true;
+    }
     typeData.value = form.subsectors.split("-")[0];
     quarterCap.value = form.quarter;
     showTabPanel.value = true;
@@ -489,6 +548,14 @@ const submit = async () => {
     showNotification(response.data.notification);
     dataContents.value = response.data.current_data;
     dataBefore.value = response.data.previous_data;
+    response.data.current_data.forEach((element) => {
+      const quarterData = dataOnDemand.value[Number(element.quarter)];
+      const theIndex = quarterData.findIndex((x) => x.region == element.region_id);
+      if (theIndex !== -1) {
+        quarterData[theIndex].adjVal["adhb_adjust"] = Number(element.adj_adhb);
+        quarterData[theIndex].adjVal["adhk_adjust"] = Number(element.adj_adhk);
+      }
+    });
   } catch (error) {
     // Display notification if available
     if (error.response.data.notification) {
@@ -514,6 +581,7 @@ const saveAdjustment = async () => {
   if (thisForm.processing) return;
   thisForm.post(route("pdrb.save-adjustment"), {
     onSuccess: (response) => {
+      console.log(response.props.notification);
       showNotification(response.props.notification);
     },
   });
@@ -525,6 +593,7 @@ const saveAdjustment = async () => {
 .table {
   font-size: 13px;
 }
+
 .fixed-thead {
   position: sticky;
   min-width: 250px;
@@ -536,6 +605,7 @@ const saveAdjustment = async () => {
   border-right: 1px solid #ccc;
   border-left: 1px solid #ccc;
 }
+
 .table {
   /* table-layout: fixed; */
   /* Ensures consistent column width */

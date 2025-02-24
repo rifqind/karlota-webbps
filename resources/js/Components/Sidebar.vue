@@ -49,9 +49,18 @@
             <NavLinkSidebar
               :navIcon="'fa-solid fa-list-ol'"
               :href="route('peng.entri')"
-              :currentRoute="currentRoute == 'peng.entri'"
+              :currentRoute="
+                currentRoute == 'peng.entri' || currentRoute == 'peng.adjustment'
+              "
             >
               Entri PDRB
+            </NavLinkSidebar>
+            <NavLinkSidebar
+              :navIcon="'fa-solid fa-list-ol'"
+              :href="route('peng.adjustment')"
+              :currentRoute="currentRoute == 'peng.adjustment'"
+            >
+              Adjustment
             </NavLinkSidebar>
           </template>
         </NavLinkParentSidebar>

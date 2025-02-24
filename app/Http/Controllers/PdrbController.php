@@ -25,12 +25,9 @@ class PdrbController extends Controller
         $subsectors = Subsector::where('type', $type)
             ->with(['sector.category'])
             ->get();
-        // $dataContents = Pdrb::where('dataset_id', 1)
-        //     ->get();
         return Inertia::render('Pdrb/Entri', [
             'type' => $type,
             'subsectors' => $subsectors,
-            // 'dataContents' => $dataContents,
             'regions' => $regions
         ]);
     }
@@ -437,6 +434,7 @@ class PdrbController extends Controller
             ->where('type', $validated['type'])
             ->pluck('id');
 
+        $list_region = [];
         foreach ($regions as $key => $reg) {
             # code...
             $cek_previous = Dataset::where('period_id', $previous_period)
@@ -472,6 +470,7 @@ class PdrbController extends Controller
                     'message' => 'Data ' . $reg->label . ' periode ini berhasil diambil',
                 ];
                 array_push($notification, $message);
+                array_push($list_region, $reg->value);
             }
         }
         $previous_data = collect(); // Ensure $previous_data is always initialized
@@ -774,6 +773,7 @@ class PdrbController extends Controller
         return response()->json([
             'previous_data' => $previous_data,
             'current_data' => $current_data,
+            'list_region' => $list_region,
             'notification' => $notification
         ]);
     }
@@ -792,8 +792,8 @@ class PdrbController extends Controller
                     Adjustment::updateOrCreate(
                         ['pdrb_id' => $value['id']], // Condition to check
                         [
-                            'adhb' => $value['adj_adhb'],
-                            'adhk' => $value['adj_adhk']
+                            'adhb' => $value['adj_adhb'] ?? 0,
+                            'adhk' => $value['adj_adhk'] ?? 0
                         ]
                     );
                 }

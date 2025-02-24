@@ -108,9 +108,6 @@ const setDisable = () => {
   if (props.typeData == "subsector") return false;
   return true;
 };
-const setNull = () => {
-  adjustmentVal.value = defaultAdjustment.value;
-};
 const createAdjVal = (region) => ({
   region,
   adjVal: {
