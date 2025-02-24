@@ -10,6 +10,9 @@ class Adjustment extends Model
     use HasFactory;
 
     public $timestamps = false;
+    protected $fillable = [
+        'pdrb_id', 'adhb', 'adhk'
+    ];
 
     public function pdrb()
     {

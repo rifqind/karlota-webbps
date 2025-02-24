@@ -10,6 +10,7 @@
             <td>
               <input
                 type="text"
+                :disabled="setDisable()"
                 :id="key + nodeRegion.region + quarterCap"
                 :key="key + nodeRegion.region + quarterCap"
                 :value="getData(key, nodeRegion.region)"
@@ -60,11 +61,20 @@ const props = defineProps({
     type: Object,
     required: true,
   },
+  typeData: {
+    type: String,
+    required: true,
+  },
 });
-const emits = defineEmits(["update:updateDataOnDemand", "update:updateDataContents"]);
+const emits = defineEmits([
+  "update:updateDataOnDemand",
+  "update:updateDataContents",
+  "update:setAdjustmentDefault",
+]);
 const adjustmentVal = ref(props.dataAdjustment);
 const dataHere = ref(props.dataContents);
 const dataHereBefore = ref(props.dataBefore);
+const defaultAdjustment = ref([]);
 watch(
   () => props.dataContents,
   (value) => {
@@ -91,6 +101,16 @@ watch(
   },
   { deep: true }
 );
+watch(defaultAdjustment, (value) => {
+  emits("update:setAdjustmentDefault", value);
+});
+const setDisable = () => {
+  if (props.typeData == "subsector") return false;
+  return true;
+};
+const setNull = () => {
+  adjustmentVal.value = defaultAdjustment.value;
+};
 const createAdjVal = (region) => ({
   region,
   adjVal: {
@@ -116,20 +136,20 @@ const createAdjVal = (region) => ({
 });
 
 onMounted(() => {
-  let arrayVal = [];
+  defaultAdjustment.value = [];
   props.regions.forEach((element, index) => {
     if (index == 0) {
-      arrayVal = [
+      defaultAdjustment.value = [
         createAdjVal(element.value),
         createAdjVal("Total Kabupaten/Kota"),
         createAdjVal("Selisih"),
         createAdjVal("Diskrepansi"),
       ];
     } else {
-      arrayVal.push(createAdjVal(element.value));
+      defaultAdjustment.value.push(createAdjVal(element.value));
     }
   });
-  adjustmentVal.value = arrayVal; // Assign to reactive state
+  adjustmentVal.value = defaultAdjustment.value; // Assign to reactive state
 });
 
 // #region Section: Show The Value

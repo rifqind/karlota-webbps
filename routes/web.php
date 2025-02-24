@@ -73,6 +73,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
     //Adjustment
     Route::get('/get-adjustment', [PdrbController::class, 'getAdjustment'])
         ->name('pdrb.get-adjustment');
+    Route::post('/save-adjustment', [PdrbController::class, 'saveAdjustment'])
+        ->name('pdrb.save-adjustment');
 });
 
 

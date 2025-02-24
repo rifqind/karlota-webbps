@@ -152,6 +152,8 @@
             :data-adjustment="dataOnDemand[1]"
             :data-on-demand="dataOnDemand"
             :data-before="dataBefore"
+            :type-data="typeData"
+            @update:set-adjustment-default="setAdjustmentDefault"
             @update:update-data-on-demand="updateDataOnDemand"
             @update:update-data-contents="updateDataContents"
           />
@@ -163,6 +165,8 @@
             :data-adjustment="dataOnDemand[2]"
             :data-on-demand="dataOnDemand"
             :data-before="dataBefore"
+            :type-data="typeData"
+            @update:set-adjustment-default="setAdjustmentDefault"
             @update:update-data-on-demand="updateDataOnDemand"
             @update:update-data-contents="updateDataContents"
           />
@@ -174,6 +178,8 @@
             :data-adjustment="dataOnDemand[3]"
             :data-on-demand="dataOnDemand"
             :data-before="dataBefore"
+            :type-data="typeData"
+            @update:set-adjustment-default="setAdjustmentDefault"
             @update:update-data-on-demand="updateDataOnDemand"
             @update:update-data-contents="updateDataContents"
           />
@@ -185,6 +191,8 @@
             :data-adjustment="dataOnDemand[4]"
             :data-on-demand="dataOnDemand"
             :data-before="dataBefore"
+            :type-data="typeData"
+            @update:set-adjustment-default="setAdjustmentDefault"
             @update:update-data-on-demand="updateDataOnDemand"
             @update:update-data-contents="updateDataContents"
           />
@@ -199,6 +207,19 @@
             @update:update-data-on-demand="updateDataOnDemand"
           />
         </table>
+      </div>
+      <div
+        v-if="showTabPanel"
+        class="bg-white shadow-md mb-2 rounded-sm border border-gray-200 mb-3"
+      >
+        <div class="p-5">
+          <div class="flex justify-end space-x-2">
+            <button @click.prevent="saveAdjustment" class="btn-info-fordone">
+              <font-awesome-icon icon="fa fa-save" />
+              Simpan Data
+            </button>
+          </div>
+        </div>
       </div>
     </div>
   </GeneralLayout>
@@ -266,6 +287,8 @@ const dataContents = ref([]);
 const dataBefore = ref([]);
 const warningToUser = ref(false);
 const notifications = ref([]);
+const defaultAdjustment = ref([]);
+const typeData = ref("subsector");
 const showNotification = (notification) => {
   notifications.value = notification;
   notifications.value.forEach((_, index) => {
@@ -280,6 +303,9 @@ const updateDataOnDemand = (data) => {
 };
 const updateDataContents = (data) => {
   dataContents.value = data;
+};
+const setAdjustmentDefault = (data) => {
+  defaultAdjustment.value = data;
 };
 const yearDrop = ref([]);
 const quarterDrop = ref([]);
@@ -366,6 +392,7 @@ onMounted(() => {
       tempData.push({ value: data, label: label });
     }
   });
+  tempData.push({ value: "total-pdrb--", label: "Total PDRB" });
   subsectorDrop.value = tempData;
   // #endregion
 });
@@ -436,6 +463,14 @@ const fetchYearBefore = async (value) => {
   }
 };
 const submit = async () => {
+  dataContents.value = [];
+  dataOnDemand.value = {
+    1: JSON.parse(JSON.stringify(defaultAdjustment.value)),
+    2: JSON.parse(JSON.stringify(defaultAdjustment.value)),
+    3: JSON.parse(JSON.stringify(defaultAdjustment.value)),
+    4: JSON.parse(JSON.stringify(defaultAdjustment.value)),
+    t: JSON.parse(JSON.stringify(defaultAdjustment.value)),
+  };
   try {
     const response = await axios.get(route("pdrb.get-adjustment"), {
       params: {
@@ -447,6 +482,7 @@ const submit = async () => {
         subsectors: form.subsectors,
       },
     });
+    typeData.value = form.subsectors.split("-")[0];
     quarterCap.value = form.quarter;
     showTabPanel.value = true;
     showTab(`q${quarterCap.value}`);
@@ -466,6 +502,21 @@ const submit = async () => {
       }, {});
     }
   }
+};
+const saveAdjustment = async () => {
+  const thisForm = useForm({
+    _token: null,
+    dataContents: dataContents.value,
+    type: page.props.type,
+  });
+  const response = await axios.get(route("token"));
+  thisForm._token = response.data;
+  if (thisForm.processing) return;
+  thisForm.post(route("pdrb.save-adjustment"), {
+    onSuccess: (response) => {
+      showNotification(response.props.notification);
+    },
+  });
 };
 // #endregion
 </script>

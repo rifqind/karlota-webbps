@@ -460,7 +460,7 @@ class PdrbController extends Controller
                 ->where('region_id', $reg->value)
                 ->where('type', $type)
                 ->first();
-            if (!$cek_previous) {
+            if (!$cek_current) {
                 $message = [
                     'type' => 'error',
                     'message' => 'Data ' . $reg->label . ' periode ini tidak ada',
@@ -593,42 +593,42 @@ class PdrbController extends Controller
                             'region_id' => $item->region_id
                         ];
                     });
-                if ($current_dataset->isNotEmpty()) {
-                    $subsectorForSearch = Subsector::where('sector_id', $sectorId)->pluck('id');
-                    $current_for = Pdrb::whereIn('dataset_id', $current_dataset)
-                        ->where('subsector_id', $subsectorId)
-                        ->pluck('id');
-                    $adjustment = Adjustment::whereIn('pdrb_id', $current_for)
-                        ->pluck('id');
-                    $current_data = Pdrb::leftJoin('adjustments as adj', 'adj.pdrb_id', '=', 'pdrbs.id')
-                        ->join('datasets as d', 'd.id', '=', 'pdrbs.dataset_id')
-                        ->whereIn('pdrbs.dataset_id', $current_dataset)
-                        ->whereIn('pdrbs.subsector_id', $subsectorForSearch)
-                        ->orderBy('d.region_id', 'asc')
-                        ->groupBy('d.region_id', 'pdrbs.year', 'pdrbs.quarter')
-                        ->selectRaw(
-                            'pdrbs.year,
+            }
+            if ($current_dataset->isNotEmpty()) {
+                $subsectorForSearch = Subsector::where('sector_id', $sectorId)->pluck('id');
+                $current_for = Pdrb::whereIn('dataset_id', $current_dataset)
+                    ->where('subsector_id', $subsectorId)
+                    ->pluck('id');
+                $adjustment = Adjustment::whereIn('pdrb_id', $current_for)
+                    ->pluck('id');
+                $current_data = Pdrb::leftJoin('adjustments as adj', 'adj.pdrb_id', '=', 'pdrbs.id')
+                    ->join('datasets as d', 'd.id', '=', 'pdrbs.dataset_id')
+                    ->whereIn('pdrbs.dataset_id', $current_dataset)
+                    ->whereIn('pdrbs.subsector_id', $subsectorForSearch)
+                    ->orderBy('d.region_id', 'asc')
+                    ->groupBy('d.region_id', 'pdrbs.year', 'pdrbs.quarter')
+                    ->selectRaw(
+                        'pdrbs.year,
                         pdrbs.quarter,
                         SUM(pdrbs.adhb) as adhb,
                         SUM(pdrbs.adhk) as adhk,
                         SUM(adj.adhb) as adj_adhb,
                         SUM(adj.adhk) as adj_adhk,
                         d.region_id as region_id'
-                        )
-                        ->get()
-                        ->map(function ($item) use ($sectorId) {
-                            return [
-                                'year' => $item->year,
-                                'quarter' => $item->quarter,
-                                'sector_id' => $sectorId,
-                                'adhb' => $item->adhb,
-                                'adhk' => $item->adhk,
-                                'adj_adhb' => $item->adj_adhb ?? null,
-                                'adj_adhk' => $item->adj_adhk ?? null,
-                                'region_id' => $item->region_id
-                            ];
-                        });
-                }
+                    )
+                    ->get()
+                    ->map(function ($item) use ($sectorId) {
+                        return [
+                            'year' => $item->year,
+                            'quarter' => $item->quarter,
+                            'sector_id' => $sectorId,
+                            'adhb' => $item->adhb,
+                            'adhk' => $item->adhk,
+                            'adj_adhb' => $item->adj_adhb ?? null,
+                            'adj_adhk' => $item->adj_adhk ?? null,
+                            'region_id' => $item->region_id
+                        ];
+                    });
             }
         } else if ($typeOfSubsector == 'category') {
             if ($previous_dataset->isNotEmpty()) {
@@ -667,43 +667,103 @@ class PdrbController extends Controller
                             'region_id' => $item->region_id
                         ];
                     });
-                if ($current_dataset->isNotEmpty()) {
-                    $sectorForSearch = Sector::where('category_id', $categoryId)->pluck('id');
-                    $subsectorForSearch = Subsector::whereIn('sector_id', $sectorForSearch)->pluck('id');
-                    $current_for = Pdrb::whereIn('dataset_id', $current_dataset)
-                        ->where('subsector_id', $subsectorId)
-                        ->pluck('id');
-                    $adjustment = Adjustment::whereIn('pdrb_id', $current_for)
-                        ->pluck('id');
-                    $current_data = Pdrb::leftJoin('adjustments as adj', 'adj.pdrb_id', '=', 'pdrbs.id')
-                        ->join('datasets as d', 'd.id', '=', 'pdrbs.dataset_id')
-                        ->whereIn('pdrbs.dataset_id', $current_dataset)
-                        ->whereIn('pdrbs.subsector_id', $subsectorForSearch)
-                        ->orderBy('d.region_id', 'asc')
-                        ->groupBy('d.region_id', 'pdrbs.year', 'pdrbs.quarter')
-                        ->selectRaw(
-                            'pdrbs.year,
+            }
+            if ($current_dataset->isNotEmpty()) {
+                $sectorForSearch = Sector::where('category_id', $categoryId)->pluck('id');
+                $subsectorForSearch = Subsector::whereIn('sector_id', $sectorForSearch)->pluck('id');
+                $current_for = Pdrb::whereIn('dataset_id', $current_dataset)
+                    ->where('subsector_id', $subsectorId)
+                    ->pluck('id');
+                $adjustment = Adjustment::whereIn('pdrb_id', $current_for)
+                    ->pluck('id');
+                $current_data = Pdrb::leftJoin('adjustments as adj', 'adj.pdrb_id', '=', 'pdrbs.id')
+                    ->join('datasets as d', 'd.id', '=', 'pdrbs.dataset_id')
+                    ->whereIn('pdrbs.dataset_id', $current_dataset)
+                    ->whereIn('pdrbs.subsector_id', $subsectorForSearch)
+                    ->orderBy('d.region_id', 'asc')
+                    ->groupBy('d.region_id', 'pdrbs.year', 'pdrbs.quarter')
+                    ->selectRaw(
+                        'pdrbs.year,
                         pdrbs.quarter,
                         SUM(pdrbs.adhb) as adhb,
                         SUM(pdrbs.adhk) as adhk,
                         SUM(adj.adhb) as adj_adhb,
                         SUM(adj.adhk) as adj_adhk,
                         d.region_id as region_id'
-                        )
-                        ->get()
-                        ->map(function ($item) use ($sectorId) {
-                            return [
-                                'year' => $item->year,
-                                'quarter' => $item->quarter,
-                                'sector_id' => $sectorId,
-                                'adhb' => $item->adhb,
-                                'adhk' => $item->adhk,
-                                'adj_adhb' => $item->adj_adhb ?? null,
-                                'adj_adhk' => $item->adj_adhk ?? null,
-                                'region_id' => $item->region_id
-                            ];
-                        });
-                }
+                    )
+                    ->get()
+                    ->map(function ($item) use ($sectorId) {
+                        return [
+                            'year' => $item->year,
+                            'quarter' => $item->quarter,
+                            'sector_id' => $sectorId,
+                            'adhb' => $item->adhb,
+                            'adhk' => $item->adhk,
+                            'adj_adhb' => $item->adj_adhb ?? null,
+                            'adj_adhk' => $item->adj_adhk ?? null,
+                            'region_id' => $item->region_id
+                        ];
+                    });
+            }
+        } else if ($typeOfSubsector == 'total') {
+            if ($previous_dataset->isNotEmpty()) {
+                $previous_data = Pdrb::leftJoin('adjustments as adj', 'adj.pdrb_id', '=', 'pdrbs.id')
+                    ->join('datasets as d', 'd.id', '=', 'pdrbs.dataset_id')
+                    ->whereIn('pdrbs.dataset_id', $previous_dataset)
+                    ->orderBy('d.region_id', 'asc')
+                    ->groupBy('d.region_id', 'pdrbs.year', 'pdrbs.quarter')
+                    ->selectRaw(
+                        'pdrbs.year,
+                        pdrbs.quarter,
+                        SUM(pdrbs.adhb) as adhb,
+                        SUM(pdrbs.adhk) as adhk,
+                        SUM(adj.adhb) as adj_adhb,
+                        SUM(adj.adhk) as adj_adhk,
+                        d.region_id as region_id'
+                    )
+                    ->get()
+                    ->map(function ($item) use ($sectorId) {
+                        return [
+                            'year' => $item->year,
+                            'quarter' => $item->quarter,
+                            'sector_id' => $sectorId,
+                            'adhb' => $item->adhb,
+                            'adhk' => $item->adhk,
+                            'adj_adhb' => $item->adj_adhb ?? null,
+                            'adj_adhk' => $item->adj_adhk ?? null,
+                            'region_id' => $item->region_id
+                        ];
+                    });
+            }
+
+            if ($current_dataset->isNotEmpty()) {
+                $current_data = Pdrb::leftJoin('adjustments as adj', 'adj.pdrb_id', '=', 'pdrbs.id')
+                    ->join('datasets as d', 'd.id', '=', 'pdrbs.dataset_id')
+                    ->whereIn('pdrbs.dataset_id', $current_dataset)
+                    ->orderBy('d.region_id', 'asc')
+                    ->groupBy('d.region_id', 'pdrbs.year', 'pdrbs.quarter')
+                    ->selectRaw(
+                        'pdrbs.year,
+                        pdrbs.quarter,
+                        SUM(pdrbs.adhb) as adhb,
+                        SUM(pdrbs.adhk) as adhk,
+                        SUM(adj.adhb) as adj_adhb,
+                        SUM(adj.adhk) as adj_adhk,
+                        d.region_id as region_id'
+                    )
+                    ->get()
+                    ->map(function ($item) use ($sectorId) {
+                        return [
+                            'year' => $item->year,
+                            'quarter' => $item->quarter,
+                            'sector_id' => $sectorId,
+                            'adhb' => $item->adhb,
+                            'adhk' => $item->adhk,
+                            'adj_adhb' => $item->adj_adhb ?? null,
+                            'adj_adhk' => $item->adj_adhk ?? null,
+                            'region_id' => $item->region_id
+                        ];
+                    });
             }
         }
         $message = [
@@ -716,5 +776,45 @@ class PdrbController extends Controller
             'current_data' => $current_data,
             'notification' => $notification
         ]);
+    }
+
+    public function saveAdjustment(Request $request)
+    {
+        $notification = [];
+        $type = $request->type;
+        if ($type == 'Lapangan Usaha') $route = 'lapus.';
+        else if ($type == 'Pengeluaran') $route = 'peng.';
+        try {
+            //code...
+            DB::beginTransaction();
+            foreach ($request->dataContents as $key => $value) {
+                if ($value['adj_adhb'] || $value['adj_adhk']) {
+                    Adjustment::updateOrCreate(
+                        ['pdrb_id' => $value['id']], // Condition to check
+                        [
+                            'adhb' => $value['adj_adhb'],
+                            'adhk' => $value['adj_adhk']
+                        ]
+                    );
+                }
+            }
+            $message = [
+                'type' => 'success',
+                'message' => 'Data sudah disimpan'
+            ];
+            array_push($notification, $message);
+            DB::commit();
+            return redirect()->route($route . 'adjustment')->with('notification', $notification);
+        } catch (\Throwable $th) {
+            //throw $th;
+            DB::rollBack();
+            $message = [
+                'type' => 'error',
+                'message' => 'Ada Kesalahan ketika simpan',
+                'errors' => $th->getMessage()
+            ];
+            array_push($notification, $message);
+            return redirect()->route($route . 'adjustment')->with('notification', $notification);
+        }
     }
 }
