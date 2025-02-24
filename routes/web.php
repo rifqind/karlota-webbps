@@ -50,12 +50,16 @@ Route::middleware(['auth', 'verified'])->group(function () {
             ->name('entri');
         Route::get('/adjustment', [PdrbController::class, 'adjustment'])
             ->name('adjustment');
+        Route::get('/monitoring', [PdrbController::class, 'monitoring'])
+            ->name('monitoring');
     });
     Route::prefix('peng')->name('peng.')->group(function () {
         Route::get('/entri', [PdrbController::class, 'entri'])
             ->name('entri');
         Route::get('/adjustment', [PdrbController::class, 'adjustment'])
             ->name('adjustment');
+        Route::get('/monitoring', [PdrbController::class, 'monitoring'])
+            ->name('monitoring');
     });
 
     //Entri
@@ -75,6 +79,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
         ->name('pdrb.get-adjustment');
     Route::post('/save-adjustment', [PdrbController::class, 'saveAdjustment'])
         ->name('pdrb.save-adjustment');
+
+    //Monitoring
+    Route::get('/get-monitoring', [PdrbController::class, 'getMonitoring'])
+        ->name('pdrb.get-monitoring');
 });
 
 

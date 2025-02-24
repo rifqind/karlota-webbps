@@ -134,6 +134,9 @@
             <vue-tailwind-datepicker v-model="form.datepicker" />
           </div>
         </div>
+        <div class="text-center mt-3 text-red-900">
+          <label>Apakah putaran sebelumnya sudah selesai?</label>
+        </div>
       </template>
       <template #modalFunction>
         <button type="button" class="btn-success-fordone btn-sm" @click.prevent="submit">Simpan</button>

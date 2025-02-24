@@ -15,7 +15,8 @@
           :menuOpen="
             menuOpenLapus ||
             currentRoute == 'lapus.entri' ||
-            currentRoute == 'lapus.adjustment'
+            currentRoute == 'lapus.adjustment' ||
+            currentRoute == 'lapus.monitoring'
           "
           :toggleMenuOpen="toggleMenuOpen"
           :params="'lapus'"
@@ -36,11 +37,22 @@
             >
               Adjustment
             </NavLinkSidebar>
+            <NavLinkSidebar
+              :navIcon="'fa-solid fa-list-ol'"
+              :href="route('lapus.monitoring')"
+              :currentRoute="currentRoute == 'lapus.monitoring'"
+            >
+              Monitoring
+            </NavLinkSidebar>
           </template>
         </NavLinkParentSidebar>
         <NavLinkParentSidebar
           :navIcon="'fa-solid fa-money-bill-trend-up'"
-          :menuOpen="menuOpenPeng || currentRoute == 'peng.entri'"
+          :menuOpen="
+            menuOpenPeng ||
+            currentRoute == 'peng.entri' ||
+            currentRoute == 'peng.adjustment'
+          "
           :toggleMenuOpen="toggleMenuOpen"
           :params="'peng'"
         >
@@ -49,9 +61,7 @@
             <NavLinkSidebar
               :navIcon="'fa-solid fa-list-ol'"
               :href="route('peng.entri')"
-              :currentRoute="
-                currentRoute == 'peng.entri' || currentRoute == 'peng.adjustment'
-              "
+              :currentRoute="currentRoute == 'peng.entri'"
             >
               Entri PDRB
             </NavLinkSidebar>
