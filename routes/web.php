@@ -52,6 +52,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
             ->name('adjustment');
         Route::get('/hasil', [PdrbController::class, 'hasil'])
             ->name('hasil');
+        Route::get('/diskrepansi', [PdrbController::class, 'diskrepansi'])
+            ->name('diskrepansi');
     });
     Route::prefix('peng')->name('peng.')->group(function () {
         Route::get('/entri', [PdrbController::class, 'entri'])
@@ -60,6 +62,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
             ->name('adjustment');
         Route::get('/hasil', [PdrbController::class, 'hasil'])
             ->name('hasil');
+        Route::get('/diskrepansi', [PdrbController::class, 'diskrepansi'])
+            ->name('diskrepansi');
     });
 
     //Entri

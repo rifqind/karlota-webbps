@@ -371,7 +371,7 @@ class PdrbController extends Controller
         }
     }
 
-    public function adjustment(Request $request)
+    public function adjustment()
     {
         $prefix = request()->route()->getPrefix();
         if ($prefix == 'lapus') $type = 'Lapangan Usaha';
@@ -1308,5 +1308,20 @@ class PdrbController extends Controller
             array_push($notification, $message);
             return response()->json(['notification' => $notification], 500);
         }
+    }
+
+    public function diskrepansi() {
+        $prefix = request()->route()->getPrefix();
+        if ($prefix == 'lapus') $type = 'Lapangan Usaha';
+        else if ($prefix == 'peng') $type = 'Pengeluaran';
+        $regions = Region::getMyRegion();
+        $subsectors = Subsector::where('type', $type)
+            ->with(['sector.category'])
+            ->get();
+        return Inertia::render('Pdrb/Diskrepansi', [
+            'type' => $type,
+            'subsectors' => $subsectors,
+            'regions' => $regions
+        ]);
     }
 }
