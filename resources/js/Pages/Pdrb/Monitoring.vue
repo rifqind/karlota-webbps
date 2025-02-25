@@ -10,6 +10,19 @@
         </div>
         <div class="p-5">
           <div class="mb-3 space-y-2">
+            <label for="type">Pilih PDRB<span class="text-danger">*</span></label>
+            <Multiselect
+              v-model="form.type"
+              placeholder="-- Pilih PDRB --"
+              :options="[
+                { label: 'Lapangan Usaha', value: 'Lapangan Usaha' },
+                { label: 'Pengeluaran', value: 'Pengeluaran' },
+              ]"
+              @change="fetchYear"
+            />
+            <div class="text-danger text-left" v-if="true" id="error-dinas"></div>
+          </div>
+          <div class="mb-3 space-y-2">
             <label for="year">Pilih Tahun<span class="text-danger">*</span></label>
             <Multiselect
               v-model="form.year"
@@ -73,7 +86,9 @@
               <tr>
                 <td>{{ node.label }}</td>
                 <td class="text-center">
-                  <span class="badge badge-info">{{ getStatus(node.value) }}</span>
+                  <span class="badge" :class="getClass(node.value)">{{
+                    getStatus(node.value)
+                  }}</span>
                 </td>
               </tr>
             </template>
@@ -96,7 +111,7 @@ import { onMounted, ref } from "vue";
 const page = usePage();
 const form = useForm({
   _token: null,
-  type: page.props.type,
+  type: null,
   year: null,
   quarter: null,
   description: null,
@@ -111,7 +126,6 @@ const quarterDrop = ref([]);
 const descDrop = ref([]);
 const dataMonitoring = ref([]);
 onMounted(() => {
-  fetchYear();
   page.props.regions.forEach((element) => {
     dataMonitoring.value[element.value] = null;
   });
@@ -120,14 +134,22 @@ const getStatus = (region_id) => {
   const theIndex = dataMonitoring.value.findIndex((x, index) => index == region_id);
   return dataMonitoring.value[theIndex];
 };
+const getClass = (region_id) => {
+  const theIndex = dataMonitoring.value.findIndex((x, index) => index == region_id);
+  let status = dataMonitoring.value[theIndex];
+  if (status == "Belum") return "badge-status-empat";
+  if (status == "Entry") return "badge-info";
+  if (status == "Submitted") return "badge-status-dua";
+};
 // #region Section: FETCHING
-const fetchYear = async () => {
+const fetchYear = async (value) => {
+  form.year = null;
   form.quarter = null;
   form.description = null;
   try {
     const response = await axios.get(route("period.fetchYear"), {
       params: {
-        type: page.props.type,
+        type: value,
       },
     });
     let result = response.data;
@@ -143,7 +165,7 @@ const fetchQuarter = async (value) => {
     try {
       const response = await axios.get(route("period.fetchQuarter"), {
         params: {
-          type: page.props.type,
+          type: form.type,
           year: value,
         },
       });
@@ -160,7 +182,7 @@ const fetchPeriod = async (value) => {
     try {
       const response = await axios.get(route("period.fetchPeriod"), {
         params: {
-          type: page.props.type,
+          type: form.type,
           year: form.year,
           quarter: value,
         },
@@ -176,7 +198,7 @@ const submit = async () => {
   try {
     const response = await axios.get(route("pdrb.get-monitoring"), {
       params: {
-        type: page.props.type,
+        type: form.type,
         year: form.year,
         quarter: form.quarter,
         description: form.description,

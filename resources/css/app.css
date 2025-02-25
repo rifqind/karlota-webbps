@@ -199,6 +199,17 @@ label {
     color: whitesmoke;
 }
 
+.badge-status-empat {
+    background-color: #8b1e3f;
+    color: whitesmoke;
+}
+
+.badge-status-dua {
+    background-color: #1d845b;
+    color: whitesmoke;
+}
+
+
 .icon-trash-color {
     color: #a80606;
     cursor: pointer;

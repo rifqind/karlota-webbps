@@ -16,7 +16,7 @@
             menuOpenLapus ||
             currentRoute == 'lapus.entri' ||
             currentRoute == 'lapus.adjustment' ||
-            currentRoute == 'lapus.monitoring'
+            currentRoute == 'lapus.hasil'
           "
           :toggleMenuOpen="toggleMenuOpen"
           :params="'lapus'"
@@ -39,10 +39,10 @@
             </NavLinkSidebar>
             <NavLinkSidebar
               :navIcon="'fa-solid fa-list-ol'"
-              :href="route('lapus.monitoring')"
-              :currentRoute="currentRoute == 'lapus.monitoring'"
+              :href="route('lapus.hasil')"
+              :currentRoute="currentRoute == 'lapus.hasil'"
             >
-              Monitoring
+              Hasil
             </NavLinkSidebar>
           </template>
         </NavLinkParentSidebar>
@@ -51,7 +51,8 @@
           :menuOpen="
             menuOpenPeng ||
             currentRoute == 'peng.entri' ||
-            currentRoute == 'peng.adjustment'
+            currentRoute == 'peng.adjustment' ||
+            currentRoute == 'peng.hasil'
           "
           :toggleMenuOpen="toggleMenuOpen"
           :params="'peng'"
@@ -72,8 +73,22 @@
             >
               Adjustment
             </NavLinkSidebar>
+            <NavLinkSidebar
+              :navIcon="'fa-solid fa-list-ol'"
+              :href="route('peng.hasil')"
+              :currentRoute="currentRoute == 'peng.hasil'"
+            >
+              Hasil
+            </NavLinkSidebar>
           </template>
         </NavLinkParentSidebar>
+        <NavLinkSidebar
+          :navIcon="'fa-solid fa-list-ol'"
+          :href="route('pdrb.monitoring')"
+          :currentRoute="currentRoute == 'pdrb.monitoring'"
+        >
+          Monitoring
+        </NavLinkSidebar>
         <NavLinkSidebar
           :navIcon="'fas fa-table'"
           :href="route('period.index')"
@@ -114,6 +129,7 @@ import { usePage } from "@inertiajs/vue3";
 import NavLinkSidebar from "./NavLinkSidebar.vue";
 import NavLinkParentSidebar from "./NavLinkParentSidebar.vue";
 import { ref } from "vue";
+import { current } from "tailwindcss/colors";
 
 const page = usePage();
 const currentRoute = page.props.route;

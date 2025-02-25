@@ -129,8 +129,7 @@
 </template>
 
 <script setup>
-import { debounce } from "@/debounce";
-import { onMounted, ref, watch } from "vue";
+import { ref, watch } from "vue";
 
 const props = defineProps({
   subsectors: {

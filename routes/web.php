@@ -50,16 +50,16 @@ Route::middleware(['auth', 'verified'])->group(function () {
             ->name('entri');
         Route::get('/adjustment', [PdrbController::class, 'adjustment'])
             ->name('adjustment');
-        Route::get('/monitoring', [PdrbController::class, 'monitoring'])
-            ->name('monitoring');
+        Route::get('/hasil', [PdrbController::class, 'hasil'])
+            ->name('hasil');
     });
     Route::prefix('peng')->name('peng.')->group(function () {
         Route::get('/entri', [PdrbController::class, 'entri'])
             ->name('entri');
         Route::get('/adjustment', [PdrbController::class, 'adjustment'])
             ->name('adjustment');
-        Route::get('/monitoring', [PdrbController::class, 'monitoring'])
-            ->name('monitoring');
+        Route::get('/hasil', [PdrbController::class, 'hasil'])
+            ->name('hasil');
     });
 
     //Entri
@@ -83,6 +83,12 @@ Route::middleware(['auth', 'verified'])->group(function () {
     //Monitoring
     Route::get('/get-monitoring', [PdrbController::class, 'getMonitoring'])
         ->name('pdrb.get-monitoring');
+    Route::get('/monitoring', [PdrbController::class, 'monitoring'])
+        ->name('pdrb.monitoring');
+
+    //Hasil
+    Route::get('/get-hasil', [PdrbController::class, 'getHasil'])
+        ->name('pdrb.get-hasil');
 });
 
 

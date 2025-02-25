@@ -1,5 +1,5 @@
 <template>
-  <Head title="Entri PDRB" />
+  <Head title="Hasil Adjustment" />
   <SpinnerBorder v-if="triggerSpinner" />
   <GeneralLayout>
     <FlashFetch :notifications="notifications" />
@@ -7,7 +7,7 @@
     <div class="container px-[7.5px] mr-auto ml-auto">
       <div class="bg-white shadow-md mb-2 rounded-sm border border-gray-200 mb-3">
         <div class="flex items-center justify-between py-3 px-4 border-b card-header">
-          <label class="text-xl">Entri PDRB</label>
+          <label class="text-xl">Hasil PDRB</label>
         </div>
         <div class="p-5">
           <div class="mb-3 space-y-2">
@@ -80,23 +80,12 @@
           </div>
           <div class="flex items-center space-x-2 justify-end">
             <div
-              @click="openCopyModal"
-              class="btn-warning-fordone w-[130px] text-center"
-              v-if="showTabPanel"
-            >
-              <font-awesome-icon icon="fa-solid fa-copy" />
-              Salin Data
-            </div>
-            <div
               class="btn-info-fordone ml-auto w-[130px] text-center"
               @click.prevent="submit"
             >
               <font-awesome-icon icon="fa-solid fa-magnifying-glass" />
               Cari Data
             </div>
-          </div>
-          <div class="text-center mt-3" v-if="warningToUser">
-            User melakukan perubahan dataset, dan data belum dicari
           </div>
         </div>
       </div>
@@ -132,6 +121,27 @@
           </div>
         </div>
       </div>
+      <div
+        v-if="showTabPanel"
+        class="bg-white shadow-md mb-2 rounded-sm border border-gray-200 mb-3"
+      >
+        <div class="p-5">
+          <div class="flex flex-wrap gap-2">
+            <button @click="showSummary('full')" :class="setActiveTab('full')">
+              Tabel Lengkap
+            </button>
+            <button @click="showSummary('summary')" :class="setActiveTab('summary')">
+              Tabel Summary
+            </button>
+            <button
+              @click="downloadHasil('tabel-entry')"
+              class="btn btn-warning-fordone ml-auto"
+            >
+              Download
+            </button>
+          </div>
+        </div>
+      </div>
       <div class="overflow-x-scroll mb-2">
         <table class="table shadow-md w-full mb-2" id="tabel-entry">
           <thead>
@@ -146,36 +156,52 @@
           </thead>
           <template v-if="page.props.type == 'Lapangan Usaha'">
             <!-- #region Section: ADHB -->
-            <LapusTable
-              v-show="showPdrbAndResult['adhb']"
-              :dataset-status="dataset.status"
+            <LapusHasilSummary
+              v-show="showPdrbAndResult['adhb'] && !isFull"
+              :data-contents="dataContentsSummary"
+              :type="'adhb'"
+              :onDemandType="'adhb_summary_now'"
+              :quarter-cap="quarterCap"
+              @update:update-d-o-d="updateDOD"
+            />
+            <LapusHasil
+              v-show="showPdrbAndResult['adhb'] && isFull"
               :data-contents="dataContents"
               :subsectors="subsectors"
               :type="'adhb'"
               :onDemandType="'adhb_now'"
               :quarter-cap="quarterCap"
               @update:update-d-o-d="updateDOD"
-              @update:updateDataContents="updateDataContents"
             />
             <!-- #endregion -->
-
             <!-- #region Section: ADHK -->
-            <LapusTable
-              v-show="showPdrbAndResult['adhk']"
+            <LapusHasilSummary
+              v-show="showPdrbAndResult['adhk'] && !isFull"
+              :data-contents="dataContentsSummary"
+              :type="'adhk'"
+              :onDemandType="'adhk_summary_now'"
+              :quarter-cap="quarterCap"
+              @update:update-d-o-d="updateDOD"
+            />
+            <LapusHasil
+              v-show="showPdrbAndResult['adhk'] && isFull"
               :data-contents="dataContents"
-              :dataset-status="dataset.status"
               :subsectors="subsectors"
               :type="'adhk'"
               :onDemandType="'adhk_now'"
               :quarter-cap="quarterCap"
               @update:update-d-o-d="updateDOD"
-              @update:updateDataContents="updateDataContents"
             />
             <!-- #endregion -->
-
             <!-- #region Section: RESULT -->
-            <LapusResultTable
-              v-show="showPdrbAndResult['result']"
+            <LapusHasilSummaryResult
+              v-show="showPdrbAndResult['result'] && !isFull"
+              :type="'distribusi'"
+              :quarter-cap="quarterCap"
+              :computed-data="computedSummaryData"
+            />
+            <LapusHasilResult
+              v-show="showPdrbAndResult['result'] && isFull"
               :subsectors="subsectors"
               :type="'distribusi'"
               :quarter-cap="quarterCap"
@@ -185,66 +211,94 @@
 
             <!-- #region Section: PREV_DATA -->
             <!-- #region Section: ADHB -->
-            <LapusTable
+            <LapusHasilSummary
               v-show="false"
-              :dataset-status="dataset.status"
+              :data-contents="dataBeforeSummary"
+              :type="'adhb'"
+              :onDemandType="'adhb_summary_prev'"
+              :quarter-cap="quarterCap"
+              @update:update-d-o-d="updateDOD"
+            />
+            <LapusHasil
+              v-show="false"
               :data-contents="dataBefore"
               :subsectors="subsectors"
               :type="'adhb'"
               :onDemandType="'adhb_prev'"
               :quarter-cap="quarterCap"
               @update:update-d-o-d="updateDOD"
-              @update:updateDataContents="updateDataContents"
             />
             <!-- #endregion -->
 
             <!-- #region Section: ADHK -->
-            <LapusTable
+            <LapusHasilSummary
               v-show="false"
-              :dataset-status="dataset.status"
+              :data-contents="dataBeforeSummary"
+              :type="'adhk'"
+              :onDemandType="'adhk_summary_prev'"
+              :quarter-cap="quarterCap"
+              @update:update-d-o-d="updateDOD"
+            />
+            <LapusHasil
+              v-show="false"
               :data-contents="dataBefore"
               :subsectors="subsectors"
               :type="'adhk'"
               :onDemandType="'adhk_prev'"
               :quarter-cap="quarterCap"
               @update:update-d-o-d="updateDOD"
-              @update:updateDataContents="updateDataContents"
             />
             <!-- #endregion -->
             <!-- #endregion -->
           </template>
           <template v-if="page.props.type == 'Pengeluaran'">
             <!-- #region Section: ADHB -->
-            <PengTable
-              v-show="showPdrbAndResult['adhb']"
-              :dataset-status="dataset.status"
+            <PengHasilSummary
+              v-show="showPdrbAndResult['adhb'] && !isFull"
+              :data-contents="dataContentsSummary"
+              :type="'adhb'"
+              :onDemandType="'adhb_summary_now'"
+              :quarter-cap="quarterCap"
+              @update:update-d-o-d="updateDOD"
+            />
+            <PengHasil
+              v-show="showPdrbAndResult['adhb'] && isFull"
               :data-contents="dataContents"
               :subsectors="subsectors"
               :type="'adhb'"
               :onDemandType="'adhb_now'"
               :quarter-cap="quarterCap"
               @update:update-d-o-d="updateDOD"
-              @update:updateDataContents="updateDataContents"
             />
             <!-- #endregion -->
-
             <!-- #region Section: ADHK -->
-            <PengTable
-              v-show="showPdrbAndResult['adhk']"
+            <PengHasilSummary
+              v-show="showPdrbAndResult['adhk'] && !isFull"
+              :data-contents="dataContentsSummary"
+              :type="'adhk'"
+              :onDemandType="'adhk_summary_now'"
+              :quarter-cap="quarterCap"
+              @update:update-d-o-d="updateDOD"
+            />
+            <PengHasil
+              v-show="showPdrbAndResult['adhk'] && isFull"
               :data-contents="dataContents"
-              :dataset-status="dataset.status"
               :subsectors="subsectors"
               :type="'adhk'"
               :onDemandType="'adhk_now'"
               :quarter-cap="quarterCap"
               @update:update-d-o-d="updateDOD"
-              @update:updateDataContents="updateDataContents"
             />
             <!-- #endregion -->
-
             <!-- #region Section: RESULT -->
-            <PengResultTable
-              v-show="showPdrbAndResult['result']"
+            <PengHasilSummaryResult
+              v-show="showPdrbAndResult['result'] && !isFull"
+              :type="'distribusi'"
+              :quarter-cap="quarterCap"
+              :computed-data="computedSummaryData"
+            />
+            <PengHasilResult
+              v-show="showPdrbAndResult['result'] && isFull"
               :subsectors="subsectors"
               :type="'distribusi'"
               :quarter-cap="quarterCap"
@@ -254,148 +308,73 @@
 
             <!-- #region Section: PREV_DATA -->
             <!-- #region Section: ADHB -->
-            <PengTable
+            <PengHasilSummary
+              v-show="false"
+              :data-contents="dataBeforeSummary"
+              :type="'adhb'"
+              :onDemandType="'adhb_summary_prev'"
+              :quarter-cap="quarterCap"
+              @update:update-d-o-d="updateDOD"
+            />
+            <PengHasil
               v-show="false"
               :data-contents="dataBefore"
-              :dataset-status="dataset.status"
               :subsectors="subsectors"
               :type="'adhb'"
               :onDemandType="'adhb_prev'"
               :quarter-cap="quarterCap"
               @update:update-d-o-d="updateDOD"
-              @update:updateDataContents="updateDataContents"
             />
             <!-- #endregion -->
 
             <!-- #region Section: ADHK -->
-            <PengTable
+            <PengHasilSummary
+              v-show="false"
+              :data-contents="dataBeforeSummary"
+              :type="'adhk'"
+              :onDemandType="'adhk_summary_prev'"
+              :quarter-cap="quarterCap"
+              @update:update-d-o-d="updateDOD"
+            />
+            <PengHasil
               v-show="false"
               :data-contents="dataBefore"
-              :dataset-status="dataset.status"
               :subsectors="subsectors"
               :type="'adhk'"
               :onDemandType="'adhk_prev'"
               :quarter-cap="quarterCap"
               @update:update-d-o-d="updateDOD"
-              @update:updateDataContents="updateDataContents"
             />
             <!-- #endregion -->
             <!-- #endregion -->
           </template>
         </table>
       </div>
-      <div
-        v-if="showTabPanel"
-        class="bg-white shadow-md mb-2 rounded-sm border border-gray-200 mb-3"
-      >
-        <div class="p-5">
-          <div class="flex justify-end space-x-2">
-            <button
-              v-if="dataset.status != 'Submitted'"
-              @click.prevent="saveEntri"
-              class="btn-info-fordone"
-            >
-              <font-awesome-icon icon="fa fa-save" />
-              Simpan Data
-            </button>
-            <button
-              v-if="dataset.status == 'Entry'"
-              @click.prevent="submitEntri"
-              class="btn-success-fordone"
-            >
-              <font-awesome-icon icon="fa fa-check" />
-              Submit Data
-            </button>
-            <button
-              v-if="dataset.status == 'Submitted'"
-              @click.prevent="unsubmitEntri"
-              class="btn-red-fordone"
-            >
-              <font-awesome-icon icon="fa-solid fa-circle-xmark" />
-              Unsubmit Data
-            </button>
-          </div>
-        </div>
-      </div>
     </div>
-    <ModalBs
-      :-modal-status="copyModal"
-      @close="closeCopyModal"
-      :modal-size="'min-w-[40vw]'"
-      :title="'Salin Data'"
-    >
-      <template #modalBody>
-        <div class="form-group">
-          <div class="mb-3 space-y-2">
-            <label for="pdrb">Pilih Tahun</label>
-            <Multiselect
-              v-model="form.year"
-              :options="yearDrop"
-              :searchable="true"
-              placeholder="-- Pilih Tahun --"
-              @change="fetchQuarter"
-            />
-          </div>
-          <div class="mb-3 space-y-2">
-            <label for="year">Pilih Triwulan<span class="text-danger">*</span></label>
-            <Multiselect
-              v-model="form.quarter"
-              :options="quarterDrop"
-              :searchable="true"
-              placeholder="-- Pilih Triwulan --"
-              @change="fetchPeriod"
-            />
-            <div class="text-danger text-left" v-if="true" id="error-dinas"></div>
-          </div>
-          <div class="mb-3 space-y-2">
-            <label for="year"
-              >Pilih Periode Putaran<span class="text-danger">*</span></label
-            >
-            <Multiselect
-              v-model="form.description"
-              :options="descDrop"
-              :searchable="true"
-              placeholder="-- Pilih Periode Putaran --"
-            />
-            <div class="text-danger text-left" v-if="true" id="error-dinas"></div>
-          </div>
-        </div>
-      </template>
-      <template #modalFunction>
-        <button type="button" class="btn-success-fordone btn-sm" @click.prevent="copy">
-          Salin
-        </button>
-      </template>
-    </ModalBs>
   </GeneralLayout>
 </template>
+
 <script setup>
 import { triggerSpinner } from "@/axiosSetup";
 import FlashFetch from "@/Components/FlashFetch.vue";
 import FloatScrollDown from "@/Components/FloatScrollDown.vue";
-import LapusResultTable from "@/Components/LapusResultTable.vue";
-import LapusTable from "@/Components/LapusTable.vue";
-import ModalBs from "@/Components/ModalBs.vue";
-import PengResultTable from "@/Components/PengResultTable.vue";
-import PengTable from "@/Components/PengTable.vue";
+import LapusHasil from "@/Components/LapusHasil.vue";
+import LapusHasilResult from "@/Components/LapusHasilResult.vue";
+import LapusHasilSummary from "@/Components/LapusHasilSummary.vue";
+import LapusHasilSummaryResult from "@/Components/LapusHasilSummaryResult.vue";
+import PengHasil from "@/Components/PengHasil.vue";
+import PengHasilResult from "@/Components/PengHasilResult.vue";
+import PengHasilSummary from "@/Components/PengHasilSummary.vue";
+import PengHasilSummaryResult from "@/Components/PengHasilSummaryResult.vue";
 import SpinnerBorder from "@/Components/SpinnerBorder.vue";
+import { tableToJson, theDownload } from "@/download";
 import GeneralLayout from "@/Layouts/GeneralLayout.vue";
 import { Head, useForm, usePage } from "@inertiajs/vue3";
 import Multiselect from "@vueform/multiselect";
-import { onMounted, ref, watch } from "vue";
+import { nextTick, onMounted, ref } from "vue";
 
 const page = usePage();
-const dataset = ref({});
-const subsectors = ref(page.props.subsectors);
-const dataContents = ref([]);
-const dataBefore = ref([]);
-const computedData = ref({});
-const quarterCap = ref("4");
-const showTabPanel = ref(false);
-const copyModal = ref(false);
-const dataOnDemand = ref({ adhb_now: {}, adhb_prev: {}, adhk_now: {}, adhk_prev: {} });
 const form = useForm({
-  dataContents: null,
   _token: null,
   type: page.props.type,
   year: null,
@@ -410,7 +389,7 @@ const formError = ref({
   description: null,
   regions: null,
 });
-const warningToUser = ref(false);
+const dataContents = ref([]);
 const notifications = ref([]);
 const showNotification = (notification) => {
   notifications.value = notification;
@@ -424,36 +403,35 @@ const yearDrop = ref([]);
 const quarterDrop = ref([]);
 const descDrop = ref([]);
 const dataBeforeDrop = ref([]);
-onMounted(() => {
-  fetchYear();
-  setWarningToUser(true);
+const dataOnDemand = ref({
+  adhb_summary_now: {},
+  adhb_summary_prev: {},
+  adhk_summary_now: {},
+  adhk_summary_prev: {},
+  adhb_now: {},
+  adhb_prev: {},
+  adhk_now: {},
+  adhk_prev: {},
 });
+const showTabPanel = ref(false);
+const quarterCap = ref("4");
+const subsectors = ref(page.props.subsectors);
+const dataBefore = ref([]);
+const computedData = ref({});
+const computedSummaryData = ref({});
+const dataContentsSummary = ref([]);
+const dataBeforeSummary = ref([]);
+
 const updateDOD = (data) => {
   dataOnDemand.value[data.type] = data.data;
 };
-const updateDataContents = (data) => {
-  dataContents.value = data;
-};
-const setWarningToUser = (mounted) => {
-  if (mounted) warningToUser.value = false;
-};
-watch(form, (changedForm) => {
-  if (
-    changedForm.year !== currentSearchSet.value.year ||
-    changedForm.quarter !== currentSearchSet.value.quarter ||
-    changedForm.description !== currentSearchSet.value.description ||
-    changedForm.dataBefore !== currentSearchSet.value.dataBefore ||
-    changedForm.regions !== currentSearchSet.value.regions
-  )
-    warningToUser.value = true;
-});
-const currentSearchSet = ref({});
 // #region Section: FETCH
+onMounted(() => {
+  fetchYear();
+});
 const fetchYear = async () => {
-  if (!copyModal.value) {
-    form.quarter = null;
-    form.description = null;
-  }
+  form.quarter = null;
+  form.description = null;
   try {
     const response = await axios.get(route("period.fetchYear"), {
       params: {
@@ -467,10 +445,8 @@ const fetchYear = async () => {
   }
 };
 const fetchQuarter = async (value) => {
-  if (!copyModal.value) {
-    form.quarter = null;
-    form.description = null;
-  }
+  form.quarter = null;
+  form.description = null;
   if (value) {
     try {
       const response = await axios.get(route("period.fetchQuarter"), {
@@ -487,9 +463,7 @@ const fetchQuarter = async (value) => {
   }
 };
 const fetchPeriod = async (value) => {
-  if (!copyModal.value) {
-    form.description = null;
-  }
+  form.description = null;
   if (value) {
     try {
       const response = await axios.get(route("period.fetchPeriod"), {
@@ -525,10 +499,10 @@ const showPdrbAndResult = ref({
   adhk: false,
   result: true,
 });
+const isFull = ref(true);
 const submit = async () => {
-  // triggerSpinner.value = true;
   try {
-    const response = await axios.get(route("pdrb.show"), {
+    const response = await axios.get(route("pdrb.get-hasil"), {
       params: {
         type: page.props.type,
         year: form.year,
@@ -538,23 +512,23 @@ const submit = async () => {
         regions: form.regions,
       },
     });
-    quarterCap.value = form.quarter;
-    dataContents.value = response.data.current_data;
-    dataBefore.value = response.data.previous_data;
-    showPdrbAndResult.value.result = false;
-    showPdrbAndResult.value.adhb = true;
-    showTabPanel.value = true;
-    dataset.value = response.data.dataset;
-    currentSearchSet.value = JSON.parse(JSON.stringify(form));
-    warningToUser.value = false;
     formError.value = {
       year: null,
       quarter: null,
       description: null,
       regions: null,
     };
+    quarterCap.value = form.quarter;
+    dataContents.value = response.data.current_data;
+    dataBefore.value = response.data.previous_data;
+    dataContentsSummary.value = response.data.current_summary_set;
+    dataBeforeSummary.value = response.data.previous_summary_set;
+    showPdrbAndResult.value.result = false;
+    showPdrbAndResult.value.adhb = true;
+    showTabPanel.value = true;
     showNotification(response.data.notification);
     showTab("adhb");
+    showSummary("full");
   } catch (error) {
     // Display notification if available
     if (error.response.data.notification) {
@@ -569,75 +543,10 @@ const submit = async () => {
       }, {});
     }
   }
-  // triggerSpinner.value = false;
 };
 // #endregion
-// #region Section: COPY
-var searchFormDefault = {};
-const openCopyModal = () => {
-  copyModal.value = true;
-  searchFormDefault = JSON.parse(JSON.stringify(form));
-};
-const closeCopyModal = () => {
-  copyModal.value = false;
-  for (const key in searchFormDefault) {
-    form[key] = searchFormDefault[key];
-  }
-  modalError.value = {
-    year: null,
-    quarter: null,
-    description: null,
-  };
-};
-const modalError = ref({
-  year: null,
-  quarter: null,
-  description: null,
-});
-const copy = async () => {
-  // triggerSpinner.value = true;
-  try {
-    const response = await axios.get(route("pdrb.copy-entri"), {
-      params: {
-        type: page.props.type,
-        year: form.year,
-        quarter: form.quarter,
-        description: form.description,
-        regions: form.regions,
-      },
-    });
-    modalError.value = {
-      year: null,
-      quarter: null,
-      description: null,
-    };
-    const updatedDataContents = dataContents.value.map((item) => {
-      const matched = response.data.current_data.find(
-        (current) =>
-          current.subsector_id === item.subsector_id && current.quarter === item.quarter
-      );
 
-      return matched ? { ...item, adhb: matched.adhb, adhk: matched.adhk } : item;
-    });
-    dataContents.value = updatedDataContents;
-    showNotification(response.data.notification);
-    showTab("adhb");
-    closeCopyModal();
-  } catch (error) {
-    if (error.response.data.notification) {
-      showNotification(error.response.data.notification);
-    }
-    if (error.response.data.errors) {
-      modalError.value = Object.keys(error.response.data.errors).reduce((acc, key) => {
-        acc[key] = error.response.data.errors[key][0];
-        return acc;
-      }, {});
-    }
-  }
-  // triggerSpinner.value = false;
-};
-// #endregion
-// const triggerSpinner = ref(false);
+// #region Section: CHANGE NAV TAB
 var def = "btn-info-fordone";
 const activeTab = ref({
   adhb: def,
@@ -649,6 +558,8 @@ const activeTab = ref({
   indeks: def,
   gi_qtoq: def,
   gi_ytoy: def,
+  full: def,
+  summary: def,
 });
 const setActiveTab = (value) => {
   return activeTab.value[value];
@@ -659,9 +570,9 @@ const resetShowTable = () => {
     showPdrbAndResult.value[key] = false;
   });
 };
-// #region Section: CHANGE NAV TAB
 const showTab = (tab) => {
   Object.keys(activeTab.value).forEach((key) => {
+    if (key == "full" || key == "summary") return;
     activeTab.value[key] = def;
   });
   activeTab.value[tab] = "btn-success-fordone";
@@ -675,35 +586,67 @@ const showTab = (tab) => {
   }
   if (tab == "dist") {
     showPdrbAndResult.value.result = true;
-    showDist();
+    computedData.value = showDist("adhb_now");
+    computedSummaryData.value = showDist("adhb_summary_now");
   }
   if (tab == "g_qtoq") {
     showPdrbAndResult.value.result = true;
-    showGQtoQ();
+    computedData.value = showGQtoQ("adhk_now", "adhk_prev");
+    computedSummaryData.value = showGQtoQ("adhk_summary_now", "adhk_summary_prev");
   }
   if (tab == "g_ytoy") {
     showPdrbAndResult.value.result = true;
-    showGYtoY();
+    computedData.value = showGYtoY("adhk_now", "adhk_prev");
+    computedSummaryData.value = showGYtoY("adhk_summary_now", "adhk_summary_prev");
   }
   if (tab == "g_ctoc") {
     showPdrbAndResult.value.result = true;
-    showGCtoC();
+    computedData.value = showGCtoC("adhk_now", "adhk_prev");
+    computedSummaryData.value = showGCtoC("adhk_summary_now", "adhk_summary_prev");
   }
   if (tab == "indeks") {
     showPdrbAndResult.value.result = true;
-    showIndeks();
+    computedData.value = showIndeks("adhb_now", "adhk_now");
+    computedSummaryData.value = showIndeks("adhb_summary_now", "adhk_summary_now");
   }
   if (tab == "gi_qtoq") {
     showPdrbAndResult.value.result = true;
-    showGIQtoQ();
+    computedData.value = showGIQtoQ("adhb_now", "adhb_prev", "adhk_now", "adhk_prev");
+    computedSummaryData.value = showGIQtoQ(
+      "adhb_summary_now",
+      "adhb_summary_prev",
+      "adhk_summary_now",
+      "adhk_summary_prev"
+    );
   }
   if (tab == "gi_ytoy") {
     showPdrbAndResult.value.result = true;
-    showGIYtoY();
+    computedData.value = showGIYtoY("adhb_now", "adhb_prev", "adhk_now", "adhk_prev");
+    computedSummaryData.value = showGIYtoY(
+      "adhb_summary_now",
+      "adhb_summary_prev",
+      "adhk_summary_now",
+      "adhk_summary_prev"
+    );
   }
 };
-const showDist = () => {
-  let dataset = dataOnDemand.value["adhb_now"];
+const showSummary = (tab) => {
+  if (tab == "full") activeTab.value["summary"] = def;
+  if (tab == "summary") activeTab.value["full"] = def;
+  activeTab.value[tab] = "btn-success-fordone";
+  let currentActive = Object.entries(activeTab.value).find(
+    ([key, value]) => value != def
+  );
+  showTab(currentActive[0]);
+  if (tab == "full") {
+    isFull.value = true;
+  }
+  if (tab == "summary") {
+    isFull.value = false;
+  }
+};
+const showDist = (data) => {
+  let dataset = dataOnDemand.value[data];
   let arrayPDRB = dataset["PDRB"];
   let stake = Number(quarterCap.value); // Current quarter
   // Helper function to parse numbers safely
@@ -721,12 +664,13 @@ const showDist = () => {
       }
     });
   });
-  computedData.value = removeSpaceOnKomponen(result);
+  //   computedData.value = removeSpaceOnKomponen(result);
+  return removeSpaceOnKomponen(result);
 };
 
-const showGQtoQ = () => {
-  let current_dataset = dataOnDemand.value["adhk_now"];
-  let previous_dataset = dataOnDemand.value["adhk_prev"];
+const showGQtoQ = (now, prev) => {
+  let current_dataset = dataOnDemand.value[now];
+  let previous_dataset = dataOnDemand.value[prev];
   // Clean up spaces
   current_dataset = removeSpaceOnKomponen(current_dataset);
   previous_dataset = removeSpaceOnKomponen(previous_dataset);
@@ -760,12 +704,13 @@ const showGQtoQ = () => {
         return formatNumberGerman(growth.toFixed(4), 2, 4);
       });
   });
-  computedData.value = removeSpaceOnKomponen(result);
+  //   computedData.value = removeSpaceOnKomponen(result);
+  return removeSpaceOnKomponen(result);
 };
 
-const showGYtoY = () => {
-  let current_dataset = removeSpaceOnKomponen(dataOnDemand.value["adhk_now"]);
-  let previous_dataset = removeSpaceOnKomponen(dataOnDemand.value["adhk_prev"]);
+const showGYtoY = (now, prev) => {
+  let current_dataset = removeSpaceOnKomponen(dataOnDemand.value[now]);
+  let previous_dataset = removeSpaceOnKomponen(dataOnDemand.value[prev]);
   if (isObjectEmpty(previous_dataset)) {
     let notif = [{ message: "Data Tahun sebelumnya masih kosong", type: "error" }];
     showNotification(notif);
@@ -790,12 +735,13 @@ const showGYtoY = () => {
       });
   });
 
-  computedData.value = removeSpaceOnKomponen(result);
+  //   computedData.value = removeSpaceOnKomponen(result);
+  return removeSpaceOnKomponen(result);
 };
 
-const showGCtoC = () => {
-  let current_dataset = removeSpaceOnKomponen(dataOnDemand.value["adhk_now"]);
-  let previous_dataset = removeSpaceOnKomponen(dataOnDemand.value["adhk_prev"]);
+const showGCtoC = (now, prev) => {
+  let current_dataset = removeSpaceOnKomponen(dataOnDemand.value[now]);
+  let previous_dataset = removeSpaceOnKomponen(dataOnDemand.value[prev]);
   if (isObjectEmpty(previous_dataset)) {
     let notif = [{ message: "Data Tahun sebelumnya masih kosong", type: "error" }];
     showNotification(notif);
@@ -820,13 +766,14 @@ const showGCtoC = () => {
       return formatNumberGerman(growth.toFixed(4), 2, 4);
     });
   });
-  computedData.value = removeSpaceOnKomponen(result);
+  //   computedData.value = removeSpaceOnKomponen(result);
+  return removeSpaceOnKomponen(result);
 };
 
-const showIndeks = () => {
+const showIndeks = (now, prev) => {
   // current = ADHB, previous = ADHK
-  let current_dataset = removeSpaceOnKomponen(dataOnDemand.value["adhb_now"]);
-  let previous_dataset = removeSpaceOnKomponen(dataOnDemand.value["adhk_now"]);
+  let current_dataset = removeSpaceOnKomponen(dataOnDemand.value[now]);
+  let previous_dataset = removeSpaceOnKomponen(dataOnDemand.value[prev]);
   let stake = Number(quarterCap.value); // Defines the quarter limit
   // Helper function to parse numbers
   const parseNumber = (value) =>
@@ -840,14 +787,15 @@ const showIndeks = () => {
       return formatNumberGerman(indeks.toFixed(4), 2, 4);
     });
   });
-  computedData.value = removeSpaceOnKomponen(result);
+  //   computedData.value = removeSpaceOnKomponen(result);
+  return removeSpaceOnKomponen(result);
 };
 
-const showGIQtoQ = () => {
-  let adhb_current_dataset = removeSpaceOnKomponen(dataOnDemand.value["adhb_now"]);
-  let adhk_current_dataset = removeSpaceOnKomponen(dataOnDemand.value["adhk_now"]);
-  let adhb_previous_dataset = removeSpaceOnKomponen(dataOnDemand.value["adhb_prev"]);
-  let adhk_previous_dataset = removeSpaceOnKomponen(dataOnDemand.value["adhk_prev"]);
+const showGIQtoQ = (adhbnow, adhbprev, adhknow, adhkprev) => {
+  let adhb_current_dataset = removeSpaceOnKomponen(dataOnDemand.value[adhbnow]);
+  let adhk_current_dataset = removeSpaceOnKomponen(dataOnDemand.value[adhknow]);
+  let adhb_previous_dataset = removeSpaceOnKomponen(dataOnDemand.value[adhbprev]);
+  let adhk_previous_dataset = removeSpaceOnKomponen(dataOnDemand.value[adhkprev]);
   if (isObjectEmpty(adhb_previous_dataset)) {
     let notif = [{ message: "Data Tahun sebelumnya masih kosong", type: "error" }];
     showNotification(notif);
@@ -897,13 +845,15 @@ const showGIQtoQ = () => {
       return formatNumberGerman(growth.toFixed(4), 2, 4);
     });
   });
-  computedData.value = result;
+  //   computedData.value = result;
+  return result;
 };
-const showGIYtoY = () => {
-  let adhb_current_dataset = removeSpaceOnKomponen(dataOnDemand.value["adhb_now"]);
-  let adhk_current_dataset = removeSpaceOnKomponen(dataOnDemand.value["adhk_now"]);
-  let adhb_previous_dataset = removeSpaceOnKomponen(dataOnDemand.value["adhb_prev"]);
-  let adhk_previous_dataset = removeSpaceOnKomponen(dataOnDemand.value["adhk_prev"]);
+
+const showGIYtoY = (adhbnow, adhbprev, adhknow, adhkprev) => {
+  let adhb_current_dataset = removeSpaceOnKomponen(dataOnDemand.value[adhbnow]);
+  let adhk_current_dataset = removeSpaceOnKomponen(dataOnDemand.value[adhknow]);
+  let adhb_previous_dataset = removeSpaceOnKomponen(dataOnDemand.value[adhbprev]);
+  let adhk_previous_dataset = removeSpaceOnKomponen(dataOnDemand.value[adhkprev]);
   if (isObjectEmpty(adhb_previous_dataset)) {
     let notif = [{ message: "Data Tahun sebelumnya masih kosong", type: "error" }];
     showNotification(notif);
@@ -944,9 +894,10 @@ const showGIYtoY = () => {
       return formatNumberGerman(growth.toFixed(4), 2, 4);
     });
   });
-  computedData.value = result;
+  //   computedData.value = result;
+  return result;
 };
-// #endregion
+
 const removeSpaceOnKomponen = (object) => {
   let result;
   result = Object.fromEntries(
@@ -954,69 +905,46 @@ const removeSpaceOnKomponen = (object) => {
   );
   return result;
 };
+
+const isObjectEmpty = (obj) => {
+  return !obj || Object.keys(obj).length === 0;
+};
+
 const formatNumberGerman = (num, min = 2, max = 5) => {
   return new Intl.NumberFormat("de-DE", {
     minimumFractionDigits: min,
     maximumFractionDigits: max,
   }).format(num);
 };
-const isObjectEmpty = (obj) => {
-  return !obj || Object.keys(obj).length === 0;
-};
-// #region Section: Save & Submit & Unsubmit
-const saveEntri = async () => {
-  const thisForm = useForm({
-    dataContents: dataContents.value,
-    type: page.props.type,
-    _token: null,
-  });
-  const response = await axios.get(route("token"));
-  thisForm._token = response.data;
-  if (thisForm.processing) return;
-  thisForm.post(route("pdrb.save-entri"), {
-    onSuccess: (response) => {
-      showNotification(response.props.notification);
-    },
-  });
-};
-const submitEntri = async () => {
-  const thisForm = useForm({
-    id: dataset.value.id,
-    type: page.props.type,
-    _token: null,
-    dataContents: dataContents.value,
-  });
-  const response = await axios.get(route("token"));
-  thisForm._token = response.data;
-  if (thisForm.processing) return;
-  thisForm.post(route("pdrb.submit-entri"), {
-    onSuccess: (response) => {
-      showNotification(response.props.notification);
-      if (response.props.notification[0].type == "success")
-        dataset.value.status = "Submitted";
-    },
-  });
-};
-const unsubmitEntri = async () => {
-  const thisForm = useForm({
-    id: dataset.value.id,
-    type: page.props.type,
-    _token: null,
-  });
-  const response = await axios.get(route("token"));
-  thisForm._token = response.data;
-  if (thisForm.processing) return;
-  thisForm.post(route("pdrb.unsubmit-entri"), {
-    onSuccess: (response) => {
-      showNotification(response.props.notification);
-      if (response.props.notification[0].type == "success")
-        dataset.value.status = "Entry";
-    },
-  });
+const downloadHasil = async (id) => {
+  let list = {};
+  triggerSpinner.value = true;
+  try {
+    showSummary("full");
+    await nextTick();
+    for (const key of Object.keys(activeTab.value)) {
+      if (key === "full" || key === "summary") continue;
+      showTab(key);
+      await new Promise((resolve) => setTimeout(resolve, 800));
+      list[key] = tableToJson(id);
+    }
+    showSummary("summary");
+    await nextTick();
+    for (const key of Object.keys(activeTab.value)) {
+      if (key === "full" || key === "summary") continue;
+      showTab(key);
+      await new Promise((resolve) => setTimeout(resolve, 800));
+      list[key + "-summary"] = tableToJson(id);
+    }
+    theDownload(list);
+  } catch (error) {
+    console.error(error);
+  } finally {
+    triggerSpinner.value = false;
+  }
 };
 // #endregion
 </script>
-
 <style scoped>
 .fixed-thead {
   position: sticky;

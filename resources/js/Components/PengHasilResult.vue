@@ -3,20 +3,15 @@
     <template v-for="(nodeSubsectors, index) in subsectors">
       <template
         v-if="
-          (nodeSubsectors.code != null &&
-            nodeSubsectors.code == 'a' &&
-            nodeSubsectors.sector.code == '1' &&
-            nodeSubsectors.sector.category.type == 'Lapangan Usaha') ||
-          (nodeSubsectors.code == null &&
-            nodeSubsectors.sector.code == '1' &&
-            nodeSubsectors.sector.category.type == 'Lapangan Usaha')
+          nodeSubsectors.code != null &&
+          nodeSubsectors.code == 'a' &&
+          nodeSubsectors.sector.category.type == 'Pengeluaran'
         "
       >
         <tr>
           <td class="desc-col fixed-column">
-            <label class=""
-              >{{ nodeSubsectors.sector.category.code }}.
-              {{ nodeSubsectors.sector.category.name }}</label
+            <label
+              >{{ nodeSubsectors.sector.code }}. {{ nodeSubsectors.sector.name }}</label
             >
           </td>
           <template v-for="(node, index) in quarters">
@@ -28,26 +23,7 @@
       <template
         v-if="
           nodeSubsectors.code != null &&
-          nodeSubsectors.code == 'a' &&
-          nodeSubsectors.sector.category.type == 'Lapangan Usaha'
-        "
-      >
-        <tr>
-          <td class="desc-col fixed-column">
-            <p class="pl-4">
-              {{ nodeSubsectors.sector.code }}. {{ nodeSubsectors.sector.name }}
-            </p>
-          </td>
-          <template v-for="(node, index) in quarters">
-            <td class="text-right pr-2"></td>
-          </template>
-          <td class="text-right"></td>
-        </tr>
-      </template>
-      <template
-        v-if="
-          nodeSubsectors.code != null &&
-          nodeSubsectors.sector.category.type == 'Lapangan Usaha'
+          nodeSubsectors.sector.category.type == 'Pengeluaran'
         "
       >
         <tr>
@@ -66,38 +42,13 @@
         v-else-if="
           nodeSubsectors.code == null &&
           nodeSubsectors.sector.code != null &&
-          nodeSubsectors.sector.category.type == 'Lapangan Usaha'
+          nodeSubsectors.sector.category.type == 'Pengeluaran'
         "
       >
         <tr>
           <td class="desc-col fixed-column">
-            <p
-              class="pl-4 pr-4"
-              :for="nodeSubsectors.sector.code + '_' + nodeSubsectors.sector.name"
-            >
+            <label :for="nodeSubsectors.sector.code + '_' + nodeSubsectors.sector.name">
               {{ nodeSubsectors.sector.code + ". " + nodeSubsectors.sector.name }}
-            </p>
-          </td>
-          <template v-for="(node, index) in quarters">
-            <td class="text-right"></td>
-          </template>
-          <td class="text-right"></td>
-        </tr>
-      </template>
-      <template
-        v-else-if="
-          nodeSubsectors.code == null &&
-          nodeSubsectors.sector.code == null &&
-          nodeSubsectors.sector.category.type == 'Lapangan Usaha'
-        "
-      >
-        <tr>
-          <td class="desc-col fixed-column">
-            <label
-              class="col"
-              :for="nodeSubsectors.sector.category.code + '_' + nodeSubsectors.name"
-            >
-              {{ nodeSubsectors.sector.category.code + ". " + nodeSubsectors.name }}
             </label>
           </td>
           <template v-for="(node, index) in quarters">
@@ -116,21 +67,11 @@
       </template>
       <td class="total-cell"></td>
     </tr>
-    <tr class="PDRB-footer text-center">
-      <td class="desc-col footer-column">
-        <p class="mt-1 mb-1">PDRB Nonmigas</p>
-      </td>
-      <template v-for="(node, index) in quarters">
-        <td :id="'adhb_total-nonmigas-' + node.label" class="total-cell"></td>
-      </template>
-      <td class="total-cell"></td>
-    </tr>
   </tbody>
 </template>
 
 <script setup>
-import { debounce } from "@/debounce";
-import { onMounted, ref, watch } from "vue";
+import { ref, watch } from "vue";
 
 const props = defineProps({
   subsectors: {

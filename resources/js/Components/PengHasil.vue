@@ -3,59 +3,31 @@
     <template v-for="(nodeSubsectors, index) in subsectors">
       <template
         v-if="
-          (nodeSubsectors.code != null &&
-            nodeSubsectors.code == 'a' &&
-            nodeSubsectors.sector.code == '1' &&
-            nodeSubsectors.sector.category.type == 'Lapangan Usaha') ||
-          (nodeSubsectors.code == null &&
-            nodeSubsectors.sector.code == '1' &&
-            nodeSubsectors.sector.category.type == 'Lapangan Usaha')
+          nodeSubsectors.code != null &&
+          nodeSubsectors.code == 'a' &&
+          nodeSubsectors.sector.category.type == 'Pengeluaran'
         "
       >
         <tr>
           <td class="desc-col fixed-column">
             <label class=""
-              >{{ nodeSubsectors.sector.category.code }}.
-              {{ nodeSubsectors.sector.category.name }}</label
+              >{{ nodeSubsectors.sector.code }}. {{ nodeSubsectors.sector.name }}</label
             >
           </td>
           <template v-for="(node, index) in quarters">
-            <td class="text-right font-bold">
-              {{ getSumLvlTwo(nodeSubsectors.sector.category_id, node.label) }}
-            </td>
-          </template>
-          <td class="text-right font-bold">
-            {{ getSumRowCat(nodeSubsectors.sector.category_id) }}
-          </td>
-        </tr>
-      </template>
-      <template
-        v-if="
-          nodeSubsectors.code != null &&
-          nodeSubsectors.code == 'a' &&
-          nodeSubsectors.sector.category.type == 'Lapangan Usaha'
-        "
-      >
-        <tr>
-          <td class="desc-col fixed-column">
-            <p class="pl-4">
-              {{ nodeSubsectors.sector.code }}. {{ nodeSubsectors.sector.name }}
-            </p>
-          </td>
-          <template v-for="(node, index) in quarters">
-            <td class="text-right pr-2">
-              {{ getSumLvlOne(nodeSubsectors.sector_id, node.label) }}
+            <td class="text-right">
+              {{ getSumLvlTwo(nodeSubsectors.sector.id, node.label) }}
             </td>
           </template>
           <td class="text-right">
-            {{ getSumRowSector(nodeSubsectors.sector.id) }}
+            {{ getSumRowCat(nodeSubsectors.sector.id) }}
           </td>
         </tr>
       </template>
       <template
         v-if="
           nodeSubsectors.code != null &&
-          nodeSubsectors.sector.category.type == 'Lapangan Usaha'
+          nodeSubsectors.sector.category.type == 'Pengeluaran'
         "
       >
         <tr>
@@ -66,23 +38,7 @@
           </td>
           <template v-for="(node, index) in quarters">
             <td>
-              <input
-                :disabled="inputDisabled(node.label)"
-                type="text"
-                :id="'cell-' + nodeSubsectors.id + '-' + node.label"
-                :value="getData(nodeSubsectors.id, node.label)"
-                @input="
-                  (event) => {
-                    debounceHandleInput(event, nodeSubsectors.id, node.label);
-                  }
-                "
-                @paste="
-                  (event) => {
-                    handlePaste(event, nodeSubsectors.id, node.label);
-                  }
-                "
-                class="w-full input-fordone"
-              />
+              {{ getData(nodeSubsectors.id, node.label) }}
             </td>
           </template>
           <td class="text-right">{{ getSumTotalFromVal(nodeSubsectors.id) }}</td>
@@ -92,82 +48,21 @@
         v-else-if="
           nodeSubsectors.code == null &&
           nodeSubsectors.sector.code != null &&
-          nodeSubsectors.sector.category.type == 'Lapangan Usaha'
+          nodeSubsectors.sector.category.type == 'Pengeluaran'
         "
       >
         <tr>
           <td class="desc-col fixed-column">
-            <p
-              class="pl-4 pr-4"
-              :for="nodeSubsectors.sector.code + '_' + nodeSubsectors.sector.name"
-            >
+            <label :for="nodeSubsectors.sector.code + '_' + nodeSubsectors.sector.name">
               {{ nodeSubsectors.sector.code + ". " + nodeSubsectors.sector.name }}
-            </p>
-          </td>
-          <template v-for="(node, index) in quarters">
-            <td>
-              <input
-                :disabled="inputDisabled(node.label)"
-                type="text"
-                :id="'cell-' + nodeSubsectors.id + '-' + node.label"
-                :value="getData(nodeSubsectors.id, node.label)"
-                @input="
-                  (event) => {
-                    debounceHandleInput(event, nodeSubsectors.id, node.label);
-                  }
-                "
-                @paste="
-                  (event) => {
-                    handlePaste(event, nodeSubsectors.id, node.label);
-                  }
-                "
-                class="w-full input-fordone"
-              />
-            </td>
-          </template>
-          <td class="text-right">{{ getSumTotalFromVal(nodeSubsectors.id) }}</td>
-        </tr>
-      </template>
-      <template
-        v-else-if="
-          nodeSubsectors.code == null &&
-          nodeSubsectors.sector.code == null &&
-          nodeSubsectors.sector.category.type == 'Lapangan Usaha'
-        "
-      >
-        <tr>
-          <td class="desc-col fixed-column">
-            <label
-              class="col"
-              :for="nodeSubsectors.sector.category.code + '_' + nodeSubsectors.name"
-            >
-              {{ nodeSubsectors.sector.category.code + ". " + nodeSubsectors.name }}
             </label>
           </td>
           <template v-for="(node, index) in quarters">
             <td>
-              <input
-                :disabled="inputDisabled(node.label)"
-                type="text"
-                :id="'cell-' + nodeSubsectors.id + '-' + node.label"
-                :value="getData(nodeSubsectors.id, node.label)"
-                @input="
-                  (event) => {
-                    debounceHandleInput(event, nodeSubsectors.id, node.label);
-                  }
-                "
-                @paste="
-                  (event) => {
-                    handlePaste(event, nodeSubsectors.id, node.label);
-                  }
-                "
-                class="w-full input-fordone font-bold"
-              />
+              {{ getData(nodeSubsectors.id, node.label) }}
             </td>
           </template>
-          <td class="text-right font-bold">
-            {{ getSumTotalFromVal(nodeSubsectors.id) }}
-          </td>
+          <td class="text-right">{{ getSumTotalFromVal(nodeSubsectors.id) }}</td>
         </tr>
       </template>
     </template>
@@ -182,22 +77,9 @@
       </template>
       <td class="total-cell">{{ getSumPDRB("PDRB") }}</td>
     </tr>
-    <tr class="PDRB-footer text-center">
-      <td class="desc-col footer-column">
-        <p class="mt-1 mb-1">PDRB Nonmigas</p>
-      </td>
-      <template v-for="(node, index) in quarters">
-        <td :id="'adhb_total-nonmigas-' + node.label" class="total-cell">
-          {{ getPDRBNonMigas(node.label) }}
-        </td>
-      </template>
-      <td class="total-cell">{{ getSumPDRB("PDRB-NonMigas") }}</td>
-    </tr>
   </tbody>
 </template>
-
 <script setup>
-import { debounce } from "@/debounce";
 import { onMounted, ref, watch } from "vue";
 
 const props = defineProps({
@@ -223,11 +105,6 @@ const props = defineProps({
     type: String,
     required: true,
   },
-  datasetStatus: {
-    type: String,
-    required: true,
-    default: "Entry",
-  },
 });
 const dataHere = ref(props.dataContents);
 const tableRef = ref(null);
@@ -252,13 +129,8 @@ onMounted(() => {
     });
   }, 100);
 });
-const emits = defineEmits(["update:updateDOD", "update:updateDataContents"]);
+const emits = defineEmits(["update:updateDOD"]);
 const quarters = [{ label: "1" }, { label: "2" }, { label: "3" }, { label: "4" }];
-const inputDisabled = (quarter) => {
-  if (props.datasetStatus == "Submitted") return true;
-  let arrayQuarter = Array.from({ length: props.quarterCap }, (_, i) => i + 1);
-  return !arrayQuarter.includes(Number(quarter));
-};
 // #region Section: GET_DATA
 const getData = (subsectors, quarter) => {
   const theData = dataHere.value.find((x) => {
@@ -380,63 +252,6 @@ const formatNumberGerman = (num, min = 2, max = 5) => {
     maximumFractionDigits: max,
   }).format(num);
 };
-
-// #endregion
-
-// #region Section: HANDLE_FUNCTION
-const handleInput = (event, subsector, quarter) => {
-  let value = event.target.value;
-  value = String(value).replaceAll(".", "").replace(",", ".");
-  const theIndex = dataHere.value.findIndex((x) => {
-    return x.quarter == quarter && x.subsector_id == subsector;
-  });
-  if (theIndex !== -1) dataHere.value[theIndex][props.type] = value;
-};
-const debounceHandleInput = debounce((event, subsector, quarter) => {
-  handleInput(event, subsector, quarter);
-}, 700);
-const handlePaste = (event, subsector, quarter) => {
-  const items = event.clipboardData.items;
-  for (let i = 0; i < items.length; i++) {
-    if (items[i].type === "text/plain") {
-      items[i].getAsString((text) => {
-        const columnIndex = event.target.closest("td").cellIndex;
-        const rowIndex = event.target.closest("tr").rowIndex;
-        const lines = text.trim().split("\n");
-        lines.forEach((line, index) => {
-          const cells = line.trim().split("\t");
-          cells.forEach((cell, subIndex) => {
-            const row = rowIndex + index;
-            const col = columnIndex + subIndex;
-            const table = event.target.closest("table");
-            const tableRow = table.rows[row];
-            if (tableRow) {
-              const tableCell = tableRow.cells[col];
-              if (tableCell) {
-                let input = tableCell.querySelector('input:not([type="hidden"])');
-                if (input) {
-                  const subsector = input.id.split("-")[1];
-                  const quarter = input.id.split("-")[2];
-                  input = cell;
-                  let formatCell = String(cell).replaceAll(".", "").replace(",", ".");
-                  const theIndex = dataHere.value.findIndex((x) => {
-                    return x.quarter == quarter && x.subsector_id == subsector;
-                  });
-                  if (theIndex !== -1) {
-                    dataHere.value[theIndex][props.type] = formatCell;
-                  }
-                }
-              }
-            }
-          });
-        });
-      });
-    }
-  }
-};
-watch(dataHere.value, (value) => {
-  emits("update:updateDataContents", value);
-});
 // #endregion
 
 // #region Section: CAPTURE_DATA
