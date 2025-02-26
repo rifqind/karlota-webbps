@@ -93,6 +93,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
     //Hasil
     Route::get('/get-hasil', [PdrbController::class, 'getHasil'])
         ->name('pdrb.get-hasil');
+
+    //Diskrepansi
+    Route::get('/get-diskrepansi', [PdrbController::class, 'getDiskrepansi'])
+        ->name('pdrb.get-diskrepansi');
 });
 
 
