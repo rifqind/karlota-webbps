@@ -300,12 +300,12 @@ const warningToUser = ref(false);
 const notifications = ref([]);
 const defaultAdjustment = ref([]);
 const typeData = ref("subsector");
-const showNotification = (notification) => {
+const showNotification = (notification, delay = 200) => {
   notifications.value = notification;
   notifications.value.forEach((_, index) => {
     setTimeout(() => {
       notifications.value.shift(); // Remove the first notification
-    }, (index + 0.5) * 200); // Delay based on index
+    }, (index + 0.5) * delay); // Delay based on index
   });
 };
 const dataOnDemand = ref({ 1: {}, 2: {}, 3: {}, 4: {}, t: {} });
@@ -559,7 +559,7 @@ const submit = async () => {
   } catch (error) {
     // Display notification if available
     if (error.response.data.notification) {
-      showNotification(error.response.data.notification);
+      showNotification(error.response.data.notification, 1500);
     }
     // Handle validation errors if they exist
     if (error.response.data.errors) {
@@ -582,7 +582,7 @@ const saveAdjustment = async () => {
   thisForm.post(route("pdrb.save-adjustment"), {
     onSuccess: (response) => {
       console.log(response.props.notification);
-      showNotification(response.props.notification);
+      showNotification(response.props.notification, 1500);
     },
   });
 };

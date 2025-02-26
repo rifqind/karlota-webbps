@@ -187,6 +187,26 @@
               :type="'distribusi'"
               :computed-data="computedData"
             />
+            <DiskrepansiLapus
+              v-show="false"
+              :subsectors="page.props.subsectors"
+              :table-column="tableColumn"
+              :data-contents="dataBefore"
+              :type="'adhb'"
+              :on-demand-type="'adhb_prev'"
+              :quarter="quarterCap"
+              @update:update-d-o-d="updateDOD"
+            />
+            <DiskrepansiLapus
+              v-show="false"
+              :subsectors="page.props.subsectors"
+              :table-column="tableColumn"
+              :data-contents="dataBefore"
+              :type="'adhk'"
+              :on-demand-type="'adhk_prev'"
+              :quarter="quarterCap"
+              @update:update-d-o-d="updateDOD"
+            />
           </template>
         </table>
       </div>
@@ -220,12 +240,12 @@ const formError = ref({
   description: null,
 });
 const notifications = ref([]);
-const showNotification = (notification) => {
+const showNotification = (notification, delay = 200) => {
   notifications.value = notification;
   notifications.value.forEach((_, index) => {
     setTimeout(() => {
       notifications.value.shift(); // Remove the first notification
-    }, (index + 1) * 200); // Delay based on index
+    }, (index + 1) * delay); // Delay based on index
   });
 };
 const listTab = ref({
@@ -362,13 +382,9 @@ const submit = async () => {
     showNotification(response.data.notification);
     quartersTab(form.quarter);
   } catch (error) {
-    // Display notification if available
-    // console.log(error);
     if (error.response.data.notification) {
-      showNotification(error.response.data.notification);
+      showNotification(error.response.data.notification, 500);
     }
-
-    // Handle validation errors if they exist
     if (error.response.data.errors) {
       formError.value = Object.keys(error.response.data.errors).reduce((acc, key) => {
         acc[key] = error.response.data.errors[key][0];
@@ -440,30 +456,238 @@ const showTab = (tab) => {
     showPdrbAndResult.value.result = true;
     computedData.value = showDist("adhb_now");
   }
+  if (tab == "g_qtoq") {
+    if (quarterCap.value == "t") {
+      let notif = [{ message: "Tidak ada Growth QtoQ untuk Tahunan", type: "error" }];
+      showNotification(notif, 1500);
+      showPdrbAndResult.value.result = false;
+      return;
+    }
+    showPdrbAndResult.value.result = true;
+    computedData.value = showGQtoQ("adhk_now", "adhk_prev");
+  }
+  if (tab == "g_ytoy") {
+    showPdrbAndResult.value.result = true;
+    computedData.value = showGYtoY("adhk_now", "adhk_prev");
+  }
+  if (tab == "g_ctoc") {
+    if (quarterCap.value == "t") {
+      let notif = [
+        { message: "Growth CtoC untuk Tahunan sama dengan YonY", type: "error" },
+      ];
+      showNotification(notif, 1500);
+      showPdrbAndResult.value.result = false;
+      return;
+    }
+    showPdrbAndResult.value.result = true;
+    computedData.value = showGCtoC("adhk_now", "adhk_prev");
+  }
+  if (tab == "indeks") {
+    showPdrbAndResult.value.result = true;
+    computedData.value = showIndeks("adhb_now", "adhk_now");
+  }
+  if (tab == "gi_qtoq") {
+    if (quarterCap.value == "t") {
+      let notif = [{ message: "Tidak ada Growth QtoQ untuk Tahunan", type: "error" }];
+      showNotification(notif, 1500);
+      showPdrbAndResult.value.result = false;
+      return;
+    }
+    showPdrbAndResult.value.result = true;
+    computedData.value = showGIQtoQ("adhb_now", "adhb_prev", "adhk_now", "adhk_prev");
+  }
 };
 const showDist = (data) => {
   let dataset = dataOnDemand.value[data][quarterCap.value];
-  console.log(dataset);
   let arrayPDRB = dataset["PDRB"];
-  let stake = Number(quarterCap.value); // Current quarter
-  // Helper function to parse numbers safely
   const parseNumber = (value) =>
     value ? Number(value.replaceAll(".", "").replaceAll(",", ".")) : 0;
   let result = {};
   Object.keys(dataset).forEach((key) => {
     result[key] = dataset[key].map((value, index) => {
-      // Include index 0 to (stake - 1) and always include index 4
-      if (index < stake || index === 4) {
-        let divisor = parseNumber(arrayPDRB[index]); // Get corresponding PDRB value
-        let dividend = parseNumber(value); // Convert current value to number
-        let dist = divisor !== 0 ? (dividend / divisor) * 100 : 0; // Avoid division by zero
-        return formatNumberGerman(dist.toFixed(4), 2, 4);
-      }
+      let divisor = parseNumber(arrayPDRB[index]); // Get corresponding PDRB value
+      let dividend = parseNumber(value); // Convert current value to number
+      let dist = divisor !== 0 ? (dividend / divisor) * 100 : 0; // Avoid division by zero
+      return formatNumberGerman(dist.toFixed(4), 2, 4);
     });
   });
-  //   computedData.value = removeSpaceOnKomponen(result);
-  console.log(result);
   return removeSpaceOnKomponen(result);
+};
+const showGQtoQ = (now, prev) => {
+  let current_dataset = dataOnDemand.value[now][quarterCap.value];
+  let previous_dataset = dataOnDemand.value[prev][4];
+  current_dataset = removeSpaceOnKomponen(current_dataset);
+  previous_dataset = removeSpaceOnKomponen(previous_dataset);
+  let result = {};
+  let previous_quarter;
+  if (quarterCap.value > 1) {
+    previous_quarter = dataOnDemand.value[now][Number(quarterCap.value) - 1];
+    previous_quarter = removeSpaceOnKomponen(previous_quarter);
+  }
+  Object.keys(current_dataset).forEach((key) => {
+    result[key] = current_dataset[key].map((value, index) => {
+      let dividend = value ? Number(value.replaceAll(".", "").replaceAll(",", ".")) : 0;
+      let divisor;
+      if (quarterCap.value == 1) {
+        divisor = previous_dataset[key][index]
+          ? Number(previous_dataset[key][index].replaceAll(".", "").replaceAll(",", "."))
+          : 0;
+      } else {
+        divisor = previous_quarter[key][index]
+          ? Number(previous_quarter[key][index].replaceAll(".", "").replaceAll(",", "."))
+          : 0;
+      }
+      let growth = divisor !== 0 && dividend !== 0 ? (dividend / divisor) * 100 - 100 : 0;
+      return formatNumberGerman(growth.toFixed(4), 2, 4);
+    });
+  });
+  return removeSpaceOnKomponen(result);
+};
+const showGYtoY = (now, prev) => {
+  let current_dataset = removeSpaceOnKomponen(dataOnDemand.value[now][quarterCap.value]);
+  let previous_dataset = removeSpaceOnKomponen(
+    dataOnDemand.value[prev][quarterCap.value]
+  );
+  if (isObjectEmpty(previous_dataset)) {
+    let notif = [{ message: "Data Tahun sebelumnya masih kosong", type: "error" }];
+    showNotification(notif, 1500);
+    showPdrbAndResult.value.result = false;
+    return;
+  }
+  let result = {};
+  Object.keys(current_dataset).forEach((key) => {
+    result[key] = current_dataset[key].map((value, index) => {
+      let dividend = value ? Number(value.replaceAll(".", "").replaceAll(",", ".")) : 0;
+      let divisor = previous_dataset[key][index]
+        ? Number(previous_dataset[key][index].replaceAll(".", "").replaceAll(",", "."))
+        : 0;
+      let growth = divisor !== 0 && dividend !== 0 ? (dividend / divisor) * 100 - 100 : 0;
+      return formatNumberGerman(growth.toFixed(4), 2, 4);
+    });
+  });
+  return removeSpaceOnKomponen(result);
+};
+const showGCtoC = (now, prev) => {
+  let current_dataset = removeSpaceOnKomponen(dataOnDemand.value[now][quarterCap.value]);
+  let previous_dataset = removeSpaceOnKomponen(
+    dataOnDemand.value[prev][quarterCap.value]
+  );
+  if (isObjectEmpty(previous_dataset)) {
+    let notif = [{ message: "Data Tahun sebelumnya masih kosong", type: "error" }];
+    showNotification(notif, 1500);
+    showPdrbAndResult.value.result = false;
+    return;
+  }
+  const parseNumber = (value) =>
+    value ? Number(value.replaceAll(".", "").replaceAll(",", ".")) : 0;
+  let result = {};
+  let current_quarter = {},
+    previous_quarter = {};
+  Object.keys(current_dataset).forEach((key) => {
+    result[key] = current_dataset[key].map((_, index) => {
+      let dividend = 0,
+        divisor = 0;
+      for (let cumulative = 1; cumulative <= quarterCap.value; cumulative++) {
+        current_quarter = removeSpaceOnKomponen(dataOnDemand.value[now][cumulative]);
+        previous_quarter = removeSpaceOnKomponen(dataOnDemand.value[prev][cumulative]);
+        dividend += parseNumber(current_quarter[key][index]);
+        divisor += parseNumber(previous_quarter[key][index]);
+      }
+      let growth = divisor !== 0 && dividend !== 0 ? (dividend / divisor) * 100 - 100 : 0;
+      return formatNumberGerman(growth.toFixed(4), 2, 4);
+    });
+  });
+  return removeSpaceOnKomponen(result);
+};
+const showIndeks = (now, prev) => {
+  let current_dataset = removeSpaceOnKomponen(dataOnDemand.value[now][quarterCap.value]);
+  let previous_dataset = removeSpaceOnKomponen(
+    dataOnDemand.value[prev][quarterCap.value]
+  );
+  const parseNumber = (value) =>
+    value ? Number(value.replaceAll(".", "").replaceAll(",", ".")) : 0;
+  let result = {};
+  Object.keys(current_dataset).forEach((key) => {
+    result[key] = current_dataset[key].map((value, index) => {
+      let dividend = parseNumber(value);
+      let divisor = parseNumber(previous_dataset[key][index]);
+      let indeks = divisor !== 0 ? (dividend / divisor) * 100 : 0;
+      return formatNumberGerman(indeks.toFixed(4), 2, 4);
+    });
+  });
+  return removeSpaceOnKomponen(result);
+};
+const showGIQtoQ = (adhbnow, adhbprev, adhknow, adhkprev) => {
+  let adhb_current_dataset = removeSpaceOnKomponen(
+    dataOnDemand.value[adhbnow][quarterCap.value]
+  );
+  let adhk_current_dataset = removeSpaceOnKomponen(
+    dataOnDemand.value[adhknow][quarterCap.value]
+  );
+  let adhb_previous_dataset = removeSpaceOnKomponen(dataOnDemand.value[adhbprev][4]);
+  let adhk_previous_dataset = removeSpaceOnKomponen(dataOnDemand.value[adhkprev][4]);
+  if (isObjectEmpty(adhb_previous_dataset)) {
+    let notif = [{ message: "Data Tahun sebelumnya masih kosong", type: "error" }];
+    showNotification(notif, 1500);
+    showPdrbAndResult.value.result = false;
+    return;
+  }
+  const parseNumber = (value) =>
+    value ? Number(value.replaceAll(".", "").replaceAll(",", ".")) : 0;
+  let indeks_implisit_previous = {};
+  Object.keys(adhb_previous_dataset).forEach((key) => {
+    indeks_implisit_previous[key] = adhb_previous_dataset[key].map((_, index) => {
+      let dividend = parseNumber(adhb_previous_dataset[key][index]);
+      let divisor = parseNumber(adhk_previous_dataset[key][index]);
+      let indeks = divisor !== 0 && dividend !== 0 ? (dividend / divisor) * 100 : 0;
+      return formatNumberGerman(indeks.toFixed(4), 2, 4);
+    });
+  });
+  let indeks_implisit_current = {};
+  Object.keys(adhb_current_dataset).forEach((key) => {
+    indeks_implisit_current[key] = adhb_current_dataset[key].map((value, index) => {
+      let dividend = parseNumber(value);
+      let divisor = parseNumber(adhk_current_dataset[key][index]);
+      let indeks = divisor !== 0 ? (dividend / divisor) * 100 : 0;
+      return formatNumberGerman(indeks.toFixed(4), 2, 4);
+    });
+  });
+  let result = {};
+  let indeks_implisit_quarter_previous = {},
+    previous_quarter_adhb = {},
+    previous_quarter_adhk = {};
+  if (quarterCap.value > 1) {
+    previous_quarter_adhb = removeSpaceOnKomponen(
+      dataOnDemand.value[adhbnow][Number(quarterCap.value) - 1]
+    );
+    previous_quarter_adhk = removeSpaceOnKomponen(
+      dataOnDemand.value[adhknow][Number(quarterCap.value) - 1]
+    );
+    Object.keys(previous_quarter_adhb).forEach((key) => {
+      indeks_implisit_quarter_previous[key] = previous_quarter_adhb[key].map(
+        (value, index) => {
+          let dividend = parseNumber(value);
+          let divisor = parseNumber(previous_quarter_adhk[key][index]);
+          let indeks = divisor !== 0 ? (dividend / divisor) * 100 : 0;
+          return formatNumberGerman(indeks.toFixed(4), 2, 4);
+        }
+      );
+    });
+  }
+  Object.keys(indeks_implisit_current).forEach((key) => {
+    result[key] = indeks_implisit_current[key].map((value, index) => {
+      let dividend = parseNumber(value);
+      let divisor;
+      if (quarterCap.value == 1) {
+        divisor = parseNumber(indeks_implisit_previous[key][index]);
+      } else {
+        divisor = parseNumber(indeks_implisit_quarter_previous[key][index]);
+      }
+      let growth = divisor !== 0 && dividend !== 0 ? (dividend / divisor) * 100 - 100 : 0;
+      return formatNumberGerman(growth.toFixed(4), 2, 4);
+    });
+  });
+  return result;
 };
 const removeSpaceOnKomponen = (object) => {
   let result;
