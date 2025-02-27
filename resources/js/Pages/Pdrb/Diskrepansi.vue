@@ -167,6 +167,7 @@
               :type="'adhb'"
               :on-demand-type="'adhb_now'"
               :quarter="quarterCap"
+              :calculate="calculateData.adhb"
               @update:update-d-o-d="updateDOD"
             />
             <DiskrepansiLapus
@@ -177,6 +178,7 @@
               :type="'adhk'"
               :on-demand-type="'adhk_now'"
               :quarter="quarterCap"
+              :calculate="calculateData.adhk"
               @update:update-d-o-d="updateDOD"
             />
             <DiskrepansiLapusResult
@@ -260,6 +262,7 @@ const dataContents = ref([]);
 const dataBefore = ref([]);
 const computedData = ref({});
 const dataOnDemand = ref({ adhb_now: {}, adhb_prev: {}, adhk_now: {}, adhk_prev: {} });
+const calculateData = ref({ adhb: {}, adhk: {} });
 const showTabPanel = ref(false);
 const yearDrop = ref([]);
 const quarterDrop = ref([]);
@@ -272,7 +275,10 @@ onMounted(() => {
   let tempData = [];
   page.props.regions.forEach((element, index) => {
     if (index == 0) {
-      tempData.push(element, { label: "Total Kabupaten/Kota", value: "total" });
+      tempData.push({ label: "Calculate", value: "calculate" }, element, {
+        label: "Total Kabupaten/Kota",
+        value: "total",
+      });
     } else {
       tempData.push(element);
     }
@@ -415,7 +421,7 @@ const activeQuarters = ref({
 const showPdrbAndResult = ref({
   adhb: false,
   adhk: false,
-  result: true,
+  result: false,
 });
 const setActiveTab = (value) => {
   return activeTab.value[value];
@@ -439,7 +445,7 @@ const resetShowTable = () => {
     showPdrbAndResult.value[key] = false;
   });
 };
-const showTab = (tab) => {
+const showTab = async (tab) => {
   Object.keys(activeTab.value).forEach((key) => {
     activeTab.value[key] = def;
   });
@@ -448,9 +454,15 @@ const showTab = (tab) => {
   resetShowTable();
   if (tab == "adhb") {
     showPdrbAndResult.value.adhb = true;
+    await nextTick();
+    await new Promise((resolve) => setTimeout(resolve, 300));
+    let disk = calculateDiskrepansi();
+    calculateData.value.adhb = disk.adhb;
+    calculateData.value.adhk = disk.adhk;
   }
   if (tab == "adhk") {
     showPdrbAndResult.value.adhk = true;
+    // console.log(calculateDiskrepansi());
   }
   if (tab == "dist") {
     showPdrbAndResult.value.result = true;
@@ -495,6 +507,10 @@ const showTab = (tab) => {
     }
     showPdrbAndResult.value.result = true;
     computedData.value = showGIQtoQ("adhb_now", "adhb_prev", "adhk_now", "adhk_prev");
+  }
+  if (tab == "gi_ytoy") {
+    showPdrbAndResult.value.result = true;
+    computedData.value = showGIYtoY("adhb_now", "adhb_prev", "adhk_now", "adhk_prev");
   }
 };
 const showDist = (data) => {
@@ -689,6 +705,88 @@ const showGIQtoQ = (adhbnow, adhbprev, adhknow, adhkprev) => {
   });
   return result;
 };
+const showGIYtoY = (adhbnow, adhbprev, adhknow, adhkprev) => {
+  let adhb_current_dataset = removeSpaceOnKomponen(
+    dataOnDemand.value[adhbnow][quarterCap.value]
+  );
+  let adhk_current_dataset = removeSpaceOnKomponen(
+    dataOnDemand.value[adhknow][quarterCap.value]
+  );
+  let adhb_previous_dataset = removeSpaceOnKomponen(
+    dataOnDemand.value[adhbprev][quarterCap.value]
+  );
+  let adhk_previous_dataset = removeSpaceOnKomponen(
+    dataOnDemand.value[adhkprev][quarterCap.value]
+  );
+  if (isObjectEmpty(adhb_previous_dataset)) {
+    let notif = [{ message: "Data Tahun sebelumnya masih kosong", type: "error" }];
+    showNotification(notif, 1500);
+    showPdrbAndResult.value.result = false;
+    return;
+  }
+  const parseNumber = (value) =>
+    value ? Number(value.replaceAll(".", "").replaceAll(",", ".")) : 0;
+  let indeks_implisit_previous = {};
+  Object.keys(adhb_previous_dataset).forEach((key) => {
+    indeks_implisit_previous[key] = adhb_previous_dataset[key].map((value, index) => {
+      let dividend = parseNumber(value);
+      let divisor = parseNumber(adhk_previous_dataset[key][index]);
+      let indeks = divisor !== 0 ? (dividend / divisor) * 100 : 0;
+      return formatNumberGerman(indeks.toFixed(4), 2, 4);
+    });
+  });
+  let indeks_implisit_current = {};
+  Object.keys(adhb_current_dataset).forEach((key) => {
+    indeks_implisit_current[key] = adhb_current_dataset[key].map((value, index) => {
+      let dividend = parseNumber(value);
+      let divisor = parseNumber(adhk_current_dataset[key][index]);
+      let indeks = divisor !== 0 ? (dividend / divisor) * 100 : 0;
+      return formatNumberGerman(indeks.toFixed(4), 2, 4);
+    });
+  });
+  let result = {};
+  Object.keys(indeks_implisit_current).forEach((key) => {
+    result[key] = indeks_implisit_current[key].map((value, index) => {
+      let dividend = parseNumber(value);
+      let divisor = parseNumber(indeks_implisit_previous[key][index]);
+      let growth = divisor !== 0 && dividend !== 0 ? (dividend / divisor) * 100 - 100 : 0;
+      return formatNumberGerman(growth.toFixed(4), 2, 4);
+    });
+  });
+  return result;
+};
+const calculateDiskrepansi = () => {
+  tableColumn.value[0].label = "Diskrepansi";
+  let adhbDisk = removeSpaceOnKomponen(dataOnDemand.value["adhb_now"][quarterCap.value]);
+  let adhkDisk = removeSpaceOnKomponen(dataOnDemand.value["adhk_now"][quarterCap.value]);
+  const parseNumber = (value) =>
+    value ? Number(value.replaceAll(".", "").replaceAll(",", ".")) : 0;
+  let resultAdhb = {},
+    resultAdhk = {},
+    prov,
+    selisih;
+  Object.keys(adhbDisk).forEach((key) => {
+    resultAdhb[key] = adhbDisk[key].slice(0, 2).map((value, index) => {
+      if (index > 0) {
+        prov = parseNumber(adhbDisk[key][1]);
+        selisih = prov - parseNumber(adhbDisk[key][2]);
+        let disk = selisih !== 0 && prov !== 0 ? (selisih / prov) * 100 : 0;
+        return formatNumberGerman(disk, 2, 4);
+      }
+    });
+  });
+  Object.keys(adhkDisk).forEach((key) => {
+    resultAdhk[key] = adhkDisk[key].slice(0, 2).map((value, index) => {
+      if (index > 0) {
+        prov = parseNumber(adhkDisk[key][1]);
+        selisih = prov - parseNumber(adhkDisk[key][2]);
+        let disk = selisih !== 0 && prov !== 0 ? (selisih / prov) * 100 : 0;
+        return formatNumberGerman(disk, 2, 4);
+      }
+    });
+  });
+  return { adhb: resultAdhb, adhk: resultAdhk };
+};
 const removeSpaceOnKomponen = (object) => {
   let result;
   result = Object.fromEntries(
@@ -696,11 +794,9 @@ const removeSpaceOnKomponen = (object) => {
   );
   return result;
 };
-
 const isObjectEmpty = (obj) => {
   return !obj || Object.keys(obj).length === 0;
 };
-
 const formatNumberGerman = (num, min = 2, max = 5) => {
   return new Intl.NumberFormat("de-DE", {
     minimumFractionDigits: min,

@@ -44,6 +44,13 @@
             >
               Hasil
             </NavLinkSidebar>
+            <NavLinkSidebar
+              :navIcon="'fa-solid fa-list-ol'"
+              :href="route('lapus.diskrepansi')"
+              :currentRoute="currentRoute == 'lapus.diskrepansi'"
+            >
+              PDRB se-Provinsi
+            </NavLinkSidebar>
           </template>
         </NavLinkParentSidebar>
         <NavLinkParentSidebar
@@ -79,6 +86,13 @@
               :currentRoute="currentRoute == 'peng.hasil'"
             >
               Hasil
+            </NavLinkSidebar>
+            <NavLinkSidebar
+              :navIcon="'fa-solid fa-list-ol'"
+              :href="route('peng.diskrepansi')"
+              :currentRoute="currentRoute == 'peng.diskrepansi'"
+            >
+              PDRB se-Provinsi
             </NavLinkSidebar>
           </template>
         </NavLinkParentSidebar>

@@ -167,9 +167,33 @@ watch(
           });
         }
       });
+      rows.forEach((row) => {
+        const parseNumber = (value) =>
+          value ? Number(value.replaceAll(".", "").replaceAll(",", ".")) : 0;
+        const prov = row.querySelector("td:nth-child(3)");
+        const total = row.querySelector("td:nth-child(4)");
+        let selisih = parseNumber(prov.textContent) - parseNumber(total.textContent);
+        const selisihCell = row.querySelector("td:nth-child(2)");
+        if (Math.abs(selisih) > 5) selisihCell.classList.add("text-red-500");
+        if (Math.abs(selisih) > 2) selisihCell.classList.add("text-yellow-500");
+        if (Math.abs(selisih)) selisihCell.classList.add("text-black");
+        if (
+          (parseNumber(prov.textContent) > 0 && parseNumber(total.textContent) < 0) ||
+          (parseNumber(prov.textContent) < 0 && parseNumber(total.textContent) > 0)
+        ) {
+          selisihCell.textContent =
+            "(Beda Arah) " + formatNumberGerman(selisih.toFixed(4), 2, 4);
+        } else selisihCell.textContent = formatNumberGerman(selisih.toFixed(4), 2, 4);
+      });
     }
   }
 );
+const formatNumberGerman = (num, min = 2, max = 5) => {
+  return new Intl.NumberFormat("de-DE", {
+    minimumFractionDigits: min,
+    maximumFractionDigits: max,
+  }).format(num);
+};
 </script>
 <style scoped>
 .fixed-column {

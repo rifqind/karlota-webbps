@@ -20,7 +20,26 @@
             >
           </td>
           <template v-for="(node, indRegion) in tableColumn" :key="indRegion">
-            <td class="text-right font-bold">
+            <td
+              v-if="node.value == 'calculate'"
+              class="text-right font-bold"
+              :class="
+                classCalculate(
+                  nodeSubsectors.sector.category.code +
+                    '.' +
+                    nodeSubsectors.sector.category.name
+                )
+              "
+            >
+              {{
+                getCalculate(
+                  nodeSubsectors.sector.category.code +
+                    "." +
+                    nodeSubsectors.sector.category.name
+                )
+              }}
+            </td>
+            <td v-else class="text-right font-bold">
               {{ getSumLvlTwo(nodeSubsectors.sector.category_id, node.value) }}
             </td>
           </template>
@@ -40,7 +59,22 @@
             </p>
           </td>
           <template v-for="(node, indRegion) in tableColumn" :key="indRegion">
-            <td class="text-right pr-2">
+            <td
+              v-if="node.value == 'calculate'"
+              class="text-right font-bold"
+              :class="
+                classCalculate(
+                  nodeSubsectors.sector.code + '.' + nodeSubsectors.sector.name
+                )
+              "
+            >
+              {{
+                getCalculate(
+                  nodeSubsectors.sector.code + "." + nodeSubsectors.sector.name
+                )
+              }}
+            </td>
+            <td v-else class="text-right pr-2">
               {{ getSumLvlOne(nodeSubsectors.sector_id, node.value) }}
             </td>
           </template>
@@ -59,7 +93,14 @@
             </p>
           </td>
           <template v-for="(node, indRegion) in tableColumn" :key="indRegion">
-            <td>
+            <td
+              v-if="node.value == 'calculate'"
+              class="text-right font-bold"
+              :class="classCalculate(nodeSubsectors.code + '.' + nodeSubsectors.name)"
+            >
+              {{ getCalculate(nodeSubsectors.code + ". " + nodeSubsectors.name) }}
+            </td>
+            <td v-else>
               {{ getData(nodeSubsectors.id, node.value) }}
             </td>
           </template>
@@ -82,7 +123,22 @@
             </p>
           </td>
           <template v-for="(node, indRegion) in tableColumn" :key="indRegion">
-            <td>
+            <td
+              v-if="node.value == 'calculate'"
+              class="text-right font-bold"
+              :class="
+                classCalculate(
+                  nodeSubsectors.sector.code + '.' + nodeSubsectors.sector.name
+                )
+              "
+            >
+              {{
+                getCalculate(
+                  nodeSubsectors.sector.code + ". " + nodeSubsectors.sector.name
+                )
+              }}
+            </td>
+            <td v-else>
               {{ getData(nodeSubsectors.id, node.value) }}
             </td>
           </template>
@@ -105,7 +161,22 @@
             </label>
           </td>
           <template v-for="(node, indRegion) in tableColumn" :key="indRegion">
-            <td class="font-bold">
+            <td
+              v-if="node.value == 'calculate'"
+              class="text-right font-bold"
+              :class="
+                classCalculate(
+                  nodeSubsectors.sector.category.code + '.' + nodeSubsectors.name
+                )
+              "
+            >
+              {{
+                getCalculate(
+                  nodeSubsectors.sector.category.code + ". " + nodeSubsectors.name
+                )
+              }}
+            </td>
+            <td v-else class="font-bold">
               {{ getData(nodeSubsectors.id, node.value) }}
             </td>
           </template>
@@ -117,7 +188,10 @@
         <p class="mt-1 mb-1">PDRB</p>
       </td>
       <template v-for="(node, indRegion) in tableColumn" :key="indRegion">
-        <td :id="'adhb_total-' + node.value" class="total-cell">
+        <td v-if="node.value == 'calculate'" class="total-cell">
+          {{ getCalculate("PDRB") }}
+        </td>
+        <td v-else :id="'adhb_total-' + node.value" class="total-cell">
           {{ getPDRB(node.value) }}
         </td>
       </template>
@@ -127,7 +201,10 @@
         <p class="mt-1 mb-1">PDRB Nonmigas</p>
       </td>
       <template v-for="(node, indRegion) in tableColumn" :key="indRegion">
-        <td :id="'adhb_total-nonmigas-' + node.label" class="total-cell">
+        <td v-if="node.value == 'calculate'" class="total-cell">
+          {{ getCalculate("PDRBNonmigas") }}
+        </td>
+        <td v-else :id="'adhb_total-nonmigas-' + node.label" class="total-cell">
           {{ getPDRBNonMigas(node.value) }}
         </td>
       </template>
@@ -164,6 +241,10 @@ const props = defineProps({
   quarter: {
     type: String || Number,
     required: true,
+  },
+  calculate: {
+    type: Object || Array,
+    required: false,
   },
 });
 const dataHere = ref(props.dataContents);
@@ -217,7 +298,7 @@ const getData = (subsectors, regions) => {
         return formattedResult;
       }
     }
-    if (isNaN(regions)) {
+    if (regions == "total") {
       const filteredData = dataHere.value.filter(
         (x) =>
           x.region_id !== 1 && x.subsector_id == subsectors && x.quarter == quarters.value
@@ -231,7 +312,7 @@ const getData = (subsectors, regions) => {
     let filteredData;
     filteredData = dataHere.value.filter(
       (x) =>
-        (isNaN(regions) ? x.region_id != 1 : x.region_id == regions) &&
+        (regions == "total" ? x.region_id != 1 : x.region_id == regions) &&
         x.subsector_id == subsectors
     );
     let result;
@@ -250,14 +331,14 @@ const getSumLvlOne = (value, region_id) => {
   let filteredData;
   filteredData = dataHere.value.filter(
     (x) =>
-      (isNaN(region_id) ? x.region_id != 1 : x.region_id == region_id) &&
+      (region_id == "total" ? x.region_id != 1 : x.region_id == region_id) &&
       subsectorIds.includes(x.subsector_id) &&
       x.quarter == quarters.value
   );
   if (quarters.value == "t") {
     filteredData = dataHere.value.filter(
       (x) =>
-        (isNaN(region_id) ? x.region_id != 1 : x.region_id == region_id) &&
+        (region_id == "total" ? x.region_id != 1 : x.region_id == region_id) &&
         subsectorIds.includes(x.subsector_id)
     );
   }
@@ -277,14 +358,14 @@ const getSumLvlTwo = (value, region_id) => {
   let filteredData;
   filteredData = dataHere.value.filter(
     (x) =>
-      (isNaN(region_id) ? x.region_id != 1 : x.region_id == region_id) &&
+      (region_id == "total" ? x.region_id != 1 : x.region_id == region_id) &&
       subsectorIds.includes(x.subsector_id) &&
       x.quarter == quarters.value
   );
   if (quarters.value == "t") {
     filteredData = dataHere.value.filter(
       (x) =>
-        (isNaN(region_id) ? x.region_id != 1 : x.region_id == region_id) &&
+        (region_id == "total" ? x.region_id != 1 : x.region_id == region_id) &&
         subsectorIds.includes(x.subsector_id)
     );
   }
@@ -300,12 +381,12 @@ const getPDRB = (region_id) => {
   let filteredData;
   filteredData = dataHere.value.filter(
     (x) =>
-      (isNaN(region_id) ? x.region_id != 1 : x.region_id == region_id) &&
+      (region_id == "total" ? x.region_id != 1 : x.region_id == region_id) &&
       x.quarter == quarters.value
   );
   if (quarters.value == "t") {
     filteredData = dataHere.value.filter((x) =>
-      isNaN(region_id) ? x.region_id != 1 : x.region_id == region_id
+      region_id == "total" ? x.region_id != 1 : x.region_id == region_id
     );
   }
   const result = filteredData.reduce((sum, item) => sum + Number(item[props.type]), 0);
@@ -318,14 +399,14 @@ const getPDRBNonMigas = (region_id) => {
   let filteredData;
   filteredData = dataHere.value.filter(
     (x) =>
-      (isNaN(region_id) ? x.region_id != 1 : x.region_id == region_id) &&
+      (region_id == "total" ? x.region_id != 1 : x.region_id == region_id) &&
       ![10, 15].includes(x.subsector_id) &&
       x.quarter == quarters.value
   );
   if (quarters.value == "t") {
     filteredData = dataHere.value.filter(
       (x) =>
-        (isNaN(region_id) ? x.region_id != 1 : x.region_id == region_id) &&
+        (region_id == "total" ? x.region_id != 1 : x.region_id == region_id) &&
         ![10, 15].includes(x.subsector_id)
     );
   }
@@ -334,6 +415,43 @@ const getPDRBNonMigas = (region_id) => {
   lvlPDRB.value["PDRB-NonMigas"][region_id] = result;
   let formattedResult = formatNumberGerman(result);
   return formattedResult;
+};
+const getCalculate = (keys) => {
+  let trimmedKeys = keys.trim().replace(/\s+/g, "");
+  if (props.calculate) {
+    let objectLength;
+    objectLength = Object.entries(props.calculate).length;
+    if (objectLength > 0) {
+      let data = Object.entries(props.calculate).find(
+        ([key, value]) => key == trimmedKeys
+      );
+      return data[1][1];
+    }
+  }
+};
+const classCalculate = (keys) => {
+  let trimmedKeys = keys.trim().replace(/\s+/g, "");
+  const parseNumber = (value) =>
+    value ? Number(value.replaceAll(".", "").replaceAll(",", ".")) : 0;
+  if (props.calculate) {
+    let objectLength;
+    objectLength = Object.entries(props.calculate).length;
+    if (objectLength > 0) {
+      let data = Object.entries(props.calculate).find(
+        ([key, value]) => key == trimmedKeys
+      );
+      let colors = parseNumber(data[1][1]);
+      if (colors > 5) {
+        return "text-red-500";
+      }
+      if (colors > 2) {
+        return "text-yellow-500";
+      }
+      if (colors) {
+        return "text-black";
+      }
+    }
+  }
 };
 const formatNumberGerman = (num, min = 2, max = 5) => {
   return new Intl.NumberFormat("de-DE", {
@@ -358,7 +476,6 @@ const captureTableData = (type) => {
     });
     if (rowData.length > 1) tempData[rowData[0]] = rowData.slice(1);
   });
-  //   dataOnDemand.value = tempData;
   emits("update:updateDOD", { data: tempData, type: type });
 };
 </script>
