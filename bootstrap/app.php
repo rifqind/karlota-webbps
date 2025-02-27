@@ -14,6 +14,9 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->web(append: [
             \App\Http\Middleware\HandleInertiaRequests::class,
             \Illuminate\Http\Middleware\AddLinkHeadersForPreloadedAssets::class,
+            \App\Http\Middleware\FrameGuard::class,
+            \App\Http\Middleware\ViteSecurity::class,
+            \App\Http\Middleware\CorsGuard::class,
         ]);
 
         //

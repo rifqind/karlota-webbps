@@ -14,7 +14,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@100;300&display=swap" rel="stylesheet">
     <link rel="icon" href="{{ url('') }}/images/karlota-logo.png" />
     <!-- Scripts -->
-    @routes
+    @routes(nonce: Vite::cspNonce())
     @vite(['resources/js/app.js', "resources/js/Pages/{$page['component']}.vue"])
     @inertiaHead
 </head>
