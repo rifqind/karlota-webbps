@@ -114,8 +114,8 @@
         >
         <NavLinkSidebar
           :navIcon="'fa-solid fa-users'"
-          :href="route('dashboard')"
-          :currentRoute="currentRoute == 'dashboard'"
+          :href="route('user.index')"
+          :currentRoute="currentRoute == 'user.index'"
         >
           Kelola Pengguna</NavLinkSidebar
         >

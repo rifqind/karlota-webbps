@@ -5,6 +5,7 @@ use App\Http\Controllers\LapusController;
 use App\Http\Controllers\PdrbController;
 use App\Http\Controllers\PeriodController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\UserController;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -99,6 +100,17 @@ Route::middleware(['auth', 'verified'])->group(function () {
     //Diskrepansi
     Route::get('/get-diskrepansi', [PdrbController::class, 'getDiskrepansi'])
         ->name('pdrb.get-diskrepansi');
+
+    //User
+    Route::prefix('user')->name('user.')->group(function () {
+        Route::get('/index', [UserController::class, 'index'])->name('index');
+        Route::post('/store', [UserController::class, 'store'])
+            ->name('store');
+        Route::get('/fetch/{id}', [UserController::class, 'fetch'])
+            ->name('fetch');
+        Route::delete('/destroy/{id}', [UserController::class, 'destroy'])
+            ->name('destroy');
+    });
 });
 
 
