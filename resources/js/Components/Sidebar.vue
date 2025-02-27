@@ -16,7 +16,8 @@
             menuOpenLapus ||
             currentRoute == 'lapus.entri' ||
             currentRoute == 'lapus.adjustment' ||
-            currentRoute == 'lapus.hasil'
+            currentRoute == 'lapus.hasil' ||
+            currentRoute == 'lapus.diskrepansi'
           "
           :toggleMenuOpen="toggleMenuOpen"
           :params="'lapus'"
@@ -59,7 +60,8 @@
             menuOpenPeng ||
             currentRoute == 'peng.entri' ||
             currentRoute == 'peng.adjustment' ||
-            currentRoute == 'peng.hasil'
+            currentRoute == 'peng.hasil' ||
+            currentRoute == 'peng.diskrepansi'
           "
           :toggleMenuOpen="toggleMenuOpen"
           :params="'peng'"

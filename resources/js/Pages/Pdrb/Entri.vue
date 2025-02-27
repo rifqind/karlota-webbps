@@ -80,6 +80,14 @@
           </div>
           <div class="flex items-center space-x-2 justify-end">
             <div
+              @click="openCopyHasil"
+              class="btn-warning-fordone w-[300px] text-center"
+              v-if="showTabPanel"
+            >
+              <font-awesome-icon icon="fa-solid fa-copy" />
+              Salin Data Hasil Adjustment
+            </div>
+            <div
               @click="openCopyModal"
               class="btn-warning-fordone w-[130px] text-center"
               v-if="showTabPanel"
@@ -367,6 +375,59 @@
         </button>
       </template>
     </ModalBs>
+    <ModalBs
+      :-modal-status="copyModalHasil"
+      @close="closeCopyHasil"
+      :modal-size="'min-w-[40vw]'"
+      :title="'Salin Data dari Hasil Adjustment'"
+    >
+      <template #modalBody>
+        <div class="form-group">
+          <div class="mb-3 space-y-2">
+            <label for="pdrb">Pilih Tahun</label>
+            <Multiselect
+              v-model="form.year"
+              :options="yearDrop"
+              :searchable="true"
+              placeholder="-- Pilih Tahun --"
+              @change="fetchQuarter"
+            />
+          </div>
+          <div class="mb-3 space-y-2">
+            <label for="year">Pilih Triwulan<span class="text-danger">*</span></label>
+            <Multiselect
+              v-model="form.quarter"
+              :options="quarterDrop"
+              :searchable="true"
+              placeholder="-- Pilih Triwulan --"
+              @change="fetchPeriod"
+            />
+            <div class="text-danger text-left" v-if="true" id="error-dinas"></div>
+          </div>
+          <div class="mb-3 space-y-2">
+            <label for="year"
+              >Pilih Periode Putaran<span class="text-danger">*</span></label
+            >
+            <Multiselect
+              v-model="form.description"
+              :options="descDrop"
+              :searchable="true"
+              placeholder="-- Pilih Periode Putaran --"
+            />
+            <div class="text-danger text-left" v-if="true" id="error-dinas"></div>
+          </div>
+        </div>
+      </template>
+      <template #modalFunction>
+        <button
+          type="button"
+          class="btn-success-fordone btn-sm"
+          @click.prevent="copyHasil"
+        >
+          Salin
+        </button>
+      </template>
+    </ModalBs>
   </GeneralLayout>
 </template>
 <script setup>
@@ -393,6 +454,7 @@ const computedData = ref({});
 const quarterCap = ref("4");
 const showTabPanel = ref(false);
 const copyModal = ref(false);
+const copyModalHasil = ref(false);
 const dataOnDemand = ref({ adhb_now: {}, adhb_prev: {}, adhk_now: {}, adhk_prev: {} });
 const form = useForm({
   dataContents: null,
@@ -578,8 +640,23 @@ const openCopyModal = () => {
   copyModal.value = true;
   searchFormDefault = JSON.parse(JSON.stringify(form));
 };
+const openCopyHasil = () => {
+  copyModalHasil.value = true;
+  searchFormDefault = JSON.parse(JSON.stringify(form));
+};
 const closeCopyModal = () => {
   copyModal.value = false;
+  for (const key in searchFormDefault) {
+    form[key] = searchFormDefault[key];
+  }
+  modalError.value = {
+    year: null,
+    quarter: null,
+    description: null,
+  };
+};
+const closeCopyHasil = () => {
+  copyModalHasil.value = false;
   for (const key in searchFormDefault) {
     form[key] = searchFormDefault[key];
   }
@@ -595,7 +672,6 @@ const modalError = ref({
   description: null,
 });
 const copy = async () => {
-  // triggerSpinner.value = true;
   try {
     const response = await axios.get(route("pdrb.copy-entri"), {
       params: {
@@ -634,7 +710,46 @@ const copy = async () => {
       }, {});
     }
   }
-  // triggerSpinner.value = false;
+};
+const copyHasil = async () => {
+  try {
+    const response = await axios.get(route("pdrb.copy-hasil"), {
+      params: {
+        type: page.props.type,
+        year: form.year,
+        quarter: form.quarter,
+        description: form.description,
+        regions: form.regions,
+      },
+    });
+    modalError.value = {
+      year: null,
+      quarter: null,
+      description: null,
+    };
+    const updatedDataContents = dataContents.value.map((item) => {
+      const matched = response.data.current_data.find(
+        (current) =>
+          current.subsector_id === item.subsector_id && current.quarter === item.quarter
+      );
+
+      return matched ? { ...item, adhb: matched.adhb, adhk: matched.adhk } : item;
+    });
+    dataContents.value = updatedDataContents;
+    showNotification(response.data.notification);
+    showTab("adhb");
+    closeCopyHasil();
+  } catch (error) {
+    if (error.response.data.notification) {
+      showNotification(error.response.data.notification);
+    }
+    if (error.response.data.errors) {
+      modalError.value = Object.keys(error.response.data.errors).reduce((acc, key) => {
+        acc[key] = error.response.data.errors[key][0];
+        return acc;
+      }, {});
+    }
+  }
 };
 // #endregion
 // const triggerSpinner = ref(false);

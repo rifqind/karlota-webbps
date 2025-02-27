@@ -1,62 +1,18 @@
 <template>
   <tbody ref="tableRef">
-    <template v-for="(nodeSubsectors, index) in subsectors" :key="index">
+    <template v-for="(nodeSubsectors, index) in subsectors">
       <template
         v-if="
-          (nodeSubsectors.code != null &&
-            nodeSubsectors.code == 'a' &&
-            nodeSubsectors.sector.code == '1' &&
-            nodeSubsectors.sector.category.type == 'Lapangan Usaha') ||
-          (nodeSubsectors.code == null &&
-            nodeSubsectors.sector.code == '1' &&
-            nodeSubsectors.sector.category.type == 'Lapangan Usaha')
+          nodeSubsectors.code != null &&
+          nodeSubsectors.code == 'a' &&
+          nodeSubsectors.sector.category.type == 'Pengeluaran'
         "
       >
         <tr>
           <td class="desc-col fixed-column">
             <label class=""
-              >{{ nodeSubsectors.sector.category.code }}.
-              {{ nodeSubsectors.sector.category.name }}</label
+              >{{ nodeSubsectors.sector.code }}. {{ nodeSubsectors.sector.name }}</label
             >
-          </td>
-          <template v-for="(node, indRegion) in tableColumn" :key="indRegion">
-            <td
-              v-if="node.value == 'calculate'"
-              class="text-right font-bold"
-              :class="
-                classCalculate(
-                  nodeSubsectors.sector.category.code +
-                    '.' +
-                    nodeSubsectors.sector.category.name
-                )
-              "
-            >
-              {{
-                getCalculate(
-                  nodeSubsectors.sector.category.code +
-                    "." +
-                    nodeSubsectors.sector.category.name
-                )
-              }}
-            </td>
-            <td v-else class="text-right font-bold">
-              {{ getSumLvlTwo(nodeSubsectors.sector.category_id, node.value) }}
-            </td>
-          </template>
-        </tr>
-      </template>
-      <template
-        v-if="
-          nodeSubsectors.code != null &&
-          nodeSubsectors.code == 'a' &&
-          nodeSubsectors.sector.category.type == 'Lapangan Usaha'
-        "
-      >
-        <tr>
-          <td class="desc-col fixed-column">
-            <p class="pl-4">
-              {{ nodeSubsectors.sector.code }}. {{ nodeSubsectors.sector.name }}
-            </p>
           </td>
           <template v-for="(node, indRegion) in tableColumn" :key="indRegion">
             <td
@@ -74,8 +30,8 @@
                 )
               }}
             </td>
-            <td v-else class="text-right pr-2">
-              {{ getSumLvlOne(nodeSubsectors.sector_id, node.value) }}
+            <td v-else class="text-right font-bold">
+              {{ getSumLvlTwo(nodeSubsectors.sector.id, node.value) }}
             </td>
           </template>
         </tr>
@@ -83,7 +39,7 @@
       <template
         v-if="
           nodeSubsectors.code != null &&
-          nodeSubsectors.sector.category.type == 'Lapangan Usaha'
+          nodeSubsectors.sector.category.type == 'Pengeluaran'
         "
       >
         <tr>
@@ -110,17 +66,14 @@
         v-else-if="
           nodeSubsectors.code == null &&
           nodeSubsectors.sector.code != null &&
-          nodeSubsectors.sector.category.type == 'Lapangan Usaha'
+          nodeSubsectors.sector.category.type == 'Pengeluaran'
         "
       >
         <tr>
           <td class="desc-col fixed-column">
-            <p
-              class="pl-4 pr-4"
-              :for="nodeSubsectors.sector.code + '_' + nodeSubsectors.sector.name"
-            >
+            <label :for="nodeSubsectors.sector.code + '_' + nodeSubsectors.sector.name">
               {{ nodeSubsectors.sector.code + ". " + nodeSubsectors.sector.name }}
-            </p>
+            </label>
           </td>
           <template v-for="(node, indRegion) in tableColumn" :key="indRegion">
             <td
@@ -138,45 +91,7 @@
                 )
               }}
             </td>
-            <td v-else>
-              {{ getData(nodeSubsectors.id, node.value) }}
-            </td>
-          </template>
-        </tr>
-      </template>
-      <template
-        v-else-if="
-          nodeSubsectors.code == null &&
-          nodeSubsectors.sector.code == null &&
-          nodeSubsectors.sector.category.type == 'Lapangan Usaha'
-        "
-      >
-        <tr>
-          <td class="desc-col fixed-column">
-            <label
-              class="col"
-              :for="nodeSubsectors.sector.category.code + '_' + nodeSubsectors.name"
-            >
-              {{ nodeSubsectors.sector.category.code + ". " + nodeSubsectors.name }}
-            </label>
-          </td>
-          <template v-for="(node, indRegion) in tableColumn" :key="indRegion">
-            <td
-              v-if="node.value == 'calculate'"
-              class="text-right font-bold"
-              :class="
-                classCalculate(
-                  nodeSubsectors.sector.category.code + '.' + nodeSubsectors.name
-                )
-              "
-            >
-              {{
-                getCalculate(
-                  nodeSubsectors.sector.category.code + ". " + nodeSubsectors.name
-                )
-              }}
-            </td>
-            <td v-else class="font-bold">
+            <td v-else class="font-bold text-right">
               {{ getData(nodeSubsectors.id, node.value) }}
             </td>
           </template>
@@ -193,19 +108,6 @@
         </td>
         <td v-else :id="'adhb_total-' + node.value" class="total-cell">
           {{ getPDRB(node.value) }}
-        </td>
-      </template>
-    </tr>
-    <tr class="PDRB-footer text-center">
-      <td class="desc-col footer-column">
-        <p class="mt-1 mb-1">PDRB Nonmigas</p>
-      </td>
-      <template v-for="(node, indRegion) in tableColumn" :key="indRegion">
-        <td v-if="node.value == 'calculate'" class="total-cell">
-          {{ getCalculate("PDRBNonmigas") }}
-        </td>
-        <td v-else :id="'adhb_total-nonmigas-' + node.label" class="total-cell">
-          {{ getPDRBNonMigas(node.value) }}
         </td>
       </template>
     </tr>
@@ -278,7 +180,6 @@ onMounted(() => {
   }, 100);
 });
 const emits = defineEmits(["update:updateDOD"]);
-
 const getData = (subsectors, regions) => {
   if (quarters.value != "t") {
     if (!isNaN(regions)) {
@@ -321,98 +222,97 @@ const getData = (subsectors, regions) => {
     return formatNumberGerman(result, 0, 9);
   }
 };
-const lvlOne = ref({});
-const getSumLvlOne = (value, region_id) => {
-  // Get all subsector IDs related to the given sector_id (value)
+const getSumLvlTwo = (value, region_id) => {
   let subsectorIds = props.subsectors
-    .filter((x) => x.sector_id == value)
+    .filter((x) => x.sector.id == value)
     .map((x) => x.id);
-  // Get all matching data where region_id matches and subsector_id is in the subsector list
-  let filteredData;
-  filteredData = dataHere.value.filter(
-    (x) =>
-      (region_id == "total" ? x.region_id != 1 : x.region_id == region_id) &&
-      subsectorIds.includes(x.subsector_id) &&
-      x.quarter == quarters.value
-  );
-  if (quarters.value == "t") {
+  let filteredData, exportFilter, importFilter, result;
+  if (value == 54) {
+    if (quarters.value == "t") {
+      exportFilter = dataHere.value.filter(
+        (x) =>
+          (region_id == "total" ? x.region_id != 1 : x.region_id == region_id) &&
+          subsectorIds[0] == x.subsector_id
+      );
+      importFilter = dataHere.value.filter(
+        (x) =>
+          (region_id == "total" ? x.region_id != 1 : x.region_id == region_id) &&
+          subsectorIds[1] == x.subsector_id
+      );
+    } else {
+      exportFilter = dataHere.value.filter(
+        (x) =>
+          (region_id == "total" ? x.region_id != 1 : x.region_id == region_id) &&
+          subsectorIds[0] == x.subsector_id &&
+          x.quarter == quarters.value
+      );
+      importFilter = dataHere.value.filter(
+        (x) =>
+          (region_id == "total" ? x.region_id != 1 : x.region_id == region_id) &&
+          subsectorIds[1] == x.subsector_id &&
+          x.quarter == quarters.value
+      );
+    }
+    let exportValue = exportFilter.reduce(
+      (sum, item) => sum + Number(item[props.type]),
+      0
+    );
+    let importValue = importFilter.reduce(
+      (sum, item) => sum + Number(item[props.type]),
+      0
+    );
+    result = exportValue - importValue;
+  } else {
     filteredData = dataHere.value.filter(
       (x) =>
         (region_id == "total" ? x.region_id != 1 : x.region_id == region_id) &&
-        subsectorIds.includes(x.subsector_id)
+        subsectorIds.includes(x.subsector_id) &&
+        x.quarter == quarters.value
     );
+    if (quarters.value == "t") {
+      filteredData = dataHere.value.filter(
+        (x) =>
+          (region_id == "total" ? x.region_id != 1 : x.region_id == region_id) &&
+          subsectorIds.includes(x.subsector_id)
+      );
+    }
+    result = filteredData.reduce((sum, item) => sum + Number(item[props.type]), 0);
   }
-  // Sum the values from the filtered data
-  const result = filteredData.reduce((sum, item) => sum + Number(item[props.type]), 0);
-  if (!lvlOne.value[value]) lvlOne.value[value] = {};
-  lvlOne.value[value][region_id] = result;
 
   let formattedResult = formatNumberGerman(result);
   return formattedResult;
 };
-const lvlTwo = ref({});
-const getSumLvlTwo = (value, region_id) => {
-  let subsectorIds = props.subsectors
-    .filter((x) => x.sector.category_id == value)
-    .map((x) => x.id);
-  let filteredData;
-  filteredData = dataHere.value.filter(
-    (x) =>
-      (region_id == "total" ? x.region_id != 1 : x.region_id == region_id) &&
-      subsectorIds.includes(x.subsector_id) &&
-      x.quarter == quarters.value
-  );
-  if (quarters.value == "t") {
-    filteredData = dataHere.value.filter(
-      (x) =>
-        (region_id == "total" ? x.region_id != 1 : x.region_id == region_id) &&
-        subsectorIds.includes(x.subsector_id)
-    );
-  }
-  // Sum the values from the filtered data
-  const result = filteredData.reduce((sum, item) => sum + Number(item[props.type]), 0);
-  if (!lvlTwo.value[value]) lvlTwo.value[value] = {};
-  lvlTwo.value[value][region_id] = result;
-  let formattedResult = formatNumberGerman(result);
-  return formattedResult;
-};
-const lvlPDRB = ref({});
 const getPDRB = (region_id) => {
-  let filteredData;
-  filteredData = dataHere.value.filter(
-    (x) =>
-      (region_id == "total" ? x.region_id != 1 : x.region_id == region_id) &&
-      x.quarter == quarters.value
-  );
-  if (quarters.value == "t") {
-    filteredData = dataHere.value.filter((x) =>
-      region_id == "total" ? x.region_id != 1 : x.region_id == region_id
-    );
-  }
-  const result = filteredData.reduce((sum, item) => sum + Number(item[props.type]), 0);
-  if (!lvlPDRB.value["PDRB"]) lvlPDRB.value["PDRB"] = {};
-  lvlPDRB.value["PDRB"][region_id] = result;
-  let formattedResult = formatNumberGerman(result);
-  return formattedResult;
-};
-const getPDRBNonMigas = (region_id) => {
-  let filteredData;
-  filteredData = dataHere.value.filter(
-    (x) =>
-      (region_id == "total" ? x.region_id != 1 : x.region_id == region_id) &&
-      ![10, 15].includes(x.subsector_id) &&
-      x.quarter == quarters.value
-  );
+  let filteredData, importData;
+
   if (quarters.value == "t") {
     filteredData = dataHere.value.filter(
       (x) =>
         (region_id == "total" ? x.region_id != 1 : x.region_id == region_id) &&
-        ![10, 15].includes(x.subsector_id)
+        ![69].includes(x.subsector_id)
+    );
+    importData = dataHere.value.filter(
+      (x) =>
+        (region_id == "total" ? x.region_id != 1 : x.region_id == region_id) &&
+        x.subsector_id == 69
+    );
+  } else {
+    filteredData = dataHere.value.filter(
+      (x) =>
+        (region_id == "total" ? x.region_id != 1 : x.region_id == region_id) &&
+        x.quarter == quarters.value &&
+        ![69].includes(x.subsector_id)
+    );
+    importData = dataHere.value.filter(
+      (x) =>
+        (region_id == "total" ? x.region_id != 1 : x.region_id == region_id) &&
+        x.quarter == quarters.value &&
+        x.subsector_id == 69
     );
   }
-  const result = filteredData.reduce((sum, item) => sum + Number(item[props.type]), 0);
-  if (!lvlPDRB.value["PDRB-NonMigas"]) lvlPDRB.value["PDRB-NonMigas"] = {};
-  lvlPDRB.value["PDRB-NonMigas"][region_id] = result;
+  let result = filteredData.reduce((sum, item) => sum + Number(item[props.type]), 0);
+  let importValue = importData.reduce((sum, item) => sum + Number(item[props.type]), 0);
+  result -= importValue;
   let formattedResult = formatNumberGerman(result);
   return formattedResult;
 };

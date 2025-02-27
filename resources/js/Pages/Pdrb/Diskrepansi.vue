@@ -147,16 +147,24 @@
             >
               Tahunan
             </button>
+            <button
+              @click="downloadHasil('tabel-entry')"
+              class="btn btn-warning-fordone ml-auto"
+            >
+              Download
+            </button>
           </div>
         </div>
       </div>
       <div class="overflow-x-scroll">
         <table class="table shadow-md w-full mb-2" id="tabel-entry">
           <thead>
-            <th class="fixed-thead">Komponen</th>
-            <th class="value-thead" v-for="(node, index) in tableColumn" :key="index">
-              {{ node.label }}
-            </th>
+            <tr>
+              <th class="fixed-thead">Komponen</th>
+              <th class="value-thead" v-for="(node, index) in tableColumn" :key="index">
+                {{ node.label }}
+              </th>
+            </tr>
           </thead>
           <template v-if="page.props.type == 'Lapangan Usaha'">
             <DiskrepansiLapus
@@ -210,6 +218,58 @@
               @update:update-d-o-d="updateDOD"
             />
           </template>
+          <template v-if="page.props.type == 'Pengeluaran'">
+            <DiskrepansiPeng
+              v-show="showPdrbAndResult['adhb']"
+              :subsectors="page.props.subsectors"
+              :table-column="tableColumn"
+              :data-contents="dataContents"
+              :type="'adhb'"
+              :on-demand-type="'adhb_now'"
+              :quarter="quarterCap"
+              :calculate="calculateData.adhb"
+              @update:update-d-o-d="updateDOD"
+            />
+            <DiskrepansiPeng
+              v-show="showPdrbAndResult['adhk']"
+              :subsectors="page.props.subsectors"
+              :table-column="tableColumn"
+              :data-contents="dataContents"
+              :type="'adhk'"
+              :on-demand-type="'adhk_now'"
+              :quarter="quarterCap"
+              :calculate="calculateData.adhk"
+              @update:update-d-o-d="updateDOD"
+            />
+            <DiskrepansiPengResult
+              v-show="showPdrbAndResult['result']"
+              :subsectors="page.props.subsectors"
+              :table-column="tableColumn"
+              :quarter="quarterCap"
+              :type="'distribusi'"
+              :computed-data="computedData"
+            />
+            <DiskrepansiPeng
+              v-show="false"
+              :subsectors="page.props.subsectors"
+              :table-column="tableColumn"
+              :data-contents="dataBefore"
+              :type="'adhb'"
+              :on-demand-type="'adhb_prev'"
+              :quarter="quarterCap"
+              @update:update-d-o-d="updateDOD"
+            />
+            <DiskrepansiPeng
+              v-show="false"
+              :subsectors="page.props.subsectors"
+              :table-column="tableColumn"
+              :data-contents="dataBefore"
+              :type="'adhk'"
+              :on-demand-type="'adhk_prev'"
+              :quarter="quarterCap"
+              @update:update-d-o-d="updateDOD"
+            />
+          </template>
         </table>
       </div>
     </div>
@@ -219,9 +279,12 @@
 import { triggerSpinner } from "@/axiosSetup";
 import DiskrepansiLapus from "@/Components/DiskrepansiLapus.vue";
 import DiskrepansiLapusResult from "@/Components/DiskrepansiLapusResult.vue";
+import DiskrepansiPeng from "@/Components/DiskrepansiPeng.vue";
+import DiskrepansiPengResult from "@/Components/DiskrepansiPengResult.vue";
 import FlashFetch from "@/Components/FlashFetch.vue";
 import FloatScrollDown from "@/Components/FloatScrollDown.vue";
 import SpinnerBorder from "@/Components/SpinnerBorder.vue";
+import { tableToJson, theDownload } from "@/download";
 import GeneralLayout from "@/Layouts/GeneralLayout.vue";
 import { Head, useForm, usePage } from "@inertiajs/vue3";
 import Multiselect from "@vueform/multiselect";
@@ -457,18 +520,20 @@ const showTab = async (tab) => {
     await nextTick();
     await new Promise((resolve) => setTimeout(resolve, 300));
     let disk = calculateDiskrepansi();
-    calculateData.value.adhb = disk.adhb;
-    calculateData.value.adhk = disk.adhk;
+    if (disk) {
+      calculateData.value.adhb = disk.adhb;
+      calculateData.value.adhk = disk.adhk;
+    }
   }
   if (tab == "adhk") {
     showPdrbAndResult.value.adhk = true;
-    // console.log(calculateDiskrepansi());
   }
   if (tab == "dist") {
     showPdrbAndResult.value.result = true;
     computedData.value = showDist("adhb_now");
   }
   if (tab == "g_qtoq") {
+    tableColumn.value[0].label = "Selisih";
     if (quarterCap.value == "t") {
       let notif = [{ message: "Tidak ada Growth QtoQ untuk Tahunan", type: "error" }];
       showNotification(notif, 1500);
@@ -479,10 +544,12 @@ const showTab = async (tab) => {
     computedData.value = showGQtoQ("adhk_now", "adhk_prev");
   }
   if (tab == "g_ytoy") {
+    tableColumn.value[0].label = "Selisih";
     showPdrbAndResult.value.result = true;
     computedData.value = showGYtoY("adhk_now", "adhk_prev");
   }
   if (tab == "g_ctoc") {
+    tableColumn.value[0].label = "Selisih";
     if (quarterCap.value == "t") {
       let notif = [
         { message: "Growth CtoC untuk Tahunan sama dengan YonY", type: "error" },
@@ -495,10 +562,12 @@ const showTab = async (tab) => {
     computedData.value = showGCtoC("adhk_now", "adhk_prev");
   }
   if (tab == "indeks") {
+    tableColumn.value[0].label = "Selisih";
     showPdrbAndResult.value.result = true;
     computedData.value = showIndeks("adhb_now", "adhk_now");
   }
   if (tab == "gi_qtoq") {
+    tableColumn.value[0].label = "Selisih";
     if (quarterCap.value == "t") {
       let notif = [{ message: "Tidak ada Growth QtoQ untuk Tahunan", type: "error" }];
       showNotification(notif, 1500);
@@ -509,6 +578,7 @@ const showTab = async (tab) => {
     computedData.value = showGIQtoQ("adhb_now", "adhb_prev", "adhk_now", "adhk_prev");
   }
   if (tab == "gi_ytoy") {
+    tableColumn.value[0].label = "Selisih";
     showPdrbAndResult.value.result = true;
     computedData.value = showGIYtoY("adhb_now", "adhb_prev", "adhk_now", "adhk_prev");
   }
@@ -560,16 +630,16 @@ const showGQtoQ = (now, prev) => {
   return removeSpaceOnKomponen(result);
 };
 const showGYtoY = (now, prev) => {
-  let current_dataset = removeSpaceOnKomponen(dataOnDemand.value[now][quarterCap.value]);
-  let previous_dataset = removeSpaceOnKomponen(
-    dataOnDemand.value[prev][quarterCap.value]
-  );
-  if (isObjectEmpty(previous_dataset)) {
+  if (isObjectEmpty(dataOnDemand.value[prev][quarterCap.value])) {
     let notif = [{ message: "Data Tahun sebelumnya masih kosong", type: "error" }];
     showNotification(notif, 1500);
     showPdrbAndResult.value.result = false;
     return;
   }
+  let current_dataset = removeSpaceOnKomponen(dataOnDemand.value[now][quarterCap.value]);
+  let previous_dataset = removeSpaceOnKomponen(
+    dataOnDemand.value[prev][quarterCap.value]
+  );
   let result = {};
   Object.keys(current_dataset).forEach((key) => {
     result[key] = current_dataset[key].map((value, index) => {
@@ -585,15 +655,6 @@ const showGYtoY = (now, prev) => {
 };
 const showGCtoC = (now, prev) => {
   let current_dataset = removeSpaceOnKomponen(dataOnDemand.value[now][quarterCap.value]);
-  let previous_dataset = removeSpaceOnKomponen(
-    dataOnDemand.value[prev][quarterCap.value]
-  );
-  if (isObjectEmpty(previous_dataset)) {
-    let notif = [{ message: "Data Tahun sebelumnya masih kosong", type: "error" }];
-    showNotification(notif, 1500);
-    showPdrbAndResult.value.result = false;
-    return;
-  }
   const parseNumber = (value) =>
     value ? Number(value.replaceAll(".", "").replaceAll(",", ".")) : 0;
   let result = {};
@@ -604,6 +665,14 @@ const showGCtoC = (now, prev) => {
       let dividend = 0,
         divisor = 0;
       for (let cumulative = 1; cumulative <= quarterCap.value; cumulative++) {
+        if (isObjectEmpty(dataOnDemand.value[prev][cumulative])) {
+          let notif = [
+            { message: "Komponen Data Sebelumnya masih kosong", type: "error" },
+          ];
+          showNotification(notif, 1500);
+          showPdrbAndResult.value.result = false;
+          return;
+        }
         current_quarter = removeSpaceOnKomponen(dataOnDemand.value[now][cumulative]);
         previous_quarter = removeSpaceOnKomponen(dataOnDemand.value[prev][cumulative]);
         dividend += parseNumber(current_quarter[key][index]);
@@ -640,14 +709,14 @@ const showGIQtoQ = (adhbnow, adhbprev, adhknow, adhkprev) => {
   let adhk_current_dataset = removeSpaceOnKomponen(
     dataOnDemand.value[adhknow][quarterCap.value]
   );
-  let adhb_previous_dataset = removeSpaceOnKomponen(dataOnDemand.value[adhbprev][4]);
-  let adhk_previous_dataset = removeSpaceOnKomponen(dataOnDemand.value[adhkprev][4]);
-  if (isObjectEmpty(adhb_previous_dataset)) {
+  if (isObjectEmpty(dataOnDemand.value[adhbprev][4])) {
     let notif = [{ message: "Data Tahun sebelumnya masih kosong", type: "error" }];
     showNotification(notif, 1500);
     showPdrbAndResult.value.result = false;
     return;
   }
+  let adhb_previous_dataset = removeSpaceOnKomponen(dataOnDemand.value[adhbprev][4]);
+  let adhk_previous_dataset = removeSpaceOnKomponen(dataOnDemand.value[adhkprev][4]);
   const parseNumber = (value) =>
     value ? Number(value.replaceAll(".", "").replaceAll(",", ".")) : 0;
   let indeks_implisit_previous = {};
@@ -712,18 +781,18 @@ const showGIYtoY = (adhbnow, adhbprev, adhknow, adhkprev) => {
   let adhk_current_dataset = removeSpaceOnKomponen(
     dataOnDemand.value[adhknow][quarterCap.value]
   );
+  if (isObjectEmpty(dataOnDemand.value[adhbprev][quarterCap.value])) {
+    let notif = [{ message: "Data Tahun sebelumnya masih kosong", type: "error" }];
+    showNotification(notif, 1500);
+    showPdrbAndResult.value.result = false;
+    return;
+  }
   let adhb_previous_dataset = removeSpaceOnKomponen(
     dataOnDemand.value[adhbprev][quarterCap.value]
   );
   let adhk_previous_dataset = removeSpaceOnKomponen(
     dataOnDemand.value[adhkprev][quarterCap.value]
   );
-  if (isObjectEmpty(adhb_previous_dataset)) {
-    let notif = [{ message: "Data Tahun sebelumnya masih kosong", type: "error" }];
-    showNotification(notif, 1500);
-    showPdrbAndResult.value.result = false;
-    return;
-  }
   const parseNumber = (value) =>
     value ? Number(value.replaceAll(".", "").replaceAll(",", ".")) : 0;
   let indeks_implisit_previous = {};
@@ -757,35 +826,41 @@ const showGIYtoY = (adhbnow, adhbprev, adhknow, adhkprev) => {
 };
 const calculateDiskrepansi = () => {
   tableColumn.value[0].label = "Diskrepansi";
-  let adhbDisk = removeSpaceOnKomponen(dataOnDemand.value["adhb_now"][quarterCap.value]);
-  let adhkDisk = removeSpaceOnKomponen(dataOnDemand.value["adhk_now"][quarterCap.value]);
-  const parseNumber = (value) =>
-    value ? Number(value.replaceAll(".", "").replaceAll(",", ".")) : 0;
-  let resultAdhb = {},
-    resultAdhk = {},
-    prov,
-    selisih;
-  Object.keys(adhbDisk).forEach((key) => {
-    resultAdhb[key] = adhbDisk[key].slice(0, 2).map((value, index) => {
-      if (index > 0) {
-        prov = parseNumber(adhbDisk[key][1]);
-        selisih = prov - parseNumber(adhbDisk[key][2]);
-        let disk = selisih !== 0 && prov !== 0 ? (selisih / prov) * 100 : 0;
-        return formatNumberGerman(disk, 2, 4);
-      }
+  if (Object.entries(dataOnDemand.value["adhb_now"]).length > 0) {
+    let adhbDisk = removeSpaceOnKomponen(
+      dataOnDemand.value["adhb_now"][quarterCap.value]
+    );
+    let adhkDisk = removeSpaceOnKomponen(
+      dataOnDemand.value["adhk_now"][quarterCap.value]
+    );
+    const parseNumber = (value) =>
+      value ? Number(value.replaceAll(".", "").replaceAll(",", ".")) : 0;
+    let resultAdhb = {},
+      resultAdhk = {},
+      prov,
+      selisih;
+    Object.keys(adhbDisk).forEach((key) => {
+      resultAdhb[key] = adhbDisk[key].slice(0, 2).map((value, index) => {
+        if (index > 0) {
+          prov = parseNumber(adhbDisk[key][1]);
+          selisih = prov - parseNumber(adhbDisk[key][2]);
+          let disk = selisih !== 0 && prov !== 0 ? (selisih / prov) * 100 : 0;
+          return formatNumberGerman(disk, 2, 4);
+        }
+      });
     });
-  });
-  Object.keys(adhkDisk).forEach((key) => {
-    resultAdhk[key] = adhkDisk[key].slice(0, 2).map((value, index) => {
-      if (index > 0) {
-        prov = parseNumber(adhkDisk[key][1]);
-        selisih = prov - parseNumber(adhkDisk[key][2]);
-        let disk = selisih !== 0 && prov !== 0 ? (selisih / prov) * 100 : 0;
-        return formatNumberGerman(disk, 2, 4);
-      }
+    Object.keys(adhkDisk).forEach((key) => {
+      resultAdhk[key] = adhkDisk[key].slice(0, 2).map((value, index) => {
+        if (index > 0) {
+          prov = parseNumber(adhkDisk[key][1]);
+          selisih = prov - parseNumber(adhkDisk[key][2]);
+          let disk = selisih !== 0 && prov !== 0 ? (selisih / prov) * 100 : 0;
+          return formatNumberGerman(disk, 2, 4);
+        }
+      });
     });
-  });
-  return { adhb: resultAdhb, adhk: resultAdhk };
+    return { adhb: resultAdhb, adhk: resultAdhk };
+  } else return;
 };
 const removeSpaceOnKomponen = (object) => {
   let result;
@@ -802,6 +877,27 @@ const formatNumberGerman = (num, min = 2, max = 5) => {
     minimumFractionDigits: min,
     maximumFractionDigits: max,
   }).format(num);
+};
+const downloadHasil = async (id) => {
+  let list = {};
+  triggerSpinner.value = true;
+  try {
+    for (let key of Object.keys(activeQuarters.value)) {
+      quartersTab(key);
+      await nextTick();
+      for (let keytab of Object.keys(activeTab.value)) {
+        showTab(keytab);
+        await new Promise((resolve) => setTimeout(resolve, 1000));
+        list["Triwulan-" + key + "-" + keytab] = tableToJson(id);
+      }
+    }
+    // console.log(list);
+    theDownload(list);
+  } catch (error) {
+    console.error(error);
+  } finally {
+    triggerSpinner.value = false;
+  }
 };
 </script>
 <style scoped>

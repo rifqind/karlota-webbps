@@ -191,23 +191,6 @@ const getData = (subsectors, quarter) => {
   }
 };
 const lvlOne = ref({});
-const getSumLvlOne = (value, quarter) => {
-  // Get all subsector IDs related to the given sector_id (value)
-  let subsectorIds = props.subsectors
-    .filter((x) => x.sector_id == value)
-    .map((x) => x.id);
-  // Get all matching data where quarter matches and subsector_id is in the subsector list
-  const filteredData = dataHere.value.filter(
-    (x) => x.quarter == quarter && subsectorIds.includes(x.subsector_id)
-  );
-  // Sum the values from the filtered data
-  const result = filteredData.reduce((sum, item) => sum + Number(item[props.type]), 0);
-  if (!lvlOne.value[value]) lvlOne.value[value] = {};
-  lvlOne.value[value][quarter] = result;
-
-  let formattedResult = formatNumberGerman(result);
-  return formattedResult;
-};
 const lvlTwo = ref({});
 const getSumLvlTwo = (value, quarter) => {
   let subsectorIds = props.subsectors
@@ -246,19 +229,6 @@ const getSumRowCat = (value) => {
 
   // Get all quarter sums for this category
   let totalSum = Object.values(lvlTwo.value[value]).reduce(
-    (sum, quarterSum) => sum + quarterSum,
-    0
-  );
-
-  let formattedResult = formatNumberGerman(totalSum);
-  return formattedResult;
-};
-
-const getSumRowSector = (value) => {
-  if (!lvlOne.value[value]) return 0; // If no data, return 0
-
-  // Get all quarter sums for this category
-  let totalSum = Object.values(lvlOne.value[value]).reduce(
     (sum, quarterSum) => sum + quarterSum,
     0
   );

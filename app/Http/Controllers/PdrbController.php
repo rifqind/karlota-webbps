@@ -1084,6 +1084,157 @@ class PdrbController extends Controller
 
     public function getHasil(Request $request)
     {
+        $result = $this->fetchHasil($request);
+        if ($result['status'] == 500) {
+            return response()->json(['notification' => $result['notification']], 500);
+        } else {
+            return  response()->json([
+                'current_data' => $result['current_data'],
+                'previous_data' => $result['previous_data'],
+                'current_summary_set' => $result['current_summary_set'],
+                'previous_summary_set' => $result['previous_summary_set'],
+                'notification' => $result['notification']
+            ]);
+        }
+    }
+
+    public function diskrepansi()
+    {
+        $prefix = request()->route()->getPrefix();
+        if ($prefix == 'lapus') $type = 'Lapangan Usaha';
+        else if ($prefix == 'peng') $type = 'Pengeluaran';
+        $regions = Region::select('id as value', 'name as label')->get();
+        $subsectors = Subsector::where('type', $type)
+            ->with(['sector.category'])
+            ->get();
+        return Inertia::render('Pdrb/Diskrepansi', [
+            'type' => $type,
+            'subsectors' => $subsectors,
+            'regions' => $regions
+        ]);
+    }
+
+    public function getDiskrepansi(Request $request)
+    {
+        $validated = $request->validate([
+            'type' => ['required', 'string'],
+            'year' => ['required', 'integer'],
+            'quarter' => ['required', 'integer'],
+            'description' => ['required', 'integer'],
+            'dataBefore' => ['sometimes', 'integer', 'nullable'],
+        ]);
+        $notification = [];
+        $type = $validated['type'];
+        $previous_data = collect(); // Ensure $previous_data is always initialized
+        $current_data = collect();
+        try {
+            //code...
+            DB::beginTransaction();
+            $period_id = $validated['description'];
+            $period_before = ($request->dataBefore) ? $validated['dataBefore'] : null;
+            $current_period = Period::where('id', $period_id)->first();
+            if (!$period_before) {
+                if ($current_period->status == 'Aktif') {
+                    $previous_period = Period::where('type', $validated['type'])->where('year', $validated['year'] - 1)
+                        ->where('quarter', 4)
+                        ->latest('id')
+                        ->value('id');
+                } else {
+                    $previous_period = Period::where('type', $validated['type'])
+                        ->where('year', $validated['year'] - 1)
+                        ->where('quarter', 4)
+                        ->where('status', '<>', 'Aktif')
+                        ->latest('id')
+                        ->value('id');
+                }
+            } else $previous_period = $period_before;
+
+            $regions = Region::select('id as value', 'name as label')->get();
+            $current_dataset = Dataset::where('period_id', $period_id)
+                ->where('type', $validated['type'])
+                ->pluck('id');
+            $previous_dataset = Dataset::where('period_id', $previous_period)
+                ->where('type', $validated['type'])
+                ->pluck('id');
+            foreach ($regions as $key => $reg) {
+                # code...
+                $cek_previous = Dataset::where('period_id', $previous_period)
+                    ->where('region_id', $reg->value)
+                    ->where('type', $type)
+                    ->first();
+                if (!$cek_previous) {
+                    $message = [
+                        'type' => 'error',
+                        'message' => 'Data ' . $reg->label . ' periode sebelumnya tidak ada',
+                    ];
+                    array_push($notification, $message);
+                } else {
+                    $message = [
+                        'type' => 'success',
+                        'message' => 'Data ' . $reg->label . ' periode sebelumnya berhasil diambil',
+                    ];
+                    array_push($notification, $message);
+                }
+                $cek_current = Dataset::where('period_id', $period_id)
+                    ->where('region_id', $reg->value)
+                    ->where('type', $type)
+                    ->first();
+                if (!$cek_current) {
+                    $message = [
+                        'type' => 'error',
+                        'message' => 'Data ' . $reg->label . ' periode ini tidak ada',
+                    ];
+                    array_push($notification, $message);
+                } else {
+                    $message = [
+                        'type' => 'success',
+                        'message' => 'Data ' . $reg->label . ' periode ini berhasil diambil',
+                    ];
+                    array_push($notification, $message);
+                }
+            }
+            if ($previous_dataset->isNotEmpty()) {
+                $previous_data = Pdrb::join('datasets as d', 'd.id', '=', 'pdrbs.dataset_id')
+                    ->whereIn('pdrbs.dataset_id', $previous_dataset)
+                    ->orderBy('d.region_id', 'asc')
+                    ->select('pdrbs.*', 'd.region_id as region_id')
+                    ->get();
+            }
+            if ($current_dataset->isNotEmpty()) {
+                $current_data = Pdrb::join('datasets as d', 'd.id', '=', 'pdrbs.dataset_id')
+                    ->whereIn('pdrbs.dataset_id', $current_dataset)
+                    ->orderBy('d.region_id', 'asc')
+                    ->select('pdrbs.*', 'd.region_id as region_id')
+                    ->get();
+            }
+            $message = [
+                'type' => 'success',
+                'message' => 'Data sudah berhasil diambil',
+            ];
+            array_push($notification, $message);
+            return response()->json([
+                'previous_data' => $previous_data,
+                'current_data' => $current_data,
+                'notification' => $notification
+            ]);
+        } catch (\Throwable $th) {
+            //throw $th;
+            $message = [
+                'type' => 'error',
+                'message' => 'Ada Error',
+                'error' => $th->getMessage()
+            ];
+            array_push($notification, $message);
+            return response()->json([
+                'previous_data' => $previous_data,
+                'current_data' => $current_data,
+                'notification' => $notification
+            ]);
+        }
+    }
+
+    private function fetchHasil(Request $request)
+    {
         $subsectors = Subsector::where('type', $request->type)->pluck('id');
         $validated = $request->validate([
             'type' => ['required', 'string'],
@@ -1097,7 +1248,6 @@ class PdrbController extends Controller
         $type = $validated['type'];
         try {
             //code...
-            DB::beginTransaction();
             $period_id = $validated['description'];
             $period_before = ($request->dataBefore) ? $validated['dataBefore'] : null;
             $current_period = Period::where('id', $period_id)->first();
@@ -1290,158 +1440,60 @@ class PdrbController extends Controller
                 ];
                 array_push($notification, $message);
             }
-            DB::commit();
-            return  response()->json([
+            $result = [
                 'current_data' => $current_data,
                 'previous_data' => $previous_data,
                 'current_summary_set' => $current_summary_set,
                 'previous_summary_set' => $previous_summary_set,
-                'notification' => $notification
-            ]);
+                'notification' => $notification,
+                'status' => 400
+            ];
+            return  $result;
         } catch (\Throwable $th) {
             //throw $th;
-            DB::rollBack();
             $message = [
                 'type' => 'error',
                 'message' => 'Ada kesalahan ketika mengambil data dari database'
             ];
             array_push($notification, $message);
-            return response()->json(['notification' => $notification], 500);
+            $result = [
+                'notification' => $notification,
+                'status' => 500
+            ];
+            return $result;
         }
     }
 
-    public function diskrepansi()
-    {
-        $prefix = request()->route()->getPrefix();
-        if ($prefix == 'lapus') $type = 'Lapangan Usaha';
-        else if ($prefix == 'peng') $type = 'Pengeluaran';
-        $regions = Region::select('id as value', 'name as label')->get();
-        $subsectors = Subsector::where('type', $type)
-            ->with(['sector.category'])
-            ->get();
-        return Inertia::render('Pdrb/Diskrepansi', [
-            'type' => $type,
-            'subsectors' => $subsectors,
-            'regions' => $regions
-        ]);
-    }
-
-    public function getDiskrepansi(Request $request)
+    public function copyHasil(Request $request)
     {
         $validated = $request->validate([
             'type' => ['required', 'string'],
-            'year' => ['required', 'integer'],
-            'quarter' => ['required', 'integer'],
             'description' => ['required', 'integer'],
-            'dataBefore' => ['sometimes', 'integer', 'nullable'],
+            'regions' => ['required', 'integer'],
         ]);
         $notification = [];
-        $type = $validated['type'];
-        $previous_data = collect(); // Ensure $previous_data is always initialized
-        $current_data = collect();
-        try {
-            //code...
-            DB::beginTransaction();
-            $period_id = $validated['description'];
-            $period_before = ($request->dataBefore) ? $validated['dataBefore'] : null;
-            $current_period = Period::where('id', $period_id)->first();
-            if (!$period_before) {
-                if ($current_period->status == 'Aktif') {
-                    $previous_period = Period::where('type', $validated['type'])->where('year', $validated['year'] - 1)
-                        ->where('quarter', 4)
-                        ->latest('id')
-                        ->value('id');
-                } else {
-                    $previous_period = Period::where('type', $validated['type'])
-                        ->where('year', $validated['year'] - 1)
-                        ->where('quarter', 4)
-                        ->where('status', '<>', 'Aktif')
-                        ->latest('id')
-                        ->value('id');
-                }
-            } else $previous_period = $period_before;
-
-            $regions = Region::select('id as value', 'name as label')->get();
-            $current_dataset = Dataset::where('period_id', $period_id)
-                ->where('type', $validated['type'])
-                ->pluck('id');
-            $previous_dataset = Dataset::where('period_id', $previous_period)
-                ->where('type', $validated['type'])
-                ->pluck('id');
-            foreach ($regions as $key => $reg) {
-                # code...
-                $cek_previous = Dataset::where('period_id', $previous_period)
-                    ->where('region_id', $reg->value)
-                    ->where('type', $type)
-                    ->first();
-                if (!$cek_previous) {
-                    $message = [
-                        'type' => 'error',
-                        'message' => 'Data ' . $reg->label . ' periode sebelumnya tidak ada',
-                    ];
-                    array_push($notification, $message);
-                } else {
-                    $message = [
-                        'type' => 'success',
-                        'message' => 'Data ' . $reg->label . ' periode sebelumnya berhasil diambil',
-                    ];
-                    array_push($notification, $message);
-                }
-                $cek_current = Dataset::where('period_id', $period_id)
-                    ->where('region_id', $reg->value)
-                    ->where('type', $type)
-                    ->first();
-                if (!$cek_current) {
-                    $message = [
-                        'type' => 'error',
-                        'message' => 'Data ' . $reg->label . ' periode ini tidak ada',
-                    ];
-                    array_push($notification, $message);
-                } else {
-                    $message = [
-                        'type' => 'success',
-                        'message' => 'Data ' . $reg->label . ' periode ini berhasil diambil',
-                    ];
-                    array_push($notification, $message);
-                }
+        $period_id = $validated['description'];
+        $current_dataset = Dataset::where('period_id', $period_id)
+            ->where('region_id', $validated['regions'])
+            ->where('type', $validated['type'])
+            ->value('id');
+        if ($current_dataset) {
+            $result = $this->fetchHasil($request);
+            if ($result['status'] == 500) {
+                return response()->json(['notification' => $result['notification']], 500);
+            } else {
+                return response()->json([
+                    'current_data' => $result['current_data'],
+                    'notification' => $result['notification']
+                ]);
             }
-            if ($previous_dataset->isNotEmpty()) {
-                $previous_data = Pdrb::join('datasets as d', 'd.id', '=', 'pdrbs.dataset_id')
-                    ->whereIn('pdrbs.dataset_id', $previous_dataset)
-                    ->orderBy('d.region_id', 'asc')
-                    ->select('pdrbs.*', 'd.region_id as region_id')
-                    ->get();
-            }
-            if ($current_dataset->isNotEmpty()) {
-                $current_data = Pdrb::join('datasets as d', 'd.id', '=', 'pdrbs.dataset_id')
-                    ->whereIn('pdrbs.dataset_id', $current_dataset)
-                    ->orderBy('d.region_id', 'asc')
-                    ->select('pdrbs.*', 'd.region_id as region_id')
-                    ->get();
-            }
-            $message = [
-                'type' => 'success',
-                'message' => 'Data sudah berhasil diambil',
-            ];
-            array_push($notification, $message);
-            return response()->json([
-                'previous_data' => $previous_data,
-                'current_data' => $current_data,
-                'notification' => $notification
-            ]);
-        } catch (\Throwable $th) {
-            //throw $th;
+        } else {
             $message = [
                 'type' => 'error',
-                'message' => 'Ada Error',
-                'error' => $th->getMessage()
+                'message' => 'Data yang ingin di-salin tidak ada'
             ];
             array_push($notification, $message);
-            return response()->json([
-                'previous_data' => $previous_data,
-                'current_data' => $current_data,
-                'notification' => $notification
-            ]);
+            return response()->json(['notification' => $notification], 500);
         }
     }
 }

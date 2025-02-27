@@ -25,7 +25,9 @@
             </td>
           </template>
           <template v-else>
-            <td>{{ showThisVal(nodeRegion.region, key) }}</td>
+            <td :class="setClass(nodeRegion.region, key)">
+              {{ showThisVal(nodeRegion.region, key) }}
+            </td>
           </template>
         </template>
       </tr>
@@ -493,6 +495,40 @@ const getKontribusi = (type, region, typeAdjust) => {
   return formatNumberGerman(kontribusi, 2, 4);
 };
 // #endregion
+
+const setClass = (region, type) => {
+  if (region == "Diskrepansi") {
+    const provVal = adjustmentVal.value.find((x) => {
+      return x.region == 1;
+    });
+    const selisih = String(getSelisih(type)).replaceAll(".", "").replaceAll(",", ".");
+    let diskrepansi = (Number(selisih) / provVal.adjVal[type]) * 100;
+    if (diskrepansi > 5) {
+      return "text-red-500";
+    }
+    if (diskrepansi > 2) {
+      return "text-yellow-500";
+    }
+    if (diskrepansi) {
+      return "text-black";
+    }
+  } else {
+    const provCell = adjustmentVal.value.find((x) => {
+      return x.region == 1;
+    });
+    const thisCell = adjustmentVal.value.find((x) => {
+      return x.region == region;
+    });
+    let provVal = provCell.adjVal[type];
+    let thisVal = thisCell.adjVal[type];
+    if (region == 1) {
+      return "font-bold";
+    }
+    if ((provVal > 0 && thisVal < 0) || (provVal < 0 && thisVal > 0)) {
+      return "text-red-500 font-bold";
+    } else return "text-black";
+  }
+};
 </script>
 
 <style scoped>

@@ -77,6 +77,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
         ->name('pdrb.unsubmit-entri');
     Route::get('/copy-entri', [PdrbController::class, 'copyEntri'])
         ->name('pdrb.copy-entri');
+    Route::get('/copy-hasil', [PdrbController::class, 'copyHasil'])
+        ->name('pdrb.copy-hasil');
 
     //Adjustment
     Route::get('/get-adjustment', [PdrbController::class, 'getAdjustment'])

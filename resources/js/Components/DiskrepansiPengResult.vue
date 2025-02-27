@@ -1,51 +1,28 @@
 <template>
   <tbody ref="tableRef">
-    <template v-for="(nodeSubsectors, index) in subsectors" :key="index">
-      <template
-        v-if="
-          (nodeSubsectors.code != null &&
-            nodeSubsectors.code == 'a' &&
-            nodeSubsectors.sector.code == '1' &&
-            nodeSubsectors.sector.category.type == 'Lapangan Usaha') ||
-          (nodeSubsectors.code == null &&
-            nodeSubsectors.sector.code == '1' &&
-            nodeSubsectors.sector.category.type == 'Lapangan Usaha')
-        "
-      >
-        <tr>
-          <td class="desc-col fixed-column">
-            <label class=""
-              >{{ nodeSubsectors.sector.category.code }}.
-              {{ nodeSubsectors.sector.category.name }}</label
-            >
-          </td>
-          <template v-for="(node, indRegion) in tableColumn" :key="indRegion">
-            <td class="text-right font-bold"></td>
-          </template>
-        </tr>
-      </template>
+    <template v-for="(nodeSubsectors, index) in subsectors">
       <template
         v-if="
           nodeSubsectors.code != null &&
           nodeSubsectors.code == 'a' &&
-          nodeSubsectors.sector.category.type == 'Lapangan Usaha'
+          nodeSubsectors.sector.category.type == 'Pengeluaran'
         "
       >
         <tr>
           <td class="desc-col fixed-column">
-            <p class="pl-4">
-              {{ nodeSubsectors.sector.code }}. {{ nodeSubsectors.sector.name }}
-            </p>
+            <label
+              >{{ nodeSubsectors.sector.code }}. {{ nodeSubsectors.sector.name }}</label
+            >
           </td>
           <template v-for="(node, indRegion) in tableColumn" :key="indRegion">
-            <td class="text-right pr-2"></td>
+            <td></td>
           </template>
         </tr>
       </template>
       <template
         v-if="
           nodeSubsectors.code != null &&
-          nodeSubsectors.sector.category.type == 'Lapangan Usaha'
+          nodeSubsectors.sector.category.type == 'Pengeluaran'
         "
       >
         <tr>
@@ -63,41 +40,17 @@
         v-else-if="
           nodeSubsectors.code == null &&
           nodeSubsectors.sector.code != null &&
-          nodeSubsectors.sector.category.type == 'Lapangan Usaha'
+          nodeSubsectors.sector.category.type == 'Pengeluaran'
         "
       >
         <tr>
           <td class="desc-col fixed-column">
-            <p
-              class="pl-4 pr-4"
-              :for="nodeSubsectors.sector.code + '_' + nodeSubsectors.sector.name"
-            >
+            <label :for="nodeSubsectors.sector.code + '_' + nodeSubsectors.sector.name">
               {{ nodeSubsectors.sector.code + ". " + nodeSubsectors.sector.name }}
-            </p>
-          </td>
-          <template v-for="(node, indRegion) in tableColumn" :key="indRegion">
-            <td></td>
-          </template>
-        </tr>
-      </template>
-      <template
-        v-else-if="
-          nodeSubsectors.code == null &&
-          nodeSubsectors.sector.code == null &&
-          nodeSubsectors.sector.category.type == 'Lapangan Usaha'
-        "
-      >
-        <tr>
-          <td class="desc-col fixed-column">
-            <label
-              class="col"
-              :for="nodeSubsectors.sector.category.code + '_' + nodeSubsectors.name"
-            >
-              {{ nodeSubsectors.sector.category.code + ". " + nodeSubsectors.name }}
             </label>
           </td>
           <template v-for="(node, indRegion) in tableColumn" :key="indRegion">
-            <td class="font-bold"></td>
+            <td></td>
           </template>
         </tr>
       </template>
@@ -107,15 +60,7 @@
         <p class="mt-1 mb-1">PDRB</p>
       </td>
       <template v-for="(node, indRegion) in tableColumn" :key="indRegion">
-        <td :id="'adhb_total-' + node.value" class="total-cell"></td>
-      </template>
-    </tr>
-    <tr class="PDRB-footer text-center">
-      <td class="desc-col footer-column">
-        <p class="mt-1 mb-1">PDRB Nonmigas</p>
-      </td>
-      <template v-for="(node, indRegion) in tableColumn" :key="indRegion">
-        <td :id="'adhb_total-nonmigas-' + node.label" class="total-cell"></td>
+        <td :id="'adhb_total-' + node.label" class="total-cell"></td>
       </template>
     </tr>
   </tbody>
@@ -134,7 +79,7 @@ const props = defineProps({
   },
   computedData: {
     type: Object,
-    required: true,
+    required: false,
   },
   quarter: {
     type: String,
@@ -195,10 +140,11 @@ const formatNumberGerman = (num, min = 2, max = 5) => {
   }).format(num);
 };
 </script>
+
 <style scoped>
 .fixed-column {
   position: sticky;
-  min-width: 400px;
+  width: 400px;
   left: 0;
   background-color: white;
   color: black;
@@ -207,10 +153,12 @@ const formatNumberGerman = (num, min = 2, max = 5) => {
   border-right: 1px solid #ccc;
   border-left: 1px solid #ccc;
 }
+
 .total-cell {
   background-color: #175676;
   color: whitesmoke;
 }
+
 .footer-column {
   font-weight: bold;
   position: sticky;
@@ -224,10 +172,26 @@ const formatNumberGerman = (num, min = 2, max = 5) => {
   border-left: 1px solid #ccc;
 }
 
-tbody tr td:not(:nth-child(1)) {
+.input-fordone {
   text-align: right;
 }
-tbody tr td {
+
+tbody td {
   padding: 0.25rem;
+  height: 50px;
+  /* Set a fixed height */
+  line-height: 1.2;
+  /* Adjust line height */
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+tbody tr {
+  height: 50px;
+}
+
+.not-fixed {
+  min-width: 250px;
 }
 </style>
