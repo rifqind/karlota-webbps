@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\FenomenaController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\LapusController;
 use App\Http\Controllers\PdrbController;
@@ -55,6 +56,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
             ->name('hasil');
         Route::get('/diskrepansi', [PdrbController::class, 'diskrepansi'])
             ->name('diskrepansi');
+        Route::get('/entri-fenomena', [FenomenaController::class, 'entri'])
+            ->name('entri-fenomena');
     });
     Route::prefix('peng')->name('peng.')->group(function () {
         Route::get('/entri', [PdrbController::class, 'entri'])
@@ -63,8 +66,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
             ->name('adjustment');
         Route::get('/hasil', [PdrbController::class, 'hasil'])
             ->name('hasil');
-        Route::get('/diskrepansi', [PdrbController::class, 'diskrepansi'])
-            ->name('diskrepansi');
+        Route::get('/entri-fenomena', [FenomenaController::class, 'entri'])
+            ->name('entri-fenomena');
     });
 
     //Entri
@@ -101,6 +104,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/get-diskrepansi', [PdrbController::class, 'getDiskrepansi'])
         ->name('pdrb.get-diskrepansi');
 
+    //Fenomena
+    Route::prefix('fenomena')->name('fenomena.')->group(function () {
+        Route::get('/show', [FenomenaController::class, 'show'])
+        ->name('show');
+    });
     //User
     Route::prefix('user')->name('user.')->group(function () {
         Route::get('/index', [UserController::class, 'index'])->name('index');

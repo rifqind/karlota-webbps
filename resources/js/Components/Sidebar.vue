@@ -103,8 +103,9 @@
           :href="route('pdrb.monitoring')"
           :currentRoute="currentRoute == 'pdrb.monitoring'"
         >
-          Monitoring
+          Monitoring PDRB
         </NavLinkSidebar>
+
         <NavLinkSidebar
           :navIcon="'fas fa-table'"
           :href="route('period.index')"
