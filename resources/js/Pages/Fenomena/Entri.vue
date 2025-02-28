@@ -20,10 +20,9 @@
             <label for="year">Pilih Tahun<span class="text-danger">*</span></label>
             <Multiselect
               v-model="form.year"
-              :options="yearDrop"
+              :options="yearDrop.options"
               :searchable="true"
               placeholder="-- Pilih Tahun --"
-              @change="fetchQuarter"
             />
             <div class="text-danger text-left" v-if="true" id="error-dinas">
               {{ formError.year }}
@@ -33,10 +32,14 @@
             <label for="year">Pilih Triwulan<span class="text-danger">*</span></label>
             <Multiselect
               v-model="form.quarter"
-              :options="quarterDrop"
+              :options="[
+                { label: 'Triwulan 1', value: '1' },
+                { label: 'Triwulan 2', value: '2' },
+                { label: 'Triwulan 3', value: '3' },
+                { label: 'Triwulan 4', value: '4' },
+              ]"
               :searchable="true"
               placeholder="-- Pilih Triwulan --"
-              @change="fetchPeriod"
             />
             <div class="text-danger text-left" v-if="true" id="error-dinas">
               {{ formError.quarter }}
@@ -65,6 +68,25 @@
           </div>
         </div>
       </div>
+      <div class="overflow-x-scroll mb-2">
+        <table class="table shadow-md w-full mb-2" id="tabel-entry">
+          <thead>
+            <tr>
+              <th class="fixed-thead">Komponen</th>
+              <th>Fenomena Q-to-Q</th>
+              <th>Fenomena Y-on-Y</th>
+              <th>Fenomena Implisit</th>
+            </tr>
+          </thead>
+          <template v-if="page.props.type == 'Lapangan Usaha'">
+            <LapusFenomena
+              :subsectors="page.props.subsectors"
+              :key-data="keyData"
+              :data-contents="dataContents"
+            />
+          </template>
+        </table>
+      </div>
     </div>
   </GeneralLayout>
 </template>
@@ -73,6 +95,7 @@
 import { triggerSpinner } from "@/axiosSetup";
 import FlashFetch from "@/Components/FlashFetch.vue";
 import FloatScrollDown from "@/Components/FloatScrollDown.vue";
+import LapusFenomena from "@/Components/LapusFenomena.vue";
 import ModalBs from "@/Components/ModalBs.vue";
 import SpinnerBorder from "@/Components/SpinnerBorder.vue";
 import GeneralLayout from "@/Layouts/GeneralLayout.vue";
@@ -81,7 +104,12 @@ import Multiselect from "@vueform/multiselect";
 import { onMounted, ref, watch } from "vue";
 
 const page = usePage();
-const dataContents = ref([]);
+const dataContents = ref({});
+const keyData = ref({
+  category: page.props.category_id,
+  sector: page.props.sector_id,
+  subsector: page.props.subsector_id,
+});
 const form = useForm({
   dataContents: null,
   _token: null,
@@ -104,46 +132,49 @@ const showNotification = (notification) => {
     }, (index + 1) * 1200); // Delay based on index
   });
 };
-const yearDrop = ref([]);
-const quarterDrop = ref([]);
-onMounted(() => {
-  fetchYear();
+const currentYear = new Date().getFullYear();
+const years = Array.from({ length: 11 }, (_, index) => currentYear - index);
+const yearDrop = ref({
+  value: null,
+  options: years.map((year) => ({
+    label: year.toString(),
+    value: year.toString(),
+  })),
 });
-const fetchYear = async () => {
-  form.quarter = null;
-  try {
-    const response = await axios.get(route("period.fetchYear"), {
-      params: {
-        type: page.props.type,
-      },
-    });
-    let result = response.data;
-    yearDrop.value = result;
-  } catch (error) {
-    console.error(error);
-  }
-};
-const fetchQuarter = async (value) => {
-  form.quarter = null;
-  if (value) {
-    try {
-      const response = await axios.get(route("period.fetchQuarter"), {
-        params: {
-          type: page.props.type,
-          year: value,
-        },
-      });
-      let result = response.data;
-      quarterDrop.value = result;
-    } catch (error) {
-      console.error(error);
-    }
-  }
-};
+onMounted(() => {});
 const submit = async () => {
   try {
+    const response = await axios.get(route("fenomena.show"), {
+      params: {
+        type: page.props.type,
+        year: form.year,
+        quarter: form.quarter,
+        regions: form.regions,
+      },
+    });
+    console.log(response.data);
   } catch (error) {}
 };
 </script>
 
-<style scoped></style>
+<style scoped>
+.fixed-thead {
+  position: sticky;
+  width: 400px;
+  left: 0;
+  background-color: #175676;
+  color: whitesmoke;
+  z-index: 1;
+  box-shadow: 2px 0 5px -2px rgba(0, 0, 0, 0.2);
+  border-right: 1px solid #ccc;
+  border-left: 1px solid #ccc;
+}
+
+.table {
+  table-layout: fixed;
+  /* Ensures consistent column width */
+  width: 100%;
+  border-collapse: collapse;
+  /* Avoid extra spacing */
+}
+</style>

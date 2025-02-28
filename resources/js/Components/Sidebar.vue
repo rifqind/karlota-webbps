@@ -105,7 +105,34 @@
         >
           Monitoring PDRB
         </NavLinkSidebar>
-
+        <NavLinkParentSidebar
+          :navIcon="'fa-solid fa-money-bill-trend-up'"
+          :menuOpen="
+            menuOpenFenom ||
+            currentRoute == 'lapus.entri-fenomena' ||
+            currentRoute == 'peng.entri-fenomena'
+          "
+          :toggleMenuOpen="toggleMenuOpen"
+          :params="'fenom'"
+        >
+          <template #label> Fenomena </template>
+          <template #content>
+            <NavLinkSidebar
+              :navIcon="'fa-solid fa-list-ol'"
+              :href="route('lapus.entri-fenomena')"
+              :currentRoute="currentRoute == 'lapus.entri-fenomena'"
+            >
+              Lapangan Usaha
+            </NavLinkSidebar>
+            <NavLinkSidebar
+              :navIcon="'fa-solid fa-list-ol'"
+              :href="route('peng.entri-fenomena')"
+              :currentRoute="currentRoute == 'peng.entri-fenomena'"
+            >
+              Pengeluaran
+            </NavLinkSidebar>
+          </template>
+        </NavLinkParentSidebar>
         <NavLinkSidebar
           :navIcon="'fas fa-table'"
           :href="route('period.index')"
@@ -152,10 +179,12 @@ const page = usePage();
 const currentRoute = page.props.route;
 const menuOpenLapus = ref(false);
 const menuOpenPeng = ref(false);
+const menuOpenFenom = ref(false);
 
 const toggleMenuOpen = (x) => {
   if (x == "lapus") menuOpenLapus.value = !menuOpenLapus.value;
   if (x == "peng") menuOpenPeng.value = !menuOpenPeng.value;
+  if (x == "fenom") menuOpenFenom.value = !menuOpenFenom.value;
 };
 
 const emit = defineEmits(["update:updateSidebarValue"]);
