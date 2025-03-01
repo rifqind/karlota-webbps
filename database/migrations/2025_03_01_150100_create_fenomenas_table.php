@@ -17,9 +17,9 @@ return new class extends Migration
             $table->unsignedBigInteger('category_id')->index('fenomena_categories');
             $table->unsignedBigInteger('sector_id')->index('fenomena_sector');
             $table->unsignedBigInteger('subsector_id')->index('fenomena_subsector');
-            $table->text('fenomena_qtoq');
-            $table->text('fenomena_yony');
-            $table->text('fenomena_implisit');
+            $table->text('qtoq')->nullable();
+            $table->text('yony')->nullable();
+            $table->text('implisit')->nullable();
         });
     }
 

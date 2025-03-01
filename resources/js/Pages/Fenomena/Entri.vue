@@ -152,7 +152,7 @@ const submit = async () => {
         regions: form.regions,
       },
     });
-    console.log(response.data);
+    dataContents.value = response.data.data;
   } catch (error) {}
 };
 </script>

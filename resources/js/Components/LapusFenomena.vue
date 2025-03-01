@@ -235,6 +235,20 @@ watch(
   () => props.dataContents,
   (value) => {
     dataHere.value = value;
+    dataContentHere.value.forEach((element) => {
+      const theIndex = dataHere.value.findIndex((x) => {
+        return (
+          x.category_id == element.category_id &&
+          x.sector_id == element.sector_id &&
+          x.subsector_id == element.subsector_id
+        );
+      });
+      if (theIndex !== -1) {
+        element.qtoq = dataHere.value[theIndex].qtoq ?? null;
+        element.yony = dataHere.value[theIndex].yony ?? null;
+        element.implisit = dataHere.value[theIndex].implisit ?? null;
+      }
+    });
   }
 );
 onMounted(() => {
@@ -257,6 +271,20 @@ onMounted(() => {
   dataContentHere.value = tempData;
 });
 const getData = (category_id, sector_id, subsector_id, type) => {
+  if (Object.keys(dataContentHere.value).length > 0) {
+    const theData = dataContentHere.value.find((x) => {
+      return (
+        x.category_id == category_id &&
+        x.sector_id == sector_id &&
+        x.subsector_id == subsector_id
+      );
+    });
+    if (theData) {
+      return (
+        theData[type] + category_id + "-" + sector_id + "-" + subsector_id + "-" + type
+      );
+    }
+  }
   return category_id + "-" + sector_id + "-" + subsector_id + "-" + type;
 };
 const handleInput = (event, category_id, sector_id, subsector_id, type) => {

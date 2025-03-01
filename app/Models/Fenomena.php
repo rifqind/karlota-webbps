@@ -16,9 +16,9 @@ class Fenomena extends Model
         'category_id',
         'sector_id',
         'subsector_id',
-        'fenomena_qtoq',
-        'fenomena_yony',
-        'fenomena_implisit'
+        'qtoq',
+        'yony',
+        'implisit'
     ];
     public function fenomenaSet() {
         return $this->belongsTo(FenomenaSet::class, 'fenomena_sets', 'id');
