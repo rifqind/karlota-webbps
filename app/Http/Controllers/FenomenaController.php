@@ -2,13 +2,12 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Category;
 use App\Models\Fenomena;
 use App\Models\FenomenaSet;
 use App\Models\Region;
-use App\Models\Sector;
 use App\Models\Subsector;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 
 class FenomenaController extends Controller
@@ -23,15 +22,9 @@ class FenomenaController extends Controller
         $subsectors = Subsector::where('type', $type)
             ->with(['sector.category'])
             ->get();
-        $categoryId = Category::pluck('id');
-        $subsectorId = Subsector::pluck('id');
-        $sectorId = Sector::pluck('id');
         return Inertia::render('Fenomena/Entri', [
             'type' => $type,
             'subsectors' => $subsectors,
-            'category_id' => $categoryId,
-            'sector_id' => $sectorId,
-            'subsector_id' => $subsectorId,
             'regions' => $regions
         ]);
     }
@@ -79,5 +72,87 @@ class FenomenaController extends Controller
         ]);
     }
 
+    public function saveFenomena(Request $request)
+    {
+        $notification = [];
+        $type = $request->type;
+        if ($type == 'Lapangan Usaha') $route = 'lapus.';
+        else if ($type == 'Pengeluaran') $route = 'peng.';
+        try {
+            //code...
+            DB::beginTransaction();
+            $data = $request->validate([
+                'dataContents' => ['required', 'array'],
+                'dataContents.*.id' => ['sometimes', 'nullable', 'integer', 'exists:fenomenas,id'],
+                'dataContents.*.fenomena_sets' => ['sometimes', 'nullable', 'integer'],
+                'dataContents.*.category_id' => ['required', 'integer'],
+                'dataContents.*.sector_id' => ['sometimes', 'nullable', 'integer'],
+                'dataContents.*.subsector_id' => ['sometimes', 'nullable', 'integer'],
+                'dataContents.*.qtoq' => ['sometimes', 'string', 'nullable'],
+                'dataContents.*.yony' => ['sometimes', 'string', 'nullable'],
+                'dataContents.*.implisit' => ['sometimes', 'string', 'nullable'],
+            ]);
+            foreach ($data['dataContents'] as $key => $value) {
+                # code...
+                if ($value['id']) {
+                    Fenomena::where('id', $value['id'])
+                        ->update([
+                            'fenomena_sets' => $value['fenomena_sets'],
+                            'category_id' => $value['category_id'],
+                            'sector_id' => $value['sector_id'],
+                            'subsector_id' => $value['subsector_id'],
+                            'qtoq' => $value['qtoq'] ?? null,
+                            'yony' => $value['yony'] ?? null,
+                            'implisit' => $value['implisit'] ?? null,
+                        ]);
+                } else {
+                    if ($value['qtoq'] || $value['yony'] || $value['implisit']) {
+                        $this_fenomena = Fenomena::where('fenomena_sets', $request->fenomena_sets)
+                            ->where('category_id', $value['category_id'])
+                            ->where('sector_id', $value['sector_id'])
+                            ->where('subsector_id', $value['subsector_id'])
+                            ->first();
+                        if ($this_fenomena) {
+                            Fenomena::where('category_id', $value['category_id'])
+                                ->where('sector_id', $value['sector_id'])
+                                ->where('subsector_id', $value['subsector_id'])
+                                ->update([
+                                    'qtoq' => $value['qtoq'] ?? null,
+                                    'yony' => $value['yony'] ?? null,
+                                    'implisit' => $value['implisit'] ?? null,
+                                ]);
+                        } else {
+                            Fenomena::create([
+                                'fenomena_sets' => $request->fenomena_sets,
+                                'category_id' => $value['category_id'],
+                                'sector_id' => $value['sector_id'],
+                                'subsector_id' => $value['subsector_id'],
+                                'qtoq' => $value['qtoq'] ?? null,
+                                'yony' => $value['yony'] ?? null,
+                                'implisit' => $value['implisit'] ?? null,
+                            ]);
+                        }
+                    }
+                }
+            }
+            $message = [
+                'type' => 'success',
+                'message' => 'Berhasil Simpan Fenomena'
+            ];
+            array_push($notification, $message);
+            DB::commit();
+            return redirect()->route($route . 'entri-fenomena')->with('notification', $notification);
+        } catch (\Throwable $th) {
+            //throw $th;
+            DB::rollBack();
+            $message = [
+                'type' => 'error',
+                'message' => 'Ada Kesalahan dalam Data yang disimpan',
+                'errors' => $th->getMessage()
+            ];
+            array_push($notification, $message);
+            return redirect()->route($route . 'entri-fenomena')->with('notification', $notification);
+        }
+    }
     public function monitoring() {}
 }

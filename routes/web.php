@@ -107,7 +107,13 @@ Route::middleware(['auth', 'verified'])->group(function () {
     //Fenomena
     Route::prefix('fenomena')->name('fenomena.')->group(function () {
         Route::get('/show', [FenomenaController::class, 'show'])
-        ->name('show');
+            ->name('show');
+        Route::post('/save-fenomena', [FenomenaController::class, 'saveFenomena'])
+            ->name('save-fenomena');
+        Route::post('/submit-fenomena', [FenomenaController::class, 'submitFenomena'])
+            ->name('submit-fenomena');
+        Route::post('/unsubmit-fenomena', [FenomenaController::class, 'unsubmitFenomena'])
+            ->name('unsubmit-fenomena');
     });
     //User
     Route::prefix('user')->name('user.')->group(function () {

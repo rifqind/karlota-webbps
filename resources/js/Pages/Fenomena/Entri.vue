@@ -80,12 +80,49 @@
           </thead>
           <template v-if="page.props.type == 'Lapangan Usaha'">
             <LapusFenomena
+              v-show="showTabPanel"
               :subsectors="page.props.subsectors"
               :key-data="keyData"
               :data-contents="dataContents"
+              @update:update-data-contents="updateDataContents"
+              @update:handle-input="handleInput"
+              @update:handle-paste="handlePaste"
             />
           </template>
         </table>
+      </div>
+      <div
+        v-if="showTabPanel"
+        class="bg-white shadow-md mb-2 rounded-sm border border-gray-200 mb-3"
+      >
+        <div class="p-5">
+          <div class="flex justify-end space-x-2">
+            <button
+              v-if="fenomenasets.status != 'Submitted'"
+              @click.prevent="saveEntri"
+              class="btn-info-fordone"
+            >
+              <font-awesome-icon icon="fa fa-save" />
+              Simpan Data
+            </button>
+            <button
+              v-if="fenomenasets.status == 'Entry'"
+              @click.prevent="submitEntri"
+              class="btn-success-fordone"
+            >
+              <font-awesome-icon icon="fa fa-check" />
+              Submit Data
+            </button>
+            <button
+              v-if="fenomenasets.status == 'Submitted'"
+              @click.prevent="unsubmitEntri"
+              class="btn-red-fordone"
+            >
+              <font-awesome-icon icon="fa-solid fa-circle-xmark" />
+              Unsubmit Data
+            </button>
+          </div>
+        </div>
       </div>
     </div>
   </GeneralLayout>
@@ -96,7 +133,6 @@ import { triggerSpinner } from "@/axiosSetup";
 import FlashFetch from "@/Components/FlashFetch.vue";
 import FloatScrollDown from "@/Components/FloatScrollDown.vue";
 import LapusFenomena from "@/Components/LapusFenomena.vue";
-import ModalBs from "@/Components/ModalBs.vue";
 import SpinnerBorder from "@/Components/SpinnerBorder.vue";
 import GeneralLayout from "@/Layouts/GeneralLayout.vue";
 import { Head, useForm, usePage } from "@inertiajs/vue3";
@@ -123,6 +159,8 @@ const formError = ref({
   quarter: null,
   regions: null,
 });
+const showTabPanel = ref(false);
+const fenomenasets = ref(null);
 const notifications = ref([]);
 const showNotification = (notification) => {
   notifications.value = notification;
@@ -141,6 +179,15 @@ const yearDrop = ref({
     value: year.toString(),
   })),
 });
+const updateDataContents = (value) => {
+  dataContents.value = value;
+};
+const handleInput = (value) => {
+  dataContents.value[value.theIndex][value.type] = value.value;
+};
+const handlePaste = (value) => {
+  dataContents.value[value.theIndex][value.type] = value.value;
+};
 onMounted(() => {});
 const submit = async () => {
   try {
@@ -152,9 +199,57 @@ const submit = async () => {
         regions: form.regions,
       },
     });
-    dataContents.value = response.data.data;
-  } catch (error) {}
+
+    response.data.data.forEach((element) => {
+      const theIndex = dataContents.value.findIndex((x) => {
+        return (
+          x.category_id == element.category_id &&
+          x.sector_id == element.sector_id &&
+          x.subsector_id == element.subsector_id
+        );
+      });
+      if (theIndex !== -1) {
+        dataContents.value[theIndex].id = element.id;
+        dataContents.value[theIndex].fenomena_sets = element.fenomena_sets;
+        dataContents.value[theIndex].qtoq = element.qtoq;
+        dataContents.value[theIndex].yony = element.yony;
+        dataContents.value[theIndex].implisit = element.implisit;
+      }
+    });
+    showTabPanel.value = true;
+    fenomenasets.value = response.data.fenomena_set;
+    formError.value = {
+      year: null,
+      quarter: null,
+      regions: null,
+    };
+  } catch (error) {
+    if (error.response.data.errors) {
+      formError.value = Object.keys(error.response.data.errors).reduce((acc, key) => {
+        acc[key] = error.response.data.errors[key][0];
+        return acc;
+      }, {});
+    }
+  }
 };
+const saveEntri = async () => {
+  const thisForm = useForm({
+    dataContents: dataContents.value,
+    type: page.props.type,
+    fenomena_sets: fenomenasets.value.id,
+    _token: null,
+  });
+  const response = await axios.get(route("token"));
+  thisForm._token = response.data;
+  if (thisForm.processing) return;
+  thisForm.post(route("fenomena.save-fenomena"), {
+    onSuccess: (response) => {
+      showNotification(response.props.notification);
+    },
+  });
+};
+const submitEntri = async () => {};
+const unsubmitEntri = async () => {};
 </script>
 
 <style scoped>

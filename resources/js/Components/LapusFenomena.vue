@@ -21,26 +21,21 @@
           </td>
           <td v-for="node in fenomenaValue">
             <textarea
+              :id="
+                nodeSubsectors.sector.category_id + '-' + null + '-' + null + '-' + node
+              "
               class="w-full input-fordone"
               @input="
                 (event) => {
-                  handleInput(
-                    event,
-                    nodeSubsectors.sector.category_id,
-                    nodeSubsectors.sector.id,
-                    nodeSubsectors.id,
-                    node
-                  );
+                  handleInput(event, nodeSubsectors.sector.category_id, null, null, node);
                 }
               "
-              :value="
-                getData(
-                  nodeSubsectors.sector.category_id,
-                  nodeSubsectors.sector.id,
-                  nodeSubsectors.id,
-                  node
-                )
+              @paste="
+                (event) => {
+                  handlePaste(event, nodeSubsectors.sector.category_id, null, null, node);
+                }
               "
+              :value="getData(nodeSubsectors.sector.category_id, null, null, node)"
             />
           </td>
         </tr>
@@ -60,6 +55,15 @@
           </td>
           <td v-for="node in fenomenaValue">
             <textarea
+              :id="
+                nodeSubsectors.sector.category_id +
+                '-' +
+                nodeSubsectors.sector.id +
+                '-' +
+                null +
+                '-' +
+                node
+              "
               class="w-full input-fordone"
               @input="
                 (event) => {
@@ -67,7 +71,18 @@
                     event,
                     nodeSubsectors.sector.category_id,
                     nodeSubsectors.sector.id,
-                    nodeSubsectors.id,
+                    null,
+                    node
+                  );
+                }
+              "
+              @paste="
+                (event) => {
+                  handlePaste(
+                    event,
+                    nodeSubsectors.sector.category_id,
+                    nodeSubsectors.sector.id,
+                    null,
                     node
                   );
                 }
@@ -76,7 +91,7 @@
                 getData(
                   nodeSubsectors.sector.category_id,
                   nodeSubsectors.sector.id,
-                  nodeSubsectors.id,
+                  null,
                   node
                 )
               "
@@ -98,10 +113,30 @@
           </td>
           <td v-for="node in fenomenaValue">
             <textarea
+              :id="
+                nodeSubsectors.sector.category_id +
+                '-' +
+                nodeSubsectors.sector.id +
+                '-' +
+                nodeSubsectors.id +
+                '-' +
+                node
+              "
               class="w-full input-fordone"
               @input="
                 (event) => {
                   handleInput(
+                    event,
+                    nodeSubsectors.sector.category_id,
+                    nodeSubsectors.sector.id,
+                    nodeSubsectors.id,
+                    node
+                  );
+                }
+              "
+              @paste="
+                (event) => {
+                  handlePaste(
                     event,
                     nodeSubsectors.sector.category_id,
                     nodeSubsectors.sector.id,
@@ -140,10 +175,30 @@
           </td>
           <td v-for="node in fenomenaValue">
             <textarea
+              :id="
+                nodeSubsectors.sector.category_id +
+                '-' +
+                nodeSubsectors.sector.id +
+                '-' +
+                nodeSubsectors.id +
+                '-' +
+                node
+              "
               class="w-full input-fordone"
               @input="
                 (event) => {
                   handleInput(
+                    event,
+                    nodeSubsectors.sector.category_id,
+                    nodeSubsectors.sector.id,
+                    nodeSubsectors.id,
+                    node
+                  );
+                }
+              "
+              @paste="
+                (event) => {
+                  handlePaste(
                     event,
                     nodeSubsectors.sector.category_id,
                     nodeSubsectors.sector.id,
@@ -181,12 +236,31 @@
             </label>
           </td>
           <td v-for="node in fenomenaValue">
-            <input
-              type="text"
+            <textarea
+              :id="
+                nodeSubsectors.sector.category_id +
+                '-' +
+                nodeSubsectors.sector.id +
+                '-' +
+                nodeSubsectors.id +
+                '-' +
+                node
+              "
               class="w-full input-fordone font-bold"
               @input="
                 (event) => {
                   handleInput(
+                    event,
+                    nodeSubsectors.sector.category_id,
+                    nodeSubsectors.sector.id,
+                    nodeSubsectors.id,
+                    node
+                  );
+                }
+              "
+              @paste="
+                (event) => {
+                  handlePaste(
                     event,
                     nodeSubsectors.sector.category_id,
                     nodeSubsectors.sector.id,
@@ -231,48 +305,158 @@ const props = defineProps({
 const fenomenaValue = ref(["qtoq", "yony", "implisit"]);
 const dataHere = ref(props.dataContents);
 const dataContentHere = ref({});
+const emits = defineEmits([
+  "update:updateDataContents",
+  "update:handleInput",
+  "update:handlePaste",
+]);
 watch(
   () => props.dataContents,
   (value) => {
     dataHere.value = value;
-    dataContentHere.value.forEach((element) => {
-      const theIndex = dataHere.value.findIndex((x) => {
-        return (
-          x.category_id == element.category_id &&
-          x.sector_id == element.sector_id &&
-          x.subsector_id == element.subsector_id
-        );
-      });
-      if (theIndex !== -1) {
-        element.qtoq = dataHere.value[theIndex].qtoq ?? null;
-        element.yony = dataHere.value[theIndex].yony ?? null;
-        element.implisit = dataHere.value[theIndex].implisit ?? null;
-      }
-    });
   }
 );
 onMounted(() => {
   let tempData = [];
-  props.keyData.category.forEach((category) => {
-    props.keyData.sector.forEach((sector) => {
-      props.keyData.subsector.forEach((subsector) => {
-        let data = {
-          category_id: category,
-          sector_id: sector,
-          subsector_id: subsector,
-          qtoq: null,
-          yony: null,
-          implisit: null,
-        };
-        tempData.push(data);
-      });
-    });
+  props.subsectors.forEach((element) => {
+    let data;
+    if (
+      (element.code != null &&
+        element.code == "a" &&
+        element.sector.code == "1" &&
+        element.sector.category.type == "Lapangan Usaha") ||
+      (element.code == null &&
+        element.sector.code == "1" &&
+        element.sector.category.type == "Lapangan Usaha")
+    ) {
+      data = {
+        id: null,
+        fenomena_sets: null,
+        category_id: element.sector.category_id,
+        sector_id: null,
+        subsector_id: null,
+        qtoq: null,
+        yony: null,
+        implisit: null,
+      };
+      tempData.push(data);
+    }
+    if (
+      element.code != null &&
+      element.code == "a" &&
+      element.sector.category.type == "Lapangan Usaha"
+    ) {
+      data = {
+        id: null,
+        fenomena_sets: null,
+        category_id: element.sector.category_id,
+        sector_id: element.sector.id,
+        subsector_id: null,
+        qtoq: null,
+        yony: null,
+        implisit: null,
+      };
+      tempData.push(data);
+    }
+    if (element.code != null && element.sector.category.type == "Lapangan Usaha") {
+      data = {
+        id: null,
+        fenomena_sets: null,
+        category_id: element.sector.category_id,
+        sector_id: element.sector.id,
+        subsector_id: element.id,
+        qtoq: null,
+        yony: null,
+        implisit: null,
+      };
+      tempData.push(data);
+    } else if (
+      element.code == null &&
+      element.sector.code != null &&
+      element.sector.category.type == "Lapangan Usaha"
+    ) {
+      data = {
+        id: null,
+        fenomena_sets: null,
+        category_id: element.sector.category_id,
+        sector_id: element.sector.id,
+        subsector_id: element.id,
+        qtoq: null,
+        yony: null,
+        implisit: null,
+      };
+      tempData.push(data);
+    } else if (
+      element.code == null &&
+      element.sector.code == null &&
+      element.sector.category.type == "Lapangan Usaha"
+    ) {
+      data = {
+        id: null,
+        fenomena_sets: null,
+        category_id: element.sector.category_id,
+        sector_id: element.sector.id,
+        subsector_id: element.id,
+        qtoq: null,
+        yony: null,
+        implisit: null,
+      };
+      tempData.push(data);
+    }
+    if (
+      element.code != null &&
+      element.code == "a" &&
+      element.sector.category.type == "Pengeluaran"
+    ) {
+      data = {
+        id: null,
+        fenomena_sets: null,
+        category_id: element.sector.category_id,
+        sector_id: element.sector.id,
+        subsector_id: null,
+        qtoq: null,
+        yony: null,
+        implisit: null,
+      };
+      tempData.push(data);
+    }
+    if (element.code != null && element.sector.category.type == "Pengeluaran") {
+      label = element.code + ". " + element.name;
+      data = {
+        id: null,
+        fenomena_sets: null,
+        category_id: element.sector.category_id,
+        sector_id: element.sector.id,
+        subsector_id: element.id,
+        qtoq: null,
+        yony: null,
+        implisit: null,
+      };
+      tempData.push(data);
+    } else if (
+      element.code == null &&
+      element.sector.code != null &&
+      element.sector.category.type == "Pengeluaran"
+    ) {
+      data = {
+        id: null,
+        fenomena_sets: null,
+        category_id: element.sector.category_id,
+        sector_id: element.sector.id,
+        subsector_id: element.id,
+        qtoq: null,
+        yony: null,
+        implisit: null,
+      };
+      tempData.push(data);
+    }
   });
-  dataContentHere.value = tempData;
+  dataHere.value = tempData;
+  emits("update:updateDataContents", tempData);
 });
 const getData = (category_id, sector_id, subsector_id, type) => {
-  if (Object.keys(dataContentHere.value).length > 0) {
-    const theData = dataContentHere.value.find((x) => {
+  if (Object.keys(dataHere.value).length > 0) {
+    const theData = dataHere.value.find((x) => {
       return (
         x.category_id == category_id &&
         x.sector_id == sector_id &&
@@ -280,33 +464,74 @@ const getData = (category_id, sector_id, subsector_id, type) => {
       );
     });
     if (theData) {
-      return (
-        theData[type] + category_id + "-" + sector_id + "-" + subsector_id + "-" + type
-      );
+      return theData[type];
     }
   }
-  return category_id + "-" + sector_id + "-" + subsector_id + "-" + type;
 };
 const handleInput = (event, category_id, sector_id, subsector_id, type) => {
   let value = event.target.value;
-  if (Object.keys(dataHere.value).length > 0) {
-    const theIndex = dataHere.value.findIndex((x) => {
-      return (
-        x.category_id == category_id &&
-        x.sector_id == sector_id &&
-        x.subsector_id == subsector_id
-      );
-    });
-    if (theIndex !== -1) dataHere.value[theIndex][type] = value;
-  }
-  const hereIndex = dataContentHere.value.findIndex((x) => {
+  const theIndex = dataHere.value.findIndex((x) => {
     return (
       x.category_id == category_id &&
       x.sector_id == sector_id &&
       x.subsector_id == subsector_id
     );
   });
-  if (hereIndex !== -1) dataContentHere.value[hereIndex][type] = value;
+  if (theIndex !== -1) {
+    dataHere.value[theIndex][type] = value;
+    emits("update:handleInput", { theIndex: theIndex, type: type, value: value });
+  }
+};
+const handlePaste = (event) => {
+  const items = event.clipboardData.items;
+  for (let i = 0; i < items.length; i++) {
+    if (items[i].type === "text/plain") {
+      items[i].getAsString((text) => {
+        const columnIndex = event.target.closest("td").cellIndex;
+        const rowIndex = event.target.closest("tr").rowIndex;
+        const lines = text.trim().split("\n");
+        lines.forEach((line, index) => {
+          const cells = line.trim().split("\t");
+          cells.forEach((cell, subIndex) => {
+            const row = rowIndex + index;
+            const col = columnIndex + subIndex;
+            const table = event.target.closest("table");
+            const tableRow = table.rows[row];
+            if (tableRow) {
+              const tableCell = tableRow.cells[col];
+              if (tableCell) {
+                let input = tableCell.querySelector("textarea");
+                if (input) {
+                  let category = input.id.split("-")[0];
+                  let sector = input.id.split("-")[1];
+                  let subsector = input.id.split("-")[2];
+                  const type = input.id.split("-")[3];
+                  input = cell;
+                  sector = sector == "null" ? null : sector;
+                  subsector = subsector == "null" ? null : subsector;
+                  const theIndex = dataHere.value.findIndex((x) => {
+                    return (
+                      x.category_id == category &&
+                      x.sector_id == sector &&
+                      x.subsector_id == subsector
+                    );
+                  });
+                  if (theIndex !== -1) {
+                    dataHere.value[theIndex][type] = input;
+                    emits("update:handlePaste", {
+                      theIndex: theIndex,
+                      type: type,
+                      value: input,
+                    });
+                  }
+                }
+              }
+            }
+          });
+        });
+      });
+    }
+  }
 };
 </script>
 
@@ -346,6 +571,7 @@ const handleInput = (event, category_id, sector_id, subsector_id, type) => {
 }
 
 tbody td {
+  font-size: smaller;
   padding: 0.25rem;
   height: 50px;
   /* Set a fixed height */
@@ -355,7 +581,9 @@ tbody td {
   text-overflow: ellipsis;
   white-space: nowrap;
 }
-
+textarea {
+  font-size: smaller;
+}
 tbody tr {
   height: 50px;
 }
