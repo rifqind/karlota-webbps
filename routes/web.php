@@ -56,6 +56,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
             ->name('adjustment');
         Route::get('/hasil', [PdrbController::class, 'hasil'])
             ->name('hasil');
+        Route::get('/diskrepansi', [PdrbController::class, 'diskrepansi'])
+            ->name('diskrepansi');
         Route::get('/entri-fenomena', [FenomenaController::class, 'entri'])
             ->name('entri-fenomena');
     });
