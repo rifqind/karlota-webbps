@@ -15,8 +15,8 @@ return new class extends Migration
             $table->bigIncrements('id');
             $table->unsignedBigInteger('fenomena_sets')->index('fenomena_to_sets');
             $table->unsignedBigInteger('category_id')->index('fenomena_categories');
-            $table->unsignedBigInteger('sector_id')->index('fenomena_sector');
-            $table->unsignedBigInteger('subsector_id')->index('fenomena_subsector');
+            $table->unsignedBigInteger('sector_id')->nullable()->index('fenomena_sector');
+            $table->unsignedBigInteger('subsector_id')->nullable()->index('fenomena_subsector');
             $table->text('qtoq')->nullable();
             $table->text('yony')->nullable();
             $table->text('implisit')->nullable();
