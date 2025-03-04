@@ -20,8 +20,8 @@ class DatabaseSeeder extends Seeder
         $this->call(CategoriesTableSeeder::class);
         $this->call(SectorsTableSeeder::class);
         $this->call(SubsectorsTableSeeder::class);
-        $this->call(PeriodsTableSeeder::class);
-        $this->call(DatasetsTableSeeder::class);
-        $this->call(PdrbsTableSeeder::class);
+        // $this->call(PeriodsTableSeeder::class);
+        // $this->call(DatasetsTableSeeder::class);
+        // $this->call(PdrbsTableSeeder::class);
     }
 }
