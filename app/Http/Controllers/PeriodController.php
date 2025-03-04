@@ -144,6 +144,7 @@ class PeriodController extends Controller
         $data = Period::selectRaw('DISTINCT quarter as value, quarter as label')
             ->where('type', $request->type)
             ->where('year', $request->year)
+            ->orderBy('quarter', 'asc')
             ->get();
         return response()->json($data);
     }
