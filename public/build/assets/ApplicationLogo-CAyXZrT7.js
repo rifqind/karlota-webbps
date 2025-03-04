@@ -1,0 +1,1 @@
+import{_ as o}from"./karlota-logo-Gt799DZz.js";import{_ as r}from"./_plugin-vue_export-helper-DlAUqK2U.js";import{f as t,o as c}from"./app-CZMwUBW3.js";const s={},e={src:o,alt:"Logo",class:"w-10 h-10 rounded-full shadow-lg opacity-80"};function _(a,n){return c(),t("img",e)}const f=r(s,[["render",_]]);export{f as A};
