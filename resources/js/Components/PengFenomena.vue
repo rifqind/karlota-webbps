@@ -3,56 +3,16 @@
     <template v-for="(nodeSubsectors, index) in subsectors">
       <template
         v-if="
-          (nodeSubsectors.code != null &&
-            nodeSubsectors.code == 'a' &&
-            nodeSubsectors.sector.code == '1' &&
-            nodeSubsectors.sector.category.type == 'Lapangan Usaha') ||
-          (nodeSubsectors.code == null &&
-            nodeSubsectors.sector.code == '1' &&
-            nodeSubsectors.sector.category.type == 'Lapangan Usaha')
+          nodeSubsectors.code != null &&
+          nodeSubsectors.code == 'a' &&
+          nodeSubsectors.sector.category.type == 'Pengeluaran'
         "
       >
         <tr>
           <td class="desc-col fixed-column">
             <label class=""
-              >{{ nodeSubsectors.sector.category.code }}.
-              {{ nodeSubsectors.sector.category.name }}</label
+              >{{ nodeSubsectors.sector.code }}. {{ nodeSubsectors.sector.name }}</label
             >
-          </td>
-          <td v-for="node in fenomenaValue">
-            <textarea
-              :disabled="setDisabled()"
-              :id="
-                nodeSubsectors.sector.category_id + '-' + null + '-' + null + '-' + node
-              "
-              class="w-full input-fordone"
-              @input="
-                (event) => {
-                  handleInput(event, nodeSubsectors.sector.category_id, null, null, node);
-                }
-              "
-              @paste="
-                (event) => {
-                  handlePaste(event, nodeSubsectors.sector.category_id, null, null, node);
-                }
-              "
-              :value="getData(nodeSubsectors.sector.category_id, null, null, node)"
-            />
-          </td>
-        </tr>
-      </template>
-      <template
-        v-if="
-          nodeSubsectors.code != null &&
-          nodeSubsectors.code == 'a' &&
-          nodeSubsectors.sector.category.type == 'Lapangan Usaha'
-        "
-      >
-        <tr>
-          <td class="desc-col fixed-column">
-            <p class="pl-4">
-              {{ nodeSubsectors.sector.code }}. {{ nodeSubsectors.sector.name }}
-            </p>
           </td>
           <td v-for="node in fenomenaValue">
             <textarea
@@ -104,7 +64,7 @@
       <template
         v-if="
           nodeSubsectors.code != null &&
-          nodeSubsectors.sector.category.type == 'Lapangan Usaha'
+          nodeSubsectors.sector.category.type == 'Pengeluaran'
         "
       >
         <tr>
@@ -164,17 +124,14 @@
         v-else-if="
           nodeSubsectors.code == null &&
           nodeSubsectors.sector.code != null &&
-          nodeSubsectors.sector.category.type == 'Lapangan Usaha'
+          nodeSubsectors.sector.category.type == 'Pengeluaran'
         "
       >
         <tr>
           <td class="desc-col fixed-column">
-            <p
-              class="pl-4 pr-4"
-              :for="nodeSubsectors.sector.code + '_' + nodeSubsectors.sector.name"
-            >
+            <label :for="nodeSubsectors.sector.code + '_' + nodeSubsectors.sector.name">
               {{ nodeSubsectors.sector.code + ". " + nodeSubsectors.sector.name }}
-            </p>
+            </label>
           </td>
           <td v-for="node in fenomenaValue">
             <textarea
@@ -223,73 +180,9 @@
           </td>
         </tr>
       </template>
-      <template
-        v-else-if="
-          nodeSubsectors.code == null &&
-          nodeSubsectors.sector.code == null &&
-          nodeSubsectors.sector.category.type == 'Lapangan Usaha'
-        "
-      >
-        <tr>
-          <td class="desc-col fixed-column">
-            <label
-              class="col"
-              :for="nodeSubsectors.sector.category.code + '_' + nodeSubsectors.name"
-            >
-              {{ nodeSubsectors.sector.category.code + ". " + nodeSubsectors.name }}
-            </label>
-          </td>
-          <td v-for="node in fenomenaValue">
-            <textarea
-              :disabled="setDisabled()"
-              :id="
-                nodeSubsectors.sector.category_id +
-                '-' +
-                nodeSubsectors.sector.id +
-                '-' +
-                nodeSubsectors.id +
-                '-' +
-                node
-              "
-              class="w-full input-fordone font-bold"
-              @input="
-                (event) => {
-                  handleInput(
-                    event,
-                    nodeSubsectors.sector.category_id,
-                    nodeSubsectors.sector.id,
-                    nodeSubsectors.id,
-                    node
-                  );
-                }
-              "
-              @paste="
-                (event) => {
-                  handlePaste(
-                    event,
-                    nodeSubsectors.sector.category_id,
-                    nodeSubsectors.sector.id,
-                    nodeSubsectors.id,
-                    node
-                  );
-                }
-              "
-              :value="
-                getData(
-                  nodeSubsectors.sector.category_id,
-                  nodeSubsectors.sector.id,
-                  nodeSubsectors.id,
-                  node
-                )
-              "
-            />
-          </td>
-        </tr>
-      </template>
     </template>
   </tbody>
 </template>
-
 <script setup>
 import { onMounted, ref, watch } from "vue";
 
@@ -430,7 +323,6 @@ onMounted(() => {
       tempData.push(data);
     }
     if (element.code != null && element.sector.category.type == "Pengeluaran") {
-      label = element.code + ". " + element.name;
       data = {
         id: null,
         fenomena_sets: null,

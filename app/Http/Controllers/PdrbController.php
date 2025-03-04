@@ -1055,7 +1055,6 @@ class PdrbController extends Controller
         ]);
         $period_id = $validated['description'];
         $regions = Region::getMyRegion();
-        $regions = Region::getMyRegion();
         $datasetStatuses = Dataset::where('period_id', $period_id)
             ->whereIn('region_id', $regions->pluck('value'))
             ->pluck('status', 'region_id');

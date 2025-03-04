@@ -10,6 +10,13 @@
     </div>
     <nav class="mt-4 px-3">
       <ul>
+        <NavLinkSidebar
+          :navIcon="'fa-solid fa-chart-line'"
+          :href="route('dashboard')"
+          :currentRoute="currentRoute == 'dashboard'"
+        >
+          Dashboard
+        </NavLinkSidebar>
         <NavLinkParentSidebar
           :navIcon="'fa-solid fa-chart-pie'"
           :menuOpen="
@@ -106,11 +113,12 @@
           Monitoring PDRB
         </NavLinkSidebar>
         <NavLinkParentSidebar
-          :navIcon="'fa-solid fa-money-bill-trend-up'"
+          :navIcon="'fa-solid fa-sun-plant-wilt'"
           :menuOpen="
             menuOpenFenom ||
             currentRoute == 'lapus.entri-fenomena' ||
-            currentRoute == 'peng.entri-fenomena'
+            currentRoute == 'peng.entri-fenomena' ||
+            currentRoute == 'fenomena.monitoring'
           "
           :toggleMenuOpen="toggleMenuOpen"
           :params="'fenom'"
@@ -131,6 +139,13 @@
             >
               Pengeluaran
             </NavLinkSidebar>
+            <NavLinkSidebar
+              :navIcon="'fa-solid fa-list-ol'"
+              :href="route('fenomena.monitoring')"
+              :currentRoute="currentRoute == 'fenomena.monitoring'"
+            >
+              Monitoring Fenomena
+            </NavLinkSidebar>
           </template>
         </NavLinkParentSidebar>
         <NavLinkSidebar
@@ -146,13 +161,6 @@
           :currentRoute="currentRoute == 'user.index'"
         >
           Kelola Pengguna</NavLinkSidebar
-        >
-        <NavLinkSidebar
-          :navIcon="'fas fa-user'"
-          :href="route('dashboard')"
-          :currentRoute="currentRoute == 'dashboard'"
-        >
-          Edit Profile</NavLinkSidebar
         >
       </ul>
       <br />

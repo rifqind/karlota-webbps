@@ -1,24 +1,14 @@
 <?php
 
+use App\Http\Controllers\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\FenomenaController;
 use App\Http\Controllers\HomeController;
-use App\Http\Controllers\LapusController;
 use App\Http\Controllers\PdrbController;
 use App\Http\Controllers\PeriodController;
-use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\UserController;
-use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
-use Inertia\Inertia;
 
-Route::get('/', function () {
-    return Inertia::render('Welcome', [
-        'canLogin' => Route::has('login'),
-        'canRegister' => Route::has('register'),
-        'laravelVersion' => Application::VERSION,
-        'phpVersion' => PHP_VERSION,
-    ]);
-});
+Route::get('/', [AuthenticatedSessionController::class, 'create']);
 Route::get('/token', function () {
     return csrf_token();
 })->name('token');
@@ -114,6 +104,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
             ->name('submit-fenomena');
         Route::post('/unsubmit-fenomena', [FenomenaController::class, 'unsubmitFenomena'])
             ->name('unsubmit-fenomena');
+        Route::get('/monitoring', [FenomenaController::class, 'monitoring'])
+            ->name('monitoring');
+        Route::get('/get-monitoring', [FenomenaController::class, 'getMonitoring'])
+            ->name('get-monitoring');
     });
     //User
     Route::prefix('user')->name('user.')->group(function () {
@@ -125,13 +119,6 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::delete('/destroy/{id}', [UserController::class, 'destroy'])
             ->name('destroy');
     });
-});
-
-
-Route::middleware('auth')->group(function () {
-    Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
-    Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
-    Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 });
 
 require __DIR__ . '/auth.php';

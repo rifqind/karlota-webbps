@@ -78,17 +78,26 @@
               <th>Fenomena Implisit</th>
             </tr>
           </thead>
-          <template v-if="page.props.type == 'Lapangan Usaha'">
-            <LapusFenomena
-              v-show="showTabPanel"
-              :subsectors="page.props.subsectors"
-              :key-data="keyData"
-              :data-contents="dataContents"
-              @update:update-data-contents="updateDataContents"
-              @update:handle-input="handleInput"
-              @update:handle-paste="handlePaste"
-            />
-          </template>
+          <LapusFenomena
+            v-if="page.props.type == 'Lapangan Usaha'"
+            v-show="showTabPanel"
+            :subsectors="page.props.subsectors"
+            :data-contents="dataContents"
+            :fenomena-status="fenomenasets.status"
+            @update:update-data-contents="updateDataContents"
+            @update:handle-input="handleInput"
+            @update:handle-paste="handlePaste"
+          />
+          <PengFenomena
+            v-if="page.props.type == 'Pengeluaran'"
+            v-show="showTabPanel"
+            :subsectors="page.props.subsectors"
+            :data-contents="dataContents"
+            :fenomena-status="fenomenasets.status"
+            @update:update-data-contents="updateDataContents"
+            @update:handle-input="handleInput"
+            @update:handle-paste="handlePaste"
+          />
         </table>
       </div>
       <div
@@ -133,6 +142,7 @@ import { triggerSpinner } from "@/axiosSetup";
 import FlashFetch from "@/Components/FlashFetch.vue";
 import FloatScrollDown from "@/Components/FloatScrollDown.vue";
 import LapusFenomena from "@/Components/LapusFenomena.vue";
+import PengFenomena from "@/Components/PengFenomena.vue";
 import SpinnerBorder from "@/Components/SpinnerBorder.vue";
 import GeneralLayout from "@/Layouts/GeneralLayout.vue";
 import { Head, useForm, usePage } from "@inertiajs/vue3";
@@ -160,7 +170,7 @@ const formError = ref({
   regions: null,
 });
 const showTabPanel = ref(false);
-const fenomenasets = ref(null);
+const fenomenasets = ref({ status: "Entry" });
 const notifications = ref([]);
 const showNotification = (notification) => {
   notifications.value = notification;
@@ -248,8 +258,41 @@ const saveEntri = async () => {
     },
   });
 };
-const submitEntri = async () => {};
-const unsubmitEntri = async () => {};
+const submitEntri = async () => {
+  const thisForm = useForm({
+    dataContents: dataContents.value,
+    type: page.props.type,
+    id: fenomenasets.value.id,
+    _token: null,
+  });
+  const response = await axios.get(route("token"));
+  thisForm._token = response.data;
+  if (thisForm.processing) return;
+  thisForm.post(route("fenomena.submit-fenomena"), {
+    onSuccess: (response) => {
+      showNotification(response.props.notification);
+      if (response.props.notification[0].type == "success")
+        fenomenasets.value.status = "Submitted";
+    },
+  });
+};
+const unsubmitEntri = async () => {
+  const thisForm = useForm({
+    id: fenomenasets.value.id,
+    type: page.props.type,
+    _token: null,
+  });
+  const response = await axios.get(route("token"));
+  thisForm._token = response.data;
+  if (thisForm.processing) return;
+  thisForm.post(route("fenomena.unsubmit-fenomena"), {
+    onSuccess: (response) => {
+      showNotification(response.props.notification);
+      if (response.props.notification[0].type == "success")
+        fenomenasets.value.status = "Entry";
+    },
+  });
+};
 </script>
 
 <style scoped>
