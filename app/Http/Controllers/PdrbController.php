@@ -380,7 +380,7 @@ class PdrbController extends Controller
         $subsectors = Subsector::where('type', $type)
             ->with(['sector.category'])
             ->get();
-        return Inertia::render('Fenomena/Entri', [
+        return Inertia::render('Pdrb/Adjustment', [
             'type' => $type,
             'subsectors' => $subsectors,
             'regions' => $regions
