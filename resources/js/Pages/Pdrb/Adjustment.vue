@@ -7,7 +7,7 @@
     <div class="mr-auto ml-auto">
       <div class="bg-white shadow-md mb-2 rounded-sm border border-gray-200 mb-3">
         <div class="flex items-center justify-between py-3 px-4 border-b card-header">
-          <label class="text-xl">Entri PDRB</label>
+          <label class="text-xl">Entri Adjustment</label>
         </div>
         <div class="p-5">
           <div class="mb-3 space-y-2">
@@ -124,7 +124,6 @@
               <th colspan="2">Y-on-Y</th>
               <th colspan="2">C-to-C</th>
               <th colspan="2">Laju Imp Q-to-Q</th>
-              <th colspan="2">SOG Y-on-Y thd Total</th>
               <th colspan="2">Kontribusi thd Total</th>
             </tr>
             <tr>
@@ -134,8 +133,6 @@
               <th class="min-w-[150px]">Inisial</th>
               <th class="min-w-[150px]">Adjustment</th>
               <th class="min-w-[150px]">Berjalan</th>
-              <th class="min-w-[120px]">Inisial</th>
-              <th class="min-w-[120px]">Berjalan</th>
               <th class="min-w-[120px]">Inisial</th>
               <th class="min-w-[120px]">Berjalan</th>
               <th class="min-w-[120px]">Inisial</th>

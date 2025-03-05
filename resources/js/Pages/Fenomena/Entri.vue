@@ -8,7 +8,7 @@
     <div class="container px-[7.5px] mr-auto ml-auto">
       <div class="bg-white shadow-md mb-2 rounded-sm border border-gray-200 mb-3">
         <div class="flex items-center justify-between py-3 px-4 border-b card-header">
-          <label class="text-xl">Entri PDRB</label>
+          <label class="text-xl">Entri Fenomena</label>
         </div>
         <div class="p-5">
           <div class="mb-3 space-y-2">
@@ -37,6 +37,7 @@
                 { label: 'Triwulan 2', value: '2' },
                 { label: 'Triwulan 3', value: '3' },
                 { label: 'Triwulan 4', value: '4' },
+                { label: 'Tahunan', value: '5' },
               ]"
               :searchable="true"
               placeholder="-- Pilih Triwulan --"
@@ -73,7 +74,7 @@
           <thead>
             <tr>
               <th class="fixed-thead">Komponen</th>
-              <th>Fenomena Q-to-Q</th>
+              <th v-if="!isYear">Fenomena Q-to-Q</th>
               <th>Fenomena Y-on-Y</th>
               <th>Fenomena Implisit</th>
             </tr>
@@ -84,9 +85,11 @@
             :subsectors="page.props.subsectors"
             :data-contents="dataContents"
             :fenomena-status="fenomenasets.status"
+            :is-year="isYear"
             @update:update-data-contents="updateDataContents"
             @update:handle-input="handleInput"
             @update:handle-paste="handlePaste"
+            @update:set-default-data="setDefaultData"
           />
           <PengFenomena
             v-if="page.props.type == 'Pengeluaran'"
@@ -94,6 +97,7 @@
             :subsectors="page.props.subsectors"
             :data-contents="dataContents"
             :fenomena-status="fenomenasets.status"
+            :is-year="isYear"
             @update:update-data-contents="updateDataContents"
             @update:handle-input="handleInput"
             @update:handle-paste="handlePaste"
@@ -147,15 +151,10 @@ import SpinnerBorder from "@/Components/SpinnerBorder.vue";
 import GeneralLayout from "@/Layouts/GeneralLayout.vue";
 import { Head, useForm, usePage } from "@inertiajs/vue3";
 import Multiselect from "@vueform/multiselect";
-import { onMounted, ref, watch } from "vue";
+import { computed, onMounted, ref, watch } from "vue";
 
 const page = usePage();
 const dataContents = ref({});
-const keyData = ref({
-  category: page.props.category_id,
-  sector: page.props.sector_id,
-  subsector: page.props.subsector_id,
-});
 const form = useForm({
   dataContents: null,
   _token: null,
@@ -169,6 +168,8 @@ const formError = ref({
   quarter: null,
   regions: null,
 });
+const isYear = ref(false);
+const defaultData = ref([]);
 const showTabPanel = ref(false);
 const fenomenasets = ref({ status: "Entry" });
 const notifications = ref([]);
@@ -195,12 +196,16 @@ const updateDataContents = (value) => {
 const handleInput = (value) => {
   dataContents.value[value.theIndex][value.type] = value.value;
 };
+const setDefaultData = (value) => {
+  defaultData.value = value;
+};
 const handlePaste = (value) => {
   dataContents.value[value.theIndex][value.type] = value.value;
 };
 onMounted(() => {});
 const submit = async () => {
   try {
+    dataContents.value = JSON.parse(JSON.stringify(defaultData.value));
     const response = await axios.get(route("fenomena.show"), {
       params: {
         type: page.props.type,
@@ -233,6 +238,7 @@ const submit = async () => {
       quarter: null,
       regions: null,
     };
+    isYear.value = form.quarter == 5 ? true : false;
   } catch (error) {
     if (error.response.data.errors) {
       formError.value = Object.keys(error.response.data.errors).reduce((acc, key) => {
