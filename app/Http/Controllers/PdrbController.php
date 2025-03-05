@@ -1452,7 +1452,8 @@ class PdrbController extends Controller
             //throw $th;
             $message = [
                 'type' => 'error',
-                'message' => 'Ada kesalahan ketika mengambil data dari database'
+                'message' => 'Ada kesalahan ketika mengambil data dari database',
+                'error' => $th->getMessage()
             ];
             array_push($notification, $message);
             $result = [
