@@ -92,6 +92,10 @@ class PeriodController extends Controller
             $validated['ended_at'] = Carbon::parse($validated['datepicker']['endDate'])->format('Y-m-d');
 
             if ($request->id) {
+                $request->validate([
+                    'status' => ['required', 'string'],
+                ]);
+                $validated['status'] = $request->status;
                 $updated_data = Period::findOrFail($request->id);
                 $updated_data->update($validated);
                 DB::commit();

@@ -152,8 +152,15 @@
     />
     <ModalBs
       :ModalStatus="createModalStatus"
-      @close="createModalStatus = false"
-      :title="'Tambah Putaran Baru'"
+      @close="
+        () => {
+          createModalStatus = false;
+          isUpdate == true ? form.reset() : null;
+          isUpdate = false;
+          modalTitle = 'Tambah Periode Putaran Baru';
+        }
+      "
+      :title="modalTitle"
       :modalSize="'min-w-[40vw]'"
       :modalPosition="'items-start pt-5'"
     >
@@ -201,6 +208,19 @@
               v-model="form.description"
               placeholder="Isikan Putaran ke-"
               class="input-fordone w-full"
+            />
+          </div>
+          <div class="mb-3 space-y-2" v-if="isUpdate">
+            <label for="triwulan">Status</label>
+            <Multiselect
+              v-model="form.status"
+              :options="[
+                { label: 'Aktif', value: 'Aktif' },
+                { label: 'Selesai', value: 'Selesai' },
+                { label: 'Final', value: 'Final' },
+              ]"
+              :searchable="true"
+              placeholder="-- Pilih Status--"
             />
           </div>
           <div class="mb-3 space-y-2">
@@ -271,6 +291,8 @@ const page = usePage();
 var dataObject = page.props.period.data;
 const periods = ref(dataObject);
 const createModalStatus = ref(false);
+const modalTitle = ref("Tambah Periode Putaran Baru");
+const isUpdate = ref(false);
 const deleteModalStatus = ref(false);
 const toggleFlash = ref(false);
 const flashObject = ref(page.props.flash);
@@ -289,6 +311,7 @@ const form = useForm({
   year: null,
   quarter: null,
   description: null,
+  status: null,
   datepicker: {
     startDate: "",
     endDate: "",
@@ -467,7 +490,9 @@ const toggleUpdateModal = async (id) => {
     form.description = response.data.data.description;
     form.datepicker.startDate = response.data.data.started_at + " 00:00:00";
     form.datepicker.endDate = response.data.data.ended_at + " 00:00:00";
-
+    form.status = response.data.data.status;
+    isUpdate.value = true;
+    modalTitle.value = "Edit Putaran";
     createModalStatus.value = true;
   } catch (error) {
     console.error(error);

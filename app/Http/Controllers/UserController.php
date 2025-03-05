@@ -57,7 +57,8 @@ class UserController extends Controller
                 'countData' => $countData
             ]);
         }
-        $regions = Region::select(['satker_id as value', 'name as label'])->distinct('satker_id')->get();
+        // $regions = Region::select(['satker_id as value', 'name as label'])->distinct('satker_id')->get();
+        $regions = Region::getMyBps();
         return Inertia::render('User/Index', [
             'user' => $data,
             'countData' => $countData,
@@ -68,7 +69,7 @@ class UserController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'name' => ['required', 'string'],
+            'name' => ['required', 'string', 'regex:/^\S*$/u'],
             'satker_id' => ['required', 'integer'],
             'email' => ['required', 'string', 'lowercase', 'email', 'max:255'],
             'role' => ['required', 'string'],
@@ -147,6 +148,56 @@ class UserController extends Controller
                 'error' => $th->getMessage()
             ];
             return redirect()->route('user.index')->with('notification', $notification);
+        }
+    }
+
+    public function edit(Request $request, String $id = null)
+    {
+        if ($request->isMethod('get')) {
+            $user = User::find($id);
+            $regions = Region::getMyBps();
+            return Inertia::render('User/Edit', [
+                'user' => $user,
+                'regions' => $regions
+            ]);
+        }
+        if ($request->isMethod('post')) {
+            $notification = [];
+            try {
+                //code...
+                DB::beginTransaction();
+                $validated = $request->validate([
+                    'name' => ['required', 'string', Rule::unique('users')->ignore($request->id), 'regex:/^\S*$/u'],
+                    'email' => ['required', 'string', 'lowercase', 'email', 'max:255', Rule::unique('users')->ignore($request->id)],
+                    'password' => ['sometimes', 'nullable', 'confirmed', Rules\Password::defaults()]
+                ]);
+                $updated_data = User::findOrFail($request->id);
+                if ($request->password) {
+                    $updated_data->update([
+                        'name' => $validated['name'],
+                        'email' => $validated['email'],
+                        'password' => Hash::make($request->password),
+                    ]);
+                } else $updated_data->update($validated);
+
+                $message = [
+                    'type' => 'message',
+                    'message' => 'Berhasil mengedit akun'
+                ];
+                array_push($notification, $message);
+                DB::commit();
+                return redirect()->route('user.edit', ['id' => $request->id])->with('notification', $notification);
+            } catch (\Throwable $th) {
+                //throw $th;
+                DB::rollBack();
+                $message = [
+                    'type' => 'error',
+                    'message' => $th->getMessage(),
+                    'error' => $th->getMessage()
+                ];
+                array_push($notification, $message);
+                return redirect()->route('user.edit', ['id' => $request->id])->with('notification', $notification);
+            }
         }
     }
 }

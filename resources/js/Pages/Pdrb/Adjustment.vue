@@ -4,7 +4,7 @@
   <GeneralLayout :entri="mountThis">
     <FlashFetch :notifications="notifications" />
     <FloatScrollDown />
-    <div class="container px-[7.5px] mr-auto ml-auto">
+    <div class="mr-auto ml-auto">
       <div class="bg-white shadow-md mb-2 rounded-sm border border-gray-200 mb-3">
         <div class="flex items-center justify-between py-3 px-4 border-b card-header">
           <label class="text-xl">Entri PDRB</label>

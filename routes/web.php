@@ -17,14 +17,16 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/dashboard', [HomeController::class, 'index'])
         ->name('dashboard');
     Route::prefix('period')->name('period.')->group(function () {
-        Route::get('/index', [PeriodController::class, 'index'])
-            ->name('index');
-        Route::post('/store', [PeriodController::class, 'store'])
-            ->name('store');
-        Route::get('/fetch/{id}', [PeriodController::class, 'fetch'])
-            ->name('fetch');
-        Route::delete('/destroy/{id}', [PeriodController::class, 'destroy'])
-            ->name('destroy');
+        Route::middleware(['role:admin'])->group(function () {
+            Route::get('/index', [PeriodController::class, 'index'])
+                ->name('index');
+            Route::post('/store', [PeriodController::class, 'store'])
+                ->name('store');
+            Route::get('/fetch/{id}', [PeriodController::class, 'fetch'])
+                ->name('fetch');
+            Route::delete('/destroy/{id}', [PeriodController::class, 'destroy'])
+                ->name('destroy');
+        });
 
         //fetching periods for rekons
         Route::get('/fetchYear', [PeriodController::class, 'fetchYear'])
@@ -83,10 +85,12 @@ Route::middleware(['auth', 'verified'])->group(function () {
         ->name('pdrb.save-adjustment');
 
     //Monitoring
-    Route::get('/get-monitoring', [PdrbController::class, 'getMonitoring'])
-        ->name('pdrb.get-monitoring');
-    Route::get('/monitoring', [PdrbController::class, 'monitoring'])
-        ->name('pdrb.monitoring');
+    Route::middleware(['role:admin'])->group(function () {
+        Route::get('/get-monitoring', [PdrbController::class, 'getMonitoring'])
+            ->name('pdrb.get-monitoring');
+        Route::get('/monitoring', [PdrbController::class, 'monitoring'])
+            ->name('pdrb.monitoring');
+    });
 
     //Hasil
     Route::get('/get-hasil', [PdrbController::class, 'getHasil'])
@@ -106,20 +110,27 @@ Route::middleware(['auth', 'verified'])->group(function () {
             ->name('submit-fenomena');
         Route::post('/unsubmit-fenomena', [FenomenaController::class, 'unsubmitFenomena'])
             ->name('unsubmit-fenomena');
-        Route::get('/monitoring', [FenomenaController::class, 'monitoring'])
-            ->name('monitoring');
-        Route::get('/get-monitoring', [FenomenaController::class, 'getMonitoring'])
-            ->name('get-monitoring');
+        Route::middleware(['role:admin'])->group(function () {
+            Route::get('/monitoring', [FenomenaController::class, 'monitoring'])
+                ->name('monitoring');
+            Route::get('/get-monitoring', [FenomenaController::class, 'getMonitoring'])
+                ->name('get-monitoring');
+        });
     });
     //User
     Route::prefix('user')->name('user.')->group(function () {
-        Route::get('/index', [UserController::class, 'index'])->name('index');
-        Route::post('/store', [UserController::class, 'store'])
-            ->name('store');
-        Route::get('/fetch/{id}', [UserController::class, 'fetch'])
-            ->name('fetch');
-        Route::delete('/destroy/{id}', [UserController::class, 'destroy'])
-            ->name('destroy');
+        Route::middleware(['role:admin'])->group(function () {
+            Route::get('/index', [UserController::class, 'index'])->name('index');
+            Route::post('/store', [UserController::class, 'store'])
+                ->name('store');
+            Route::get('/fetch/{id}', [UserController::class, 'fetch'])
+                ->name('fetch');
+            Route::delete('/destroy/{id}', [UserController::class, 'destroy'])
+                ->name('destroy');
+        });
+        Route::get('/edit/{id}', [UserController::class, 'edit'])
+            ->name('edit');
+        Route::post('/edit', [UserController::class, 'edit']);
     });
 });
 

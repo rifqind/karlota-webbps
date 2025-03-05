@@ -33,6 +33,30 @@ class Region extends Model
         return $region;
     }
 
+    public static function getMyBps()
+    {
+        if (auth()->user()->satker_id == 1) {
+            $bps = Region::selectRaw('MIN(id) as id, satker_id')
+                ->groupBy('satker_id')
+                ->orderBy('id')
+                ->pluck('id');
+            $result = Region::whereIn('id', $bps)
+                ->select(['satker_id as value', 'name as label'])
+                ->get();
+        } else {
+            $bps = Region::selectRaw('MIN(id) as id, satker_id')
+                ->where('satker_id', auth()->user()->satker_id)
+                ->groupBy('satker_id')
+                ->orderBy('id')
+                ->pluck('id');
+            $result = Region::whereIn('id', $bps)
+                ->select(['satker_id as value', 'name as label'])
+                ->get();
+        }
+
+        return $result;
+    }
+
     public static function getMyRegionId()
     {
         if (auth()->user()->satker_id == 1) {
