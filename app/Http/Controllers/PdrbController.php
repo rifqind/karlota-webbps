@@ -1337,6 +1337,7 @@ class PdrbController extends Controller
                 array_push($notification, $message);
             } else {
                 $previous_data = [];
+                $previous_summary_set = [];
                 for ($index = 1; $index <= 4; $index++) {
                     foreach ($subsectors as $subsector_id) {
                         $singleData = [
@@ -1349,6 +1350,7 @@ class PdrbController extends Controller
                             'adhk' => null,
                         ];
                         array_push($previous_data, $singleData);
+                        array_push($previous_summary_set, $singleData);
                     }
                 }
 
