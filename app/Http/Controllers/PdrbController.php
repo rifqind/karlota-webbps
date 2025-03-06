@@ -69,11 +69,9 @@ class PdrbController extends Controller
             $periode_before_year = Period::find($previous_period);
             $current_dataset = Dataset::where('period_id', $period_id)
                 ->where('region_id', $validated['regions'])
-                ->where('type', $validated['type'])
                 ->value('id');
             $previous_dataset = Dataset::where('period_id', $previous_period)
                 ->where('region_id', $validated['regions'])
-                ->where('type', $validated['type'])
                 ->value('id');
 
             if ($previous_dataset) {
@@ -121,11 +119,8 @@ class PdrbController extends Controller
             } else {
                 //create new datasets
                 $current_object_dataset = Dataset::create([
-                    'type' => $validated['type'],
                     'period_id' => $period_id,
                     'region_id' => $validated['regions'],
-                    'year' => $validated['year'],
-                    'quarter' => $validated['quarter'],
                     'status' => 'Entry',
                 ]);
 
@@ -335,7 +330,6 @@ class PdrbController extends Controller
             $period_id = $validated['description'];
             $current_dataset = Dataset::where('period_id', $period_id)
                 ->where('region_id', $validated['regions'])
-                ->where('type', $validated['type'])
                 ->value('id');
             if ($current_dataset) {
                 $current_data = Pdrb::where('dataset_id', $current_dataset)
@@ -428,10 +422,8 @@ class PdrbController extends Controller
 
         $periode_before_year = Period::find($previous_period);
         $current_dataset = Dataset::where('period_id', $period_id)
-            ->where('type', $validated['type'])
             ->pluck('id');
         $previous_dataset = Dataset::where('period_id', $previous_period)
-            ->where('type', $validated['type'])
             ->pluck('id');
 
         $list_region = [];
@@ -439,7 +431,6 @@ class PdrbController extends Controller
             # code...
             $cek_previous = Dataset::where('period_id', $previous_period)
                 ->where('region_id', $reg->value)
-                ->where('type', $type)
                 ->first();
             if (!$cek_previous) {
                 $message = [
@@ -456,7 +447,6 @@ class PdrbController extends Controller
             }
             $cek_current = Dataset::where('period_id', $period_id)
                 ->where('region_id', $reg->value)
-                ->where('type', $type)
                 ->first();
             if (!$cek_current) {
                 $message = [
@@ -1150,16 +1140,13 @@ class PdrbController extends Controller
 
             $regions = Region::select('id as value', 'name as label')->get();
             $current_dataset = Dataset::where('period_id', $period_id)
-                ->where('type', $validated['type'])
                 ->pluck('id');
             $previous_dataset = Dataset::where('period_id', $previous_period)
-                ->where('type', $validated['type'])
                 ->pluck('id');
             foreach ($regions as $key => $reg) {
                 # code...
                 $cek_previous = Dataset::where('period_id', $previous_period)
                     ->where('region_id', $reg->value)
-                    ->where('type', $type)
                     ->first();
                 if (!$cek_previous) {
                     $message = [
@@ -1176,7 +1163,6 @@ class PdrbController extends Controller
                 }
                 $cek_current = Dataset::where('period_id', $period_id)
                     ->where('region_id', $reg->value)
-                    ->where('type', $type)
                     ->first();
                 if (!$cek_current) {
                     $message = [
@@ -1269,11 +1255,9 @@ class PdrbController extends Controller
             $periode_before_year = Period::find($previous_period);
             $current_dataset = Dataset::where('period_id', $period_id)
                 ->where('region_id', $validated['regions'])
-                ->where('type', $validated['type'])
                 ->value('id');
             $previous_dataset = Dataset::where('period_id', $previous_period)
                 ->where('region_id', $validated['regions'])
-                ->where('type', $validated['type'])
                 ->value('id');
 
             if ($previous_dataset) {
@@ -1477,7 +1461,6 @@ class PdrbController extends Controller
         $period_id = $validated['description'];
         $current_dataset = Dataset::where('period_id', $period_id)
             ->where('region_id', $validated['regions'])
-            ->where('type', $validated['type'])
             ->value('id');
         if ($current_dataset) {
             $result = $this->fetchHasil($request);

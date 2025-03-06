@@ -271,6 +271,9 @@
             />
           </template>
         </table>
+        <div v-if="loadingWarn" class="text-center">
+          Data masih loading . . . dan cukup lama
+        </div>
       </div>
     </div>
   </GeneralLayout>
@@ -288,7 +291,7 @@ import { tableToJson, theDownload } from "@/download";
 import GeneralLayout from "@/Layouts/GeneralLayout.vue";
 import { Head, useForm, usePage } from "@inertiajs/vue3";
 import Multiselect from "@vueform/multiselect";
-import { nextTick, onMounted, ref } from "vue";
+import { computed, nextTick, onMounted, ref } from "vue";
 
 const page = usePage();
 const form = useForm({
@@ -303,6 +306,12 @@ const formError = ref({
   year: null,
   quarter: null,
   description: null,
+});
+const loadingWarn = computed(() => {
+  if (showPdrbAndResult.value.adhb == false) return true;
+  if (showPdrbAndResult.value.adhk == false) return true;
+  if (showPdrbAndResult.value.result == false) return true;
+  return false;
 });
 const notifications = ref([]);
 const showNotification = (notification, delay = 200) => {
