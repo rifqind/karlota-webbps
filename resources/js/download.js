@@ -1,5 +1,5 @@
 import * as XLSX from "xlsx";
-const tableToJson = (idTabel) => {
+const tableToJson = (idTabel, type = 'number') => {
     const table = document.getElementById(idTabel);
     if (!table) {
         console.error(`Table with id "${idTabel}" not found.`);
@@ -34,9 +34,11 @@ const tableToJson = (idTabel) => {
                     let val = cell.textContent.trim(); // Trim whitespace
 
                     if (index !== 0) { // Skip the first column
-                        val = val.replace(/\./g, "").replace(/,/g, "."); // Convert German numeric format
-                        val = parseFloat(val); // Convert to a number
-                        if (isNaN(val)) val = '-'
+                        if (type == 'number') {
+                            val = val.replace(/\./g, "").replace(/,/g, "."); // Convert German numeric format
+                            val = parseFloat(val); // Convert to a number
+                            if (isNaN(val)) val = '-'
+                        }
                     }
                     rowData[header] = val
                 });

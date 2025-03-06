@@ -119,6 +119,7 @@
             menuOpenFenom ||
             currentRoute == 'lapus.entri-fenomena' ||
             currentRoute == 'peng.entri-fenomena' ||
+            currentRoute == 'fenomena.index' ||
             currentRoute == 'fenomena.monitoring'
           "
           :toggleMenuOpen="toggleMenuOpen"
@@ -139,6 +140,13 @@
               :currentRoute="currentRoute == 'peng.entri-fenomena'"
             >
               Pengeluaran
+            </NavLinkSidebar>
+            <NavLinkSidebar
+              :navIcon="'fa-solid fa-list-ol'"
+              :href="route('fenomena.index')"
+              :currentRoute="currentRoute == 'fenomena.index'"
+            >
+              Lihat Fenomena
             </NavLinkSidebar>
             <NavLinkSidebar
               v-if="page.props.auth.user.role == 'admin'"

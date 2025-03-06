@@ -239,6 +239,7 @@ const submit = async () => {
       regions: null,
     };
     isYear.value = form.quarter == 5 ? true : false;
+    showNotification(response.data.notification);
   } catch (error) {
     if (error.response.data.errors) {
       formError.value = Object.keys(error.response.data.errors).reduce((acc, key) => {

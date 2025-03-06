@@ -104,6 +104,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::prefix('fenomena')->name('fenomena.')->group(function () {
         Route::get('/show', [FenomenaController::class, 'show'])
             ->name('show');
+        Route::get('/index', [FenomenaController::class, 'index'])
+            ->name('index');
+        Route::get('/get-index', [FenomenaController::class, 'getIndex'])
+            ->name('get-index');
         Route::post('/save-fenomena', [FenomenaController::class, 'saveFenomena'])
             ->name('save-fenomena');
         Route::post('/submit-fenomena', [FenomenaController::class, 'submitFenomena'])
