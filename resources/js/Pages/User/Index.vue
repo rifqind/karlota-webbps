@@ -99,10 +99,10 @@
       <template #modalBody>
         <div class="form-group">
           <div class="mb-3 space-y-2">
-            <label for="pdrb">Nama</label>
+            <label for="pdrb">Username</label>
             <input
               v-model="form.name"
-              placeholder="Isikan Nama Akun"
+              placeholder="Isikan Username Akun"
               class="input-fordone w-full"
               type="text"
             />

@@ -43,6 +43,7 @@
                 { label: 'Triwulan 2', value: '2' },
                 { label: 'Triwulan 3', value: '3' },
                 { label: 'Triwulan 4', value: '4' },
+                { label: 'Tahunan', value: '5' },
               ]"
               :searchable="true"
               placeholder="-- Pilih Triwulan --"

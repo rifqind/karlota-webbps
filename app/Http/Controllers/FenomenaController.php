@@ -51,7 +51,12 @@ class FenomenaController extends Controller
             ];
             array_push($notification, $message);
         } else {
-            $fenomena_set = FenomenaSet::create([
+            $fenomena_set = FenomenaSet::firstOrCreate([
+                'type' => $validated['type'],
+                'region_id' => $validated['regions'],
+                'year' => $validated['year'],
+                'quarter' => $validated['quarter'],
+            ], [
                 'type' => $validated['type'],
                 'region_id' => $validated['regions'],
                 'year' => $validated['year'],
@@ -320,5 +325,55 @@ class FenomenaController extends Controller
             array_push($notification, $message);
             return response()->json(['notification' => $notification]);
         }
+    }
+
+    public function index()
+    {
+        $subsectors = Subsector::with(['sector.category'])
+            ->get();
+        $regions = Region::get();
+        return Inertia::render('Fenomena/Index', [
+            'subsectors' => $subsectors,
+            'regions' => $regions
+        ]);
+    }
+
+    public function getIndex(Request $request)
+    {
+        $validated = $request->validate([
+            'type' => ['required', 'string'],
+            'year' => ['required', 'integer']
+        ]);
+        $notification = [];
+        $fenomenasets = FenomenaSet::where('type', $validated['type'])
+            ->where('year', $validated['year'])
+            ->where('status', 'Submitted')
+            ->pluck('id');
+        $quarterList = FenomenaSet::where('type', $validated['type'])
+            ->where('year', $validated['year'])
+            ->where('status', 'Submitted')
+            ->pluck('quarter');
+        $data = Fenomena::join('fenomena_sets as fs', 'fs.id', '=', 'fenomenas.fenomena_sets')
+            ->whereIn('fenomena_sets', $fenomenasets)
+            ->select(['fenomenas.*', 'region_id', 'quarter'])
+            ->get();
+        if ($data->isEmpty()) {
+            $message = [
+                'type' => 'error',
+                'message' => 'Fenomena tahun ini belum dientri'
+            ];
+            array_push($notification, $message);
+        } else {
+            $message = [
+                'type' => 'success',
+                'message' => 'Fenomena berhasil diambil'
+            ];
+            array_push($notification, $message);
+        }
+        return response()->json([
+            'data' => $data,
+            'notification' => $notification,
+            'quarter' => $quarterList
+        ]);
     }
 }

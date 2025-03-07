@@ -127,8 +127,6 @@ const createAdjVal = (region) => ({
     ctoc_berjalan: null,
     lajuimpqtoq_initial: null,
     lajuimpqtoq_berjalan: null,
-    sogyony_initial: null,
-    sogyony_berjalan: null,
     kontribusi_initial: null,
     kontribusi_berjalan: null,
   },

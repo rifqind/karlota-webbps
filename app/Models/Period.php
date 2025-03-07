@@ -16,6 +16,7 @@ class Period extends Model
     protected $fillable = [
         'type',
         'year',
+        'status',
         'quarter',
         'description',
         'started_at',

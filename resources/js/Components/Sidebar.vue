@@ -106,6 +106,7 @@
           </template>
         </NavLinkParentSidebar>
         <NavLinkSidebar
+          v-if="page.props.auth.user.role == 'admin'"
           :navIcon="'fa-solid fa-list-ol'"
           :href="route('pdrb.monitoring')"
           :currentRoute="currentRoute == 'pdrb.monitoring'"
@@ -118,6 +119,7 @@
             menuOpenFenom ||
             currentRoute == 'lapus.entri-fenomena' ||
             currentRoute == 'peng.entri-fenomena' ||
+            currentRoute == 'fenomena.index' ||
             currentRoute == 'fenomena.monitoring'
           "
           :toggleMenuOpen="toggleMenuOpen"
@@ -141,6 +143,14 @@
             </NavLinkSidebar>
             <NavLinkSidebar
               :navIcon="'fa-solid fa-list-ol'"
+              :href="route('fenomena.index')"
+              :currentRoute="currentRoute == 'fenomena.index'"
+            >
+              Lihat Fenomena
+            </NavLinkSidebar>
+            <NavLinkSidebar
+              v-if="page.props.auth.user.role == 'admin'"
+              :navIcon="'fa-solid fa-list-ol'"
               :href="route('fenomena.monitoring')"
               :currentRoute="currentRoute == 'fenomena.monitoring'"
             >
@@ -148,19 +158,28 @@
             </NavLinkSidebar>
           </template>
         </NavLinkParentSidebar>
-        <NavLinkSidebar
-          :navIcon="'fas fa-table'"
-          :href="route('period.index')"
-          :currentRoute="currentRoute == 'period.index'"
-        >
-          Kelola Jadwal</NavLinkSidebar
-        >
+        <template v-if="page.props.auth.user.role == 'admin'">
+          <NavLinkSidebar
+            :navIcon="'fas fa-table'"
+            :href="route('period.index')"
+            :currentRoute="currentRoute == 'period.index'"
+          >
+            Kelola Jadwal</NavLinkSidebar
+          >
+          <NavLinkSidebar
+            :navIcon="'fa-solid fa-users'"
+            :href="route('user.index')"
+            :currentRoute="currentRoute == 'user.index'"
+          >
+            Kelola Pengguna</NavLinkSidebar
+          >
+        </template>
         <NavLinkSidebar
           :navIcon="'fa-solid fa-users'"
-          :href="route('user.index')"
-          :currentRoute="currentRoute == 'user.index'"
+          :href="route('user.edit', { id: page.props.auth.user.id })"
+          :currentRoute="currentRoute == 'user.edit'"
         >
-          Kelola Pengguna</NavLinkSidebar
+          Edit Profil Akun</NavLinkSidebar
         >
       </ul>
       <br />
