@@ -152,12 +152,37 @@ const props = defineProps({
 const dataHere = ref(props.dataContents);
 const tableRef = ref(null);
 const quarters = ref(props.quarter);
+const getDataCache = ref(new Map());
 watch(
   () => props.dataContents,
   (value) => {
-    dataHere.value = value;
-  }
+    if (value.length > 0) {
+      triggerSpinner.value = true;
+      try {
+        dataHere.value = value;
+        fetchData();
+      } catch (error) {
+        console.error(error);
+      } finally {
+        triggerSpinner.value = false;
+      }
+    }
+  },
+  { immediate: true }
 );
+const triggerSpinner = ref(false);
+const fetchData = () => {
+  getDataCache.value.clear();
+  for (const nodeS of props.subsectors) {
+    for (const node of props.tableColumn) {
+      if (node.value !== "calculate") {
+        const cacheKey = `${nodeS.id}-${node.value}-${quarters.value}`;
+        const result = getData(nodeS.id, node.value);
+        getDataCache.value.set(cacheKey, result);
+      }
+    }
+  }
+};
 watch(
   () => props.quarter,
   (value) => {
@@ -181,6 +206,10 @@ onMounted(() => {
 });
 const emits = defineEmits(["update:updateDOD"]);
 const getData = (subsectors, regions) => {
+  const cacheKey = `${subsectors}-${regions}-${quarters.value}`; // Unique key for caching
+  if (getDataCache.value.has(cacheKey)) {
+    return getDataCache.value.get(cacheKey); // Return cached result
+  }
   if (quarters.value != "t") {
     if (!isNaN(regions)) {
       const theData = dataHere.value.find((x) => {

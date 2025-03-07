@@ -51,7 +51,12 @@ class FenomenaController extends Controller
             ];
             array_push($notification, $message);
         } else {
-            $fenomena_set = FenomenaSet::create([
+            $fenomena_set = FenomenaSet::firstOrCreate([
+                'type' => $validated['type'],
+                'region_id' => $validated['regions'],
+                'year' => $validated['year'],
+                'quarter' => $validated['quarter'],
+            ], [
                 'type' => $validated['type'],
                 'region_id' => $validated['regions'],
                 'year' => $validated['year'],

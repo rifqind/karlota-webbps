@@ -118,7 +118,10 @@ class PdrbController extends Controller
                 array_push($notification, $message);
             } else {
                 //create new datasets
-                $current_object_dataset = Dataset::create([
+                $current_object_dataset = Dataset::firstOrCreate([
+                    'period_id' => $period_id,
+                    'region_id' => $validated['regions'],
+                ], [
                     'period_id' => $period_id,
                     'region_id' => $validated['regions'],
                     'status' => 'Entry',
