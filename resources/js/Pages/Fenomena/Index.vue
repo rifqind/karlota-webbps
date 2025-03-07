@@ -223,7 +223,7 @@ const submit = async () => {
       },
     });
     warningToUser.value = false;
-    if (response.data.notification.type == "success") {
+    if (response.data.notification[0].type == "success") {
       showTab("qtoq");
       response.data.quarter.forEach((element, index) => {
         listTab.value[element] = true;

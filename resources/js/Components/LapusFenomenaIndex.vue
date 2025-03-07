@@ -30,6 +30,7 @@
                 type
               )
             }}
+            <span class="badge badge-info">...</span>
           </td>
         </tr>
       </template>
@@ -57,6 +58,7 @@
                 type
               )
             }}
+            <span class="badge badge-info">...</span>
           </td>
         </tr>
       </template>
@@ -83,6 +85,7 @@
                 type
               )
             }}
+            <span class="badge badge-info">...</span>
           </td>
         </tr>
       </template>
@@ -113,6 +116,7 @@
                 type
               )
             }}
+            <span class="badge badge-info">...</span>
           </td>
         </tr>
       </template>
@@ -143,6 +147,7 @@
                 type
               )
             }}
+            <span class="badge badge-info">...</span>
           </td>
         </tr>
       </template>
@@ -196,8 +201,16 @@ const getData = (id, quarter, category_id, sector_id, subsector_id, type) => {
         x.subsector_id == subsector_id
       );
     });
-    if (theIndex !== -1) return thisData.value[theIndex][type];
+    if (theIndex !== -1) {
+      let text = thisData.value[theIndex][type];
+      return text;
+    }
   }
+};
+const hiddenText = (value) => {
+  if (value.length > 200) {
+    return value.substring(0, 200);
+  } else return value;
 };
 </script>
 
@@ -232,7 +245,10 @@ const getData = (id, quarter, category_id, sector_id, subsector_id, type) => {
 
 tbody tr td:not(:nth-child(1)) {
   text-align: justify;
-  min-width: 300px;
+  min-width: 400px;
+  /* overflow: hidden; */
+  /* text-overflow: ellipsis; */
+  /* white-space: nowrap; */
 }
 tbody tr td {
   padding: 0.25rem;
