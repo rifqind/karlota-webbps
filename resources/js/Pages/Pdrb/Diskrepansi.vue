@@ -307,12 +307,7 @@ const formError = ref({
   quarter: null,
   description: null,
 });
-const loadingWarn = computed(() => {
-  if (showPdrbAndResult.value.adhb == false) return true;
-  if (showPdrbAndResult.value.adhk == false) return true;
-  if (showPdrbAndResult.value.result == false) return true;
-  return false;
-});
+const loadingWarn = ref(false);
 const notifications = ref([]);
 const showNotification = (notification, delay = 200) => {
   notifications.value = notification;
@@ -453,9 +448,11 @@ const submit = async () => {
     showTabPanel.value = true;
     await nextTick();
     for (const key of Object.keys(listTab.value)) {
+      loadingWarn.value = true;
       quarterCap.value = key;
       await new Promise((resolve) => setTimeout(resolve, 300));
     }
+    loadingWarn.value = false;
     showTab("adhb");
     showNotification(response.data.notification);
     quartersTab(form.quarter);
@@ -545,7 +542,7 @@ const showTab = async (tab) => {
     tableColumn.value[0].label = "Selisih";
     if (quarterCap.value == "t") {
       let notif = [{ message: "Tidak ada Growth QtoQ untuk Tahunan", type: "error" }];
-      showNotification(notif, 1500);
+      showNotification(notif, 10000);
       showPdrbAndResult.value.result = false;
       return;
     }
@@ -563,7 +560,7 @@ const showTab = async (tab) => {
       let notif = [
         { message: "Growth CtoC untuk Tahunan sama dengan YonY", type: "error" },
       ];
-      showNotification(notif, 1500);
+      showNotification(notif, 10000);
       showPdrbAndResult.value.result = false;
       return;
     }
@@ -579,7 +576,7 @@ const showTab = async (tab) => {
     tableColumn.value[0].label = "Selisih";
     if (quarterCap.value == "t") {
       let notif = [{ message: "Tidak ada Growth QtoQ untuk Tahunan", type: "error" }];
-      showNotification(notif, 1500);
+      showNotification(notif, 10000);
       showPdrbAndResult.value.result = false;
       return;
     }
@@ -641,7 +638,7 @@ const showGQtoQ = (now, prev) => {
 const showGYtoY = (now, prev) => {
   if (isObjectEmpty(dataOnDemand.value[prev][quarterCap.value])) {
     let notif = [{ message: "Data Tahun sebelumnya masih kosong", type: "error" }];
-    showNotification(notif, 1500);
+    showNotification(notif, 10000);
     showPdrbAndResult.value.result = false;
     return;
   }
@@ -720,7 +717,7 @@ const showGIQtoQ = (adhbnow, adhbprev, adhknow, adhkprev) => {
   );
   if (isObjectEmpty(dataOnDemand.value[adhbprev][4])) {
     let notif = [{ message: "Data Tahun sebelumnya masih kosong", type: "error" }];
-    showNotification(notif, 1500);
+    showNotification(notif, 10000);
     showPdrbAndResult.value.result = false;
     return;
   }
@@ -792,7 +789,7 @@ const showGIYtoY = (adhbnow, adhbprev, adhknow, adhkprev) => {
   );
   if (isObjectEmpty(dataOnDemand.value[adhbprev][quarterCap.value])) {
     let notif = [{ message: "Data Tahun sebelumnya masih kosong", type: "error" }];
-    showNotification(notif, 1500);
+    showNotification(notif, 10000);
     showPdrbAndResult.value.result = false;
     return;
   }
