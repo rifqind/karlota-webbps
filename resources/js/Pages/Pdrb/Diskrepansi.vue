@@ -450,7 +450,7 @@ const submit = async () => {
     for (const key of Object.keys(listTab.value)) {
       loadingWarn.value = true;
       quarterCap.value = key;
-      await new Promise((resolve) => setTimeout(resolve, 300));
+      await new Promise((resolve) => setTimeout(resolve, 100));
     }
     loadingWarn.value = false;
     showTab("adhb");

@@ -1,1 +1,0 @@
-import{c as e,o as r,u as t,m as o}from"./app-Bk__iPNg.js";const s={__name:"Welcome",props:{canLogin:{type:Boolean},canRegister:{type:Boolean},laravelVersion:{type:String,required:!0},phpVersion:{type:String,required:!0}},setup(a){return(n,p)=>(r(),e(t(o),{title:"Welcome"}))}};export{s as default};
