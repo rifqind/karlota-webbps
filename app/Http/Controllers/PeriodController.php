@@ -100,8 +100,10 @@ class PeriodController extends Controller
                 $updated_data->update($validated);
                 DB::commit();
                 return redirect()->route('period.index')->with('message', 'Berhasil mengedit periode putaran tersebut');
-            } else
+            } else {
+                $validated['status'] = 'Aktif';
                 $new_data = Period::create($validated);
+            }
             DB::commit();
             return redirect()->route('period.index')->with('message', 'Berhasil menambah periode putaran baru');
         } catch (\Throwable $th) {

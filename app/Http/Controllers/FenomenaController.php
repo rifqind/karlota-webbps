@@ -45,6 +45,7 @@ class FenomenaController extends Controller
             ->first();
         if ($fenomena_set) {
             $data = Fenomena::where('fenomena_sets', $fenomena_set->id)->get();
+
             $message = [
                 'type' => 'success',
                 'message' => 'Mengambil Data Fenomena Periode Ini'

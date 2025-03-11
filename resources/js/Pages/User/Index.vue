@@ -169,6 +169,9 @@
               class="input-fordone w-full"
             />
           </div>
+          <div class="text-danger" v-if="formError.length > 0" v-for="node in formError">
+            {{ node }}
+          </div>
         </div>
       </template>
       <template #modalFunction>
@@ -237,6 +240,7 @@ const form = useForm({
   password: null,
   password_confirmation: null,
 });
+const formError = ref([]);
 const notifications = ref([]);
 const showNotification = (notification) => {
   notifications.value = notification;
@@ -329,9 +333,16 @@ const submit = async () => {
   if (form.processing) return;
   form.post(route("user.store"), {
     onSuccess: (response) => {
-      fetchData();
-      createModalStatus.value = false;
       showNotification(response.props.notification);
+      if (response.props.notification[0].type == "success") {
+        fetchData();
+        form.reset();
+        createModalStatus.value = false;
+      } else {
+        response.props.notification.forEach((element) => {
+          formError.value.push(element.error);
+        });
+      }
     },
   });
 };

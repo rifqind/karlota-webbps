@@ -133,6 +133,7 @@
             :data-contents="dataContents"
             :quarter="quarterCap"
             :type="typeCap"
+            ref="childRef"
           />
           <PengFenomenaIndex
             v-if="typeShow == 'Pengeluaran'"
@@ -141,6 +142,7 @@
             :data-contents="dataContents"
             :quarter="quarterCap"
             :type="typeCap"
+            ref="childRef"
           />
         </table>
       </div>
@@ -185,6 +187,7 @@ const typeShow = computed(() => {
 watch(form, () => {
   warningToUser.value = true;
 });
+const childRef = ref(null);
 const warningToUser = ref(false);
 const mountThis = ref(false);
 const isYear = ref(false);
@@ -286,6 +289,7 @@ const downloadHasil = async (id) => {
   let list = {};
   let quarterReady = [];
   triggerSpinner.value = true;
+  if (childRef.value) childRef.value.prepareDownload();
   try {
     Object.entries(listTab.value).forEach(([key, index]) => {
       if (index) quarterReady.push(key);
@@ -296,7 +300,7 @@ const downloadHasil = async (id) => {
         await nextTick();
         for (let keytab of Object.keys(activeTab.value)) {
           showTab(keytab);
-          await new Promise((resolve) => setTimeout(resolve, 500));
+          await new Promise((resolve) => setTimeout(resolve, 200));
           if (key == 5) list["Tahunan-" + keytab] = tableToJson(id, "string");
           else list["Triwulan-" + key + "-" + keytab] = tableToJson(id, "string");
         }
