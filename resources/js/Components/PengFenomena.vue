@@ -183,6 +183,7 @@
     </template>
   </tbody>
 </template>
+
 <script setup>
 import { onMounted, ref, watch } from "vue";
 
@@ -200,13 +201,20 @@ const props = defineProps({
     required: false,
     default: "Entry",
   },
+  isYear: {
+    type: Boolean,
+    required: false,
+    default: false,
+  },
 });
 const fenomenaValue = ref(["qtoq", "yony", "implisit"]);
+const defaultData = ref([]);
 const dataHere = ref(props.dataContents);
 const emits = defineEmits([
   "update:updateDataContents",
   "update:handleInput",
   "update:handlePaste",
+  "update:setDefaultData",
 ]);
 watch(
   () => props.dataContents,
@@ -214,11 +222,22 @@ watch(
     dataHere.value = value;
   }
 );
+watch(
+  () => props.isYear,
+  (value) => {
+    if (value == true) fenomenaValue.value = ["yony", "implisit"];
+    else fenomenaValue.value = ["qtoq", "yony", "implisit"];
+  }
+);
+watch(defaultData, (value) => {
+  emits("update:setDefaultData", value);
+});
 const setDisabled = () => {
   if (props.fenomenaStatus == "Entry") return false;
   return true;
 };
 onMounted(() => {
+  defaultData.value = [];
   let tempData = [];
   props.subsectors.forEach((element) => {
     let data;
@@ -323,6 +342,7 @@ onMounted(() => {
       tempData.push(data);
     }
     if (element.code != null && element.sector.category.type == "Pengeluaran") {
+      label = element.code + ". " + element.name;
       data = {
         id: null,
         fenomena_sets: null,
@@ -353,6 +373,7 @@ onMounted(() => {
     }
   });
   dataHere.value = tempData;
+  defaultData.value = tempData;
   emits("update:updateDataContents", tempData);
 });
 const getData = (category_id, sector_id, subsector_id, type) => {
