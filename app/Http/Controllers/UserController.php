@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Question;
 use App\Models\Region;
 use App\Models\User;
 use Illuminate\Http\Request;
@@ -197,6 +198,84 @@ class UserController extends Controller
                 ];
                 array_push($notification, $message);
                 return redirect()->route('user.edit', ['id' => $request->id])->with('notification', $notification);
+            }
+        }
+    }
+
+    public function question(Request $request)
+    {
+        if ($request->isMethod('get')) {
+            if ($request->paginated) $paginated = $request->paginated;
+            else $paginated = 10;
+            if ($request->currentPage) $currentPage = $request->currentPage;
+            else $currentPage = 1;
+
+            $query = Question::query();
+            $number = 1;
+            $dataToCounted = $query->join('users', 'users.id', '=', 'questions.user_id')
+                ->select('*');
+            if ($request->orderAttribute) {
+                $order = $request->orderAttribute;
+                if (sizeof($order) > 2) $query->orderBy($order['label'], $order['value']);
+                else $query->orderBy('updated_at', 'desc');
+            } else $query->orderBy('updated_at', 'desc');
+
+            if ($request->ArrayFilter) {
+                $filter = $request->ArrayFilter;
+                if (!empty($filter['problem'])) {
+                    $query->where('problem', 'like', '%' . $filter['problem'] . '%');
+                }
+                if (!empty($filter['location'])) {
+                    $query->where('location', 'like', '%' .  $filter['location'] . '%');
+                }
+                if (!empty($filter['reason'])) {
+                    $query->where('reason', 'like', '%' .  $filter['reason'] . '%');
+                }
+                if (!empty($filter['fix'])) {
+                    $query->where('fix', 'like', '%' . $filter['fix'] . '%');
+                }
+                if (!empty($filter['username'])) {
+                    $query->where('users.name', 'like', '%' . $filter['username'] . '%');
+                }
+                if (!empty($filter['updated_at'])) {
+                    $query->where('updated_at', 'like', '%' . $filter['updated_at'] . '%');
+                }
+            }
+            $countData = $dataToCounted->count();
+            $data = $query->paginate($paginated, ['*'], 'page', $currentPage);
+            foreach ($data as $key => $value) {
+                # code...
+                $value->number = $number;
+                $number++;
+            }
+            if ($request->paginated) {
+                return response()->json([
+                    'question' => $data,
+                    'countData' => $countData
+                ]);
+            }
+            return Inertia::render('User/Question', [
+                'question' => $data
+            ]);
+        } else if ($request->isMethod('post')) {
+            $validated = $request->validate([
+                'location' => ['required', 'string'],
+                'problem' => ['required', 'string']
+            ]);
+            $notification = [];
+            try {
+                //code...
+                DB::beginTransaction();
+                if ($request->id) {
+
+                } else {
+                    $validated['user_id'] = auth()->user()->id;
+                    $new_data = Question::create($validated);
+                }
+                DB::commit();
+            } catch (\Throwable $th) {
+                //throw $th;
+                DB::rollBack();
             }
         }
     }

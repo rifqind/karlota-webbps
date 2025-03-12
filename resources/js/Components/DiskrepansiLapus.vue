@@ -505,7 +505,7 @@ const captureTableData = (type) => {
     });
     if (rowData.length > 1) tempData[rowData[0]] = rowData.slice(1);
   });
-  emits("update:updateDOD", { data: tempData, type: type });
+  emits("update:updateDOD", { data: tempData, type: type, quarter: quarters.value });
 };
 </script>
 
