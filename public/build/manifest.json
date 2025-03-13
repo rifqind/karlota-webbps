@@ -1,6 +1,6 @@
 {
-  "_ApplicationLogo-Bjr0khfC.js": {
-    "file": "assets/ApplicationLogo-Bjr0khfC.js",
+  "_ApplicationLogo-BTULTJqQ.js": {
+    "file": "assets/ApplicationLogo-BTULTJqQ.js",
     "name": "ApplicationLogo",
     "imports": [
       "_karlota-logo-Gt799DZz.js",
@@ -12,8 +12,8 @@
     "file": "assets/FlashFetch-BTphG7sF.css",
     "src": "_FlashFetch-BTphG7sF.css"
   },
-  "_FlashFetch-C_iNsA5C.js": {
-    "file": "assets/FlashFetch-C_iNsA5C.js",
+  "_FlashFetch-C1dj3hcq.js": {
+    "file": "assets/FlashFetch-C1dj3hcq.js",
     "name": "FlashFetch",
     "imports": [
       "resources/js/app.js",
@@ -23,8 +23,8 @@
       "assets/FlashFetch-BTphG7sF.css"
     ]
   },
-  "_FloatScrollDown-B6FDhI4K.js": {
-    "file": "assets/FloatScrollDown-B6FDhI4K.js",
+  "_FloatScrollDown-D8yUo0ve.js": {
+    "file": "assets/FloatScrollDown-D8yUo0ve.js",
     "name": "FloatScrollDown",
     "imports": [
       "__plugin-vue_export-helper-DlAUqK2U.js",
@@ -38,8 +38,12 @@
     "file": "assets/FloatScrollDown-XX0E2j-4.css",
     "src": "_FloatScrollDown-XX0E2j-4.css"
   },
-  "_GeneralLayout-DobnOhaL.js": {
-    "file": "assets/GeneralLayout-DobnOhaL.js",
+  "_GeneralLayout-HQVJMkGg.css": {
+    "file": "assets/GeneralLayout-HQVJMkGg.css",
+    "src": "_GeneralLayout-HQVJMkGg.css"
+  },
+  "_GeneralLayout-vZfIxgcl.js": {
+    "file": "assets/GeneralLayout-vZfIxgcl.js",
     "name": "GeneralLayout",
     "imports": [
       "resources/js/app.js",
@@ -50,15 +54,11 @@
       "assets/GeneralLayout-HQVJMkGg.css"
     ]
   },
-  "_GeneralLayout-HQVJMkGg.css": {
-    "file": "assets/GeneralLayout-HQVJMkGg.css",
-    "src": "_GeneralLayout-HQVJMkGg.css"
-  },
-  "_GuestLayout-B32aAB6h.js": {
-    "file": "assets/GuestLayout-B32aAB6h.js",
+  "_GuestLayout-B69Ja0P0.js": {
+    "file": "assets/GuestLayout-B69Ja0P0.js",
     "name": "GuestLayout",
     "imports": [
-      "_ApplicationLogo-Bjr0khfC.js",
+      "_ApplicationLogo-BTULTJqQ.js",
       "resources/js/app.js"
     ]
   },
@@ -66,8 +66,8 @@
     "file": "assets/ModalBs-CIjiQL-6.css",
     "src": "_ModalBs-CIjiQL-6.css"
   },
-  "_ModalBs-DdOokuZ3.js": {
-    "file": "assets/ModalBs-DdOokuZ3.js",
+  "_ModalBs-CJCToQZB.js": {
+    "file": "assets/ModalBs-CJCToQZB.js",
     "name": "ModalBs",
     "imports": [
       "__plugin-vue_export-helper-DlAUqK2U.js",
@@ -81,8 +81,8 @@
     "file": "assets/Pagination-0tA3RqHi.css",
     "src": "_Pagination-0tA3RqHi.css"
   },
-  "_Pagination-CwKS9CGp.js": {
-    "file": "assets/Pagination-CwKS9CGp.js",
+  "_Pagination-C0P958xW.js": {
+    "file": "assets/Pagination-C0P958xW.js",
     "name": "Pagination",
     "imports": [
       "__plugin-vue_export-helper-DlAUqK2U.js",
@@ -92,16 +92,16 @@
       "assets/Pagination-0tA3RqHi.css"
     ]
   },
-  "_PrimaryButton-DBsJ1fc6.js": {
-    "file": "assets/PrimaryButton-DBsJ1fc6.js",
+  "_PrimaryButton-C1cViBxG.js": {
+    "file": "assets/PrimaryButton-C1cViBxG.js",
     "name": "PrimaryButton",
     "imports": [
       "__plugin-vue_export-helper-DlAUqK2U.js",
       "resources/js/app.js"
     ]
   },
-  "_TextInput-BkXMRc-H.js": {
-    "file": "assets/TextInput-BkXMRc-H.js",
+  "_TextInput-DM5MvMlR.js": {
+    "file": "assets/TextInput-DM5MvMlR.js",
     "name": "TextInput",
     "imports": [
       "resources/js/app.js"
@@ -133,8 +133,8 @@
       "assets/karlota-logo-Bai2o6-b.png"
     ]
   },
-  "_multiselect-CTO6ptJx.js": {
-    "file": "assets/multiselect-CTO6ptJx.js",
+  "_multiselect-ZkpVHZ8r.js": {
+    "file": "assets/multiselect-ZkpVHZ8r.js",
     "name": "multiselect",
     "imports": [
       "resources/js/app.js",
@@ -1636,118 +1636,118 @@
     "src": "resources/images/karlota-logo.png"
   },
   "resources/js/Pages/Auth/ConfirmPassword.vue": {
-    "file": "assets/ConfirmPassword-NFBL601h.js",
+    "file": "assets/ConfirmPassword-Q3IvwvpE.js",
     "name": "ConfirmPassword",
     "src": "resources/js/Pages/Auth/ConfirmPassword.vue",
     "isDynamicEntry": true,
     "imports": [
       "resources/js/app.js",
-      "_GuestLayout-B32aAB6h.js",
-      "_TextInput-BkXMRc-H.js",
-      "_PrimaryButton-DBsJ1fc6.js",
-      "_ApplicationLogo-Bjr0khfC.js",
+      "_GuestLayout-B69Ja0P0.js",
+      "_TextInput-DM5MvMlR.js",
+      "_PrimaryButton-C1cViBxG.js",
+      "_ApplicationLogo-BTULTJqQ.js",
       "_karlota-logo-Gt799DZz.js",
       "__plugin-vue_export-helper-DlAUqK2U.js"
     ]
   },
   "resources/js/Pages/Auth/ForgotPassword.vue": {
-    "file": "assets/ForgotPassword-C50-CF3-.js",
+    "file": "assets/ForgotPassword-TiV1zKrd.js",
     "name": "ForgotPassword",
     "src": "resources/js/Pages/Auth/ForgotPassword.vue",
     "isDynamicEntry": true,
     "imports": [
       "resources/js/app.js",
-      "_GuestLayout-B32aAB6h.js",
-      "_TextInput-BkXMRc-H.js",
-      "_PrimaryButton-DBsJ1fc6.js",
-      "_ApplicationLogo-Bjr0khfC.js",
+      "_GuestLayout-B69Ja0P0.js",
+      "_TextInput-DM5MvMlR.js",
+      "_PrimaryButton-C1cViBxG.js",
+      "_ApplicationLogo-BTULTJqQ.js",
       "_karlota-logo-Gt799DZz.js",
       "__plugin-vue_export-helper-DlAUqK2U.js"
     ]
   },
   "resources/js/Pages/Auth/Login.vue": {
-    "file": "assets/Login-BxTHqtEe.js",
+    "file": "assets/Login-lhmueAFf.js",
     "name": "Login",
     "src": "resources/js/Pages/Auth/Login.vue",
     "isDynamicEntry": true,
     "imports": [
       "resources/js/app.js",
-      "_GuestLayout-B32aAB6h.js",
-      "_TextInput-BkXMRc-H.js",
-      "_PrimaryButton-DBsJ1fc6.js",
-      "_ApplicationLogo-Bjr0khfC.js",
+      "_GuestLayout-B69Ja0P0.js",
+      "_TextInput-DM5MvMlR.js",
+      "_PrimaryButton-C1cViBxG.js",
+      "_ApplicationLogo-BTULTJqQ.js",
       "_karlota-logo-Gt799DZz.js",
       "__plugin-vue_export-helper-DlAUqK2U.js"
     ]
   },
   "resources/js/Pages/Auth/Register.vue": {
-    "file": "assets/Register-lagjYTFA.js",
+    "file": "assets/Register-CckwxMvd.js",
     "name": "Register",
     "src": "resources/js/Pages/Auth/Register.vue",
     "isDynamicEntry": true,
     "imports": [
       "resources/js/app.js",
-      "_GuestLayout-B32aAB6h.js",
-      "_TextInput-BkXMRc-H.js",
-      "_PrimaryButton-DBsJ1fc6.js",
-      "_ApplicationLogo-Bjr0khfC.js",
+      "_GuestLayout-B69Ja0P0.js",
+      "_TextInput-DM5MvMlR.js",
+      "_PrimaryButton-C1cViBxG.js",
+      "_ApplicationLogo-BTULTJqQ.js",
       "_karlota-logo-Gt799DZz.js",
       "__plugin-vue_export-helper-DlAUqK2U.js"
     ]
   },
   "resources/js/Pages/Auth/ResetPassword.vue": {
-    "file": "assets/ResetPassword-DxChw2nl.js",
+    "file": "assets/ResetPassword-B-vvKrOq.js",
     "name": "ResetPassword",
     "src": "resources/js/Pages/Auth/ResetPassword.vue",
     "isDynamicEntry": true,
     "imports": [
       "resources/js/app.js",
-      "_GuestLayout-B32aAB6h.js",
-      "_TextInput-BkXMRc-H.js",
-      "_PrimaryButton-DBsJ1fc6.js",
-      "_ApplicationLogo-Bjr0khfC.js",
+      "_GuestLayout-B69Ja0P0.js",
+      "_TextInput-DM5MvMlR.js",
+      "_PrimaryButton-C1cViBxG.js",
+      "_ApplicationLogo-BTULTJqQ.js",
       "_karlota-logo-Gt799DZz.js",
       "__plugin-vue_export-helper-DlAUqK2U.js"
     ]
   },
   "resources/js/Pages/Auth/VerifyEmail.vue": {
-    "file": "assets/VerifyEmail-NM1cLxgN.js",
+    "file": "assets/VerifyEmail-DC7RrJ6P.js",
     "name": "VerifyEmail",
     "src": "resources/js/Pages/Auth/VerifyEmail.vue",
     "isDynamicEntry": true,
     "imports": [
       "resources/js/app.js",
-      "_GuestLayout-B32aAB6h.js",
-      "_PrimaryButton-DBsJ1fc6.js",
-      "_ApplicationLogo-Bjr0khfC.js",
+      "_GuestLayout-B69Ja0P0.js",
+      "_PrimaryButton-C1cViBxG.js",
+      "_ApplicationLogo-BTULTJqQ.js",
       "_karlota-logo-Gt799DZz.js",
       "__plugin-vue_export-helper-DlAUqK2U.js"
     ]
   },
   "resources/js/Pages/Dashboard.vue": {
-    "file": "assets/Dashboard-DAmMJWH5.js",
+    "file": "assets/Dashboard-RRvfBtdj.js",
     "name": "Dashboard",
     "src": "resources/js/Pages/Dashboard.vue",
     "isDynamicEntry": true,
     "imports": [
       "resources/js/app.js",
-      "_GeneralLayout-DobnOhaL.js",
+      "_GeneralLayout-vZfIxgcl.js",
       "__plugin-vue_export-helper-DlAUqK2U.js",
       "_karlota-logo-Gt799DZz.js"
     ]
   },
   "resources/js/Pages/Fenomena/Entri.vue": {
-    "file": "assets/Entri-CVPW46cP.js",
+    "file": "assets/Entri-DL3dOant.js",
     "name": "Entri",
     "src": "resources/js/Pages/Fenomena/Entri.vue",
     "isDynamicEntry": true,
     "imports": [
       "resources/js/app.js",
-      "_multiselect-CTO6ptJx.js",
-      "_FlashFetch-C_iNsA5C.js",
-      "_FloatScrollDown-B6FDhI4K.js",
+      "_multiselect-ZkpVHZ8r.js",
+      "_FlashFetch-C1dj3hcq.js",
+      "_FloatScrollDown-D8yUo0ve.js",
       "__plugin-vue_export-helper-DlAUqK2U.js",
-      "_GeneralLayout-DobnOhaL.js",
+      "_GeneralLayout-vZfIxgcl.js",
       "_karlota-logo-Gt799DZz.js"
     ],
     "css": [
@@ -1755,18 +1755,18 @@
     ]
   },
   "resources/js/Pages/Fenomena/Index.vue": {
-    "file": "assets/Index-Dfwr65ZE.js",
+    "file": "assets/Index-NQ5BXsWn.js",
     "name": "Index",
     "src": "resources/js/Pages/Fenomena/Index.vue",
     "isDynamicEntry": true,
     "imports": [
       "resources/js/app.js",
-      "_multiselect-CTO6ptJx.js",
-      "_FlashFetch-C_iNsA5C.js",
-      "_FloatScrollDown-B6FDhI4K.js",
+      "_multiselect-ZkpVHZ8r.js",
+      "_FlashFetch-C1dj3hcq.js",
+      "_FloatScrollDown-D8yUo0ve.js",
       "__plugin-vue_export-helper-DlAUqK2U.js",
       "_download-CGBdhq77.js",
-      "_GeneralLayout-DobnOhaL.js",
+      "_GeneralLayout-vZfIxgcl.js",
       "_karlota-logo-Gt799DZz.js"
     ],
     "css": [
@@ -1774,16 +1774,16 @@
     ]
   },
   "resources/js/Pages/Fenomena/Monitoring.vue": {
-    "file": "assets/Monitoring-TorkTaYQ.js",
+    "file": "assets/Monitoring-Dmi7vvY0.js",
     "name": "Monitoring",
     "src": "resources/js/Pages/Fenomena/Monitoring.vue",
     "isDynamicEntry": true,
     "imports": [
       "resources/js/app.js",
-      "_multiselect-CTO6ptJx.js",
-      "_FlashFetch-C_iNsA5C.js",
-      "_FloatScrollDown-B6FDhI4K.js",
-      "_GeneralLayout-DobnOhaL.js",
+      "_multiselect-ZkpVHZ8r.js",
+      "_FlashFetch-C1dj3hcq.js",
+      "_FloatScrollDown-D8yUo0ve.js",
+      "_GeneralLayout-vZfIxgcl.js",
       "__plugin-vue_export-helper-DlAUqK2U.js",
       "_karlota-logo-Gt799DZz.js"
     ],
@@ -1792,18 +1792,18 @@
     ]
   },
   "resources/js/Pages/Pdrb/Adjustment.vue": {
-    "file": "assets/Adjustment-CWk1pwoo.js",
+    "file": "assets/Adjustment-BdHNYm5I.js",
     "name": "Adjustment",
     "src": "resources/js/Pages/Pdrb/Adjustment.vue",
     "isDynamicEntry": true,
     "imports": [
       "resources/js/app.js",
-      "_multiselect-CTO6ptJx.js",
+      "_multiselect-ZkpVHZ8r.js",
       "_debounce-CD1Fzea3.js",
       "__plugin-vue_export-helper-DlAUqK2U.js",
-      "_FlashFetch-C_iNsA5C.js",
-      "_FloatScrollDown-B6FDhI4K.js",
-      "_GeneralLayout-DobnOhaL.js",
+      "_FlashFetch-C1dj3hcq.js",
+      "_FloatScrollDown-D8yUo0ve.js",
+      "_GeneralLayout-vZfIxgcl.js",
       "_karlota-logo-Gt799DZz.js"
     ],
     "css": [
@@ -1811,38 +1811,38 @@
     ]
   },
   "resources/js/Pages/Pdrb/Diskrepansi.vue": {
-    "file": "assets/Diskrepansi-C-l5bNzK.js",
+    "file": "assets/Diskrepansi-C_5KHy58.js",
     "name": "Diskrepansi",
     "src": "resources/js/Pages/Pdrb/Diskrepansi.vue",
     "isDynamicEntry": true,
     "imports": [
       "resources/js/app.js",
-      "_multiselect-CTO6ptJx.js",
+      "_multiselect-ZkpVHZ8r.js",
       "__plugin-vue_export-helper-DlAUqK2U.js",
-      "_FlashFetch-C_iNsA5C.js",
-      "_FloatScrollDown-B6FDhI4K.js",
+      "_FlashFetch-C1dj3hcq.js",
+      "_FloatScrollDown-D8yUo0ve.js",
       "_download-CGBdhq77.js",
-      "_GeneralLayout-DobnOhaL.js",
+      "_GeneralLayout-vZfIxgcl.js",
       "_karlota-logo-Gt799DZz.js"
     ],
     "css": [
-      "assets/Diskrepansi-CaeBb6rq.css"
+      "assets/Diskrepansi-BZ-K5Hjp.css"
     ]
   },
   "resources/js/Pages/Pdrb/Entri.vue": {
-    "file": "assets/Entri-BdaTijyn.js",
+    "file": "assets/Entri-BJ80fSiX.js",
     "name": "Entri",
     "src": "resources/js/Pages/Pdrb/Entri.vue",
     "isDynamicEntry": true,
     "imports": [
       "resources/js/app.js",
-      "_multiselect-CTO6ptJx.js",
-      "_FlashFetch-C_iNsA5C.js",
-      "_FloatScrollDown-B6FDhI4K.js",
+      "_multiselect-ZkpVHZ8r.js",
+      "_FlashFetch-C1dj3hcq.js",
+      "_FloatScrollDown-D8yUo0ve.js",
       "__plugin-vue_export-helper-DlAUqK2U.js",
       "_debounce-CD1Fzea3.js",
-      "_ModalBs-DdOokuZ3.js",
-      "_GeneralLayout-DobnOhaL.js",
+      "_ModalBs-CJCToQZB.js",
+      "_GeneralLayout-vZfIxgcl.js",
       "_karlota-logo-Gt799DZz.js"
     ],
     "css": [
@@ -1850,18 +1850,18 @@
     ]
   },
   "resources/js/Pages/Pdrb/Hasil.vue": {
-    "file": "assets/Hasil-tUaM1gck.js",
+    "file": "assets/Hasil-D9t02poB.js",
     "name": "Hasil",
     "src": "resources/js/Pages/Pdrb/Hasil.vue",
     "isDynamicEntry": true,
     "imports": [
       "resources/js/app.js",
-      "_multiselect-CTO6ptJx.js",
-      "_FlashFetch-C_iNsA5C.js",
-      "_FloatScrollDown-B6FDhI4K.js",
+      "_multiselect-ZkpVHZ8r.js",
+      "_FlashFetch-C1dj3hcq.js",
+      "_FloatScrollDown-D8yUo0ve.js",
       "__plugin-vue_export-helper-DlAUqK2U.js",
       "_download-CGBdhq77.js",
-      "_GeneralLayout-DobnOhaL.js",
+      "_GeneralLayout-vZfIxgcl.js",
       "_karlota-logo-Gt799DZz.js"
     ],
     "css": [
@@ -1869,15 +1869,15 @@
     ]
   },
   "resources/js/Pages/Pdrb/Monitoring.vue": {
-    "file": "assets/Monitoring-vi0WMaXT.js",
+    "file": "assets/Monitoring-CLJoJPwS.js",
     "name": "Monitoring",
     "src": "resources/js/Pages/Pdrb/Monitoring.vue",
     "isDynamicEntry": true,
     "imports": [
       "resources/js/app.js",
-      "_multiselect-CTO6ptJx.js",
-      "_FloatScrollDown-B6FDhI4K.js",
-      "_GeneralLayout-DobnOhaL.js",
+      "_multiselect-ZkpVHZ8r.js",
+      "_FloatScrollDown-D8yUo0ve.js",
+      "_GeneralLayout-vZfIxgcl.js",
       "__plugin-vue_export-helper-DlAUqK2U.js",
       "_karlota-logo-Gt799DZz.js"
     ],
@@ -1886,18 +1886,18 @@
     ]
   },
   "resources/js/Pages/Period/Index.vue": {
-    "file": "assets/Index-t5vJj_0l.js",
+    "file": "assets/Index-BNfZXwON.js",
     "name": "Index",
     "src": "resources/js/Pages/Period/Index.vue",
     "isDynamicEntry": true,
     "imports": [
       "resources/js/app.js",
-      "_GeneralLayout-DobnOhaL.js",
+      "_GeneralLayout-vZfIxgcl.js",
       "__plugin-vue_export-helper-DlAUqK2U.js",
       "_debounce-CD1Fzea3.js",
-      "_Pagination-CwKS9CGp.js",
-      "_ModalBs-DdOokuZ3.js",
-      "_multiselect-CTO6ptJx.js",
+      "_Pagination-C0P958xW.js",
+      "_ModalBs-CJCToQZB.js",
+      "_multiselect-ZkpVHZ8r.js",
       "_karlota-logo-Gt799DZz.js"
     ],
     "css": [
@@ -1905,89 +1905,106 @@
     ]
   },
   "resources/js/Pages/Profile/Edit.vue": {
-    "file": "assets/Edit-yBv-ovKj.js",
+    "file": "assets/Edit-DrCOpvl4.js",
     "name": "Edit",
     "src": "resources/js/Pages/Profile/Edit.vue",
     "isDynamicEntry": true,
     "imports": [
-      "_ApplicationLogo-Bjr0khfC.js",
+      "_ApplicationLogo-BTULTJqQ.js",
       "resources/js/app.js",
       "resources/js/Pages/Profile/Partials/DeleteUserForm.vue",
       "resources/js/Pages/Profile/Partials/UpdatePasswordForm.vue",
       "resources/js/Pages/Profile/Partials/UpdateProfileInformationForm.vue",
       "_karlota-logo-Gt799DZz.js",
       "__plugin-vue_export-helper-DlAUqK2U.js",
-      "_TextInput-BkXMRc-H.js",
-      "_PrimaryButton-DBsJ1fc6.js"
+      "_TextInput-DM5MvMlR.js",
+      "_PrimaryButton-C1cViBxG.js"
     ]
   },
   "resources/js/Pages/Profile/Partials/DeleteUserForm.vue": {
-    "file": "assets/DeleteUserForm-6mKNgSCl.js",
+    "file": "assets/DeleteUserForm-GSbBWf54.js",
     "name": "DeleteUserForm",
     "src": "resources/js/Pages/Profile/Partials/DeleteUserForm.vue",
     "isDynamicEntry": true,
     "imports": [
       "resources/js/app.js",
       "__plugin-vue_export-helper-DlAUqK2U.js",
-      "_TextInput-BkXMRc-H.js"
+      "_TextInput-DM5MvMlR.js"
     ]
   },
   "resources/js/Pages/Profile/Partials/UpdatePasswordForm.vue": {
-    "file": "assets/UpdatePasswordForm-kRXHSuES.js",
+    "file": "assets/UpdatePasswordForm-CWxBl2qU.js",
     "name": "UpdatePasswordForm",
     "src": "resources/js/Pages/Profile/Partials/UpdatePasswordForm.vue",
     "isDynamicEntry": true,
     "imports": [
       "resources/js/app.js",
-      "_TextInput-BkXMRc-H.js",
-      "_PrimaryButton-DBsJ1fc6.js",
+      "_TextInput-DM5MvMlR.js",
+      "_PrimaryButton-C1cViBxG.js",
       "__plugin-vue_export-helper-DlAUqK2U.js"
     ]
   },
   "resources/js/Pages/Profile/Partials/UpdateProfileInformationForm.vue": {
-    "file": "assets/UpdateProfileInformationForm-CvK9RpCU.js",
+    "file": "assets/UpdateProfileInformationForm-C8XT0KiV.js",
     "name": "UpdateProfileInformationForm",
     "src": "resources/js/Pages/Profile/Partials/UpdateProfileInformationForm.vue",
     "isDynamicEntry": true,
     "imports": [
       "resources/js/app.js",
-      "_TextInput-BkXMRc-H.js",
-      "_PrimaryButton-DBsJ1fc6.js",
+      "_TextInput-DM5MvMlR.js",
+      "_PrimaryButton-C1cViBxG.js",
       "__plugin-vue_export-helper-DlAUqK2U.js"
     ]
   },
   "resources/js/Pages/User/Edit.vue": {
-    "file": "assets/Edit-D_nup2s6.js",
+    "file": "assets/Edit-bckQiZup.js",
     "name": "Edit",
     "src": "resources/js/Pages/User/Edit.vue",
     "isDynamicEntry": true,
     "imports": [
       "resources/js/app.js",
-      "_FlashFetch-C_iNsA5C.js",
-      "_GeneralLayout-DobnOhaL.js",
+      "_FlashFetch-C1dj3hcq.js",
+      "_GeneralLayout-vZfIxgcl.js",
       "__plugin-vue_export-helper-DlAUqK2U.js",
       "_karlota-logo-Gt799DZz.js"
     ]
   },
   "resources/js/Pages/User/Index.vue": {
-    "file": "assets/Index-DdR5-Hj5.js",
+    "file": "assets/Index-BvxTQq_R.js",
     "name": "Index",
     "src": "resources/js/Pages/User/Index.vue",
     "isDynamicEntry": true,
     "imports": [
       "resources/js/app.js",
-      "_multiselect-CTO6ptJx.js",
-      "_FlashFetch-C_iNsA5C.js",
-      "_ModalBs-DdOokuZ3.js",
-      "_Pagination-CwKS9CGp.js",
+      "_multiselect-ZkpVHZ8r.js",
+      "_FlashFetch-C1dj3hcq.js",
+      "_ModalBs-CJCToQZB.js",
+      "_Pagination-C0P958xW.js",
       "_debounce-CD1Fzea3.js",
-      "_GeneralLayout-DobnOhaL.js",
+      "_GeneralLayout-vZfIxgcl.js",
+      "__plugin-vue_export-helper-DlAUqK2U.js",
+      "_karlota-logo-Gt799DZz.js"
+    ]
+  },
+  "resources/js/Pages/User/Question.vue": {
+    "file": "assets/Question-B8TzqCVA.js",
+    "name": "Question",
+    "src": "resources/js/Pages/User/Question.vue",
+    "isDynamicEntry": true,
+    "imports": [
+      "resources/js/app.js",
+      "_multiselect-ZkpVHZ8r.js",
+      "_FlashFetch-C1dj3hcq.js",
+      "_ModalBs-CJCToQZB.js",
+      "_Pagination-C0P958xW.js",
+      "_debounce-CD1Fzea3.js",
+      "_GeneralLayout-vZfIxgcl.js",
       "__plugin-vue_export-helper-DlAUqK2U.js",
       "_karlota-logo-Gt799DZz.js"
     ]
   },
   "resources/js/Pages/Welcome.vue": {
-    "file": "assets/Welcome-DvXGbYY7.js",
+    "file": "assets/Welcome-DzhzVgn_.js",
     "name": "Welcome",
     "src": "resources/js/Pages/Welcome.vue",
     "isDynamicEntry": true,
@@ -1996,7 +2013,7 @@
     ]
   },
   "resources/js/app.js": {
-    "file": "assets/app-BIqefJVc.js",
+    "file": "assets/app-rpOQtHDP.js",
     "name": "app",
     "src": "resources/js/app.js",
     "isEntry": true,
@@ -2166,6 +2183,7 @@
       "resources/js/Pages/Profile/Partials/UpdateProfileInformationForm.vue",
       "resources/js/Pages/User/Edit.vue",
       "resources/js/Pages/User/Index.vue",
+      "resources/js/Pages/User/Question.vue",
       "resources/js/Pages/Welcome.vue"
     ],
     "css": [
