@@ -168,25 +168,27 @@
           </thead>
           <template v-if="page.props.type == 'Lapangan Usaha'">
             <DiskrepansiLapus
-              v-show="showPdrbAndResult['adhb']"
+              v-for="(node, index) in ['1', '2', '3', '4', 't']"
+              v-show="showPdrbAndResult['adhb']['quarter_' + node]"
               :subsectors="page.props.subsectors"
               :table-column="tableColumn"
-              :data-contents="dataContents"
+              :data-contents="dataContents['quarter_' + node]"
               :type="'adhb'"
               :on-demand-type="'adhb_now'"
-              :quarter="quarterCap"
-              :calculate="calculateData.adhb"
+              :quarter="node"
+              :calculate="calculateData.adhb['quarter_' + node]"
               @update:update-d-o-d="updateDOD"
             />
             <DiskrepansiLapus
-              v-show="showPdrbAndResult['adhk']"
+              v-for="(node, index) in ['1', '2', '3', '4', 't']"
+              v-show="showPdrbAndResult['adhk']['quarter_' + node]"
               :subsectors="page.props.subsectors"
               :table-column="tableColumn"
-              :data-contents="dataContents"
+              :data-contents="dataContents['quarter_' + node]"
               :type="'adhk'"
               :on-demand-type="'adhk_now'"
-              :quarter="quarterCap"
-              :calculate="calculateData.adhk"
+              :quarter="node"
+              :calculate="calculateData.adhk['quarter_' + node]"
               @update:update-d-o-d="updateDOD"
             />
             <DiskrepansiLapusResult
@@ -198,23 +200,25 @@
               :computed-data="computedData"
             />
             <DiskrepansiLapus
+              v-for="(node, index) in ['1', '2', '3', '4', 't']"
               v-show="false"
               :subsectors="page.props.subsectors"
               :table-column="tableColumn"
-              :data-contents="dataBefore"
+              :data-contents="dataBefore['quarter_' + node]"
               :type="'adhb'"
               :on-demand-type="'adhb_prev'"
-              :quarter="quarterCap"
+              :quarter="node"
               @update:update-d-o-d="updateDOD"
             />
             <DiskrepansiLapus
+              v-for="(node, index) in ['1', '2', '3', '4', 't']"
               v-show="false"
               :subsectors="page.props.subsectors"
               :table-column="tableColumn"
-              :data-contents="dataBefore"
+              :data-contents="dataBefore['quarter_' + node]"
               :type="'adhk'"
               :on-demand-type="'adhk_prev'"
-              :quarter="quarterCap"
+              :quarter="node"
               @update:update-d-o-d="updateDOD"
             />
           </template>
@@ -291,7 +295,7 @@ import { tableToJson, theDownload } from "@/download";
 import GeneralLayout from "@/Layouts/GeneralLayout.vue";
 import { Head, useForm, usePage } from "@inertiajs/vue3";
 import Multiselect from "@vueform/multiselect";
-import { computed, nextTick, onMounted, ref } from "vue";
+import { nextTick, onMounted, ref } from "vue";
 
 const page = usePage();
 const form = useForm({
@@ -325,11 +329,26 @@ const listTab = ref({
   t: false,
 });
 const mountThis = ref(false);
-const dataContents = ref([]);
-const dataBefore = ref([]);
+const dataContents = ref({
+  quarter_1: [],
+  quarter_2: [],
+  quarter_3: [],
+  quarter_4: [],
+  quarter_t: [],
+});
+const dataBefore = ref({
+  quarter_1: [],
+  quarter_2: [],
+  quarter_3: [],
+  quarter_4: [],
+  quarter_t: [],
+});
 const computedData = ref({});
 const dataOnDemand = ref({ adhb_now: {}, adhb_prev: {}, adhk_now: {}, adhk_prev: {} });
-const calculateData = ref({ adhb: {}, adhk: {} });
+const calculateData = ref({
+  adhb: { quarter_1: {}, quarter_2: {}, quarter_3: {}, quarter_4: {}, quarter_t: {} },
+  adhk: { quarter_1: {}, quarter_2: {}, quarter_3: {}, quarter_4: {}, quarter_t: {} },
+});
 const showTabPanel = ref(false);
 const yearDrop = ref([]);
 const quarterDrop = ref([]);
@@ -353,7 +372,7 @@ onMounted(() => {
   tableColumn.value = tempData;
 });
 const updateDOD = (data) => {
-  dataOnDemand.value[data.type][quarterCap.value] = data.data;
+  dataOnDemand.value[data.type][data.quarter] = data.data;
 };
 const fetchYear = async () => {
   form.quarter = null;
@@ -421,6 +440,7 @@ const fetchYearBefore = async (value) => {
   }
 };
 const submit = async () => {
+  loadingWarn.value = true;
   try {
     const response = await axios.get(route("pdrb.get-diskrepansi"), {
       params: {
@@ -437,8 +457,64 @@ const submit = async () => {
       }
       listTab.value[index] = true;
     }
-    dataContents.value = response.data.current_data;
-    dataBefore.value = response.data.previous_data;
+    ["1", "2", "3", "4", "t"].forEach((element) => {
+      if (element != "t") {
+        dataContents.value["quarter_" + element] = response.data.current_data.filter(
+          (x) => {
+            return x.quarter == element;
+          }
+        );
+        dataBefore.value["quarter_" + element] = response.data.previous_data.filter(
+          (x) => {
+            return x.quarter == element;
+          }
+        );
+      } else {
+        let filteredData = {};
+        let yearlyData = [];
+        page.props.subsectors.forEach((subsector) => {
+          page.props.regions.forEach((regions) => {
+            let adhbSum, adhkSum;
+            filteredData = response.data.current_data.filter((x) => {
+              return x.subsector_id == subsector.id && x.region_id == regions.value;
+            });
+            adhbSum = filteredData.reduce((sum, item) => sum + Number(item["adhb"]), 0);
+            adhkSum = filteredData.reduce((sum, item) => sum + Number(item["adhk"]), 0);
+            if (filteredData.length > 0) {
+              let yearlyEntry = { ...filteredData[0] };
+              yearlyEntry.quarter = "t";
+              yearlyEntry.adhb = adhbSum;
+              yearlyEntry.adhk = adhkSum;
+              yearlyData.push(yearlyEntry);
+            }
+          });
+        });
+        dataContents.value["quarter_t"] = yearlyData;
+
+        filteredData = {};
+        yearlyData = [];
+        page.props.subsectors.forEach((subsector) => {
+          page.props.regions.forEach((regions) => {
+            let adhbSum, adhkSum;
+            filteredData = response.data.previous_data.filter((x) => {
+              return x.subsector_id == subsector.id && x.region_id == regions.value;
+            });
+            adhbSum = filteredData.reduce((sum, item) => sum + Number(item["adhb"]), 0);
+            adhkSum = filteredData.reduce((sum, item) => sum + Number(item["adhk"]), 0);
+            if (filteredData.length > 0) {
+              let yearlyEntry = { ...filteredData[0] };
+              yearlyEntry.quarter = "t";
+              yearlyEntry.adhb = adhbSum;
+              yearlyEntry.adhk = adhkSum;
+              yearlyData.push(yearlyEntry);
+            }
+          });
+        });
+        dataBefore.value["quarter_t"] = yearlyData;
+      }
+    });
+
+    // dataBefore.value = response.data.previous_data;
     formError.value = {
       year: null,
       quarter: null,
@@ -446,16 +522,18 @@ const submit = async () => {
       regions: null,
     };
     showTabPanel.value = true;
-    await nextTick();
-    for (const key of Object.keys(listTab.value)) {
-      loadingWarn.value = true;
-      quarterCap.value = key;
-      await new Promise((resolve) => setTimeout(resolve, 100));
-    }
     loadingWarn.value = false;
     showTab("adhb");
     showNotification(response.data.notification);
     quartersTab(form.quarter);
+    await nextTick();
+    ["1", "2", "3", "4", "t"].forEach((element) => {
+      let disk = calculateDiskrepansi(element);
+      if (disk) {
+        calculateData.value.adhb["quarter_" + element] = disk.adhb;
+        calculateData.value.adhk["quarter_" + element] = disk.adhk;
+      }
+    });
   } catch (error) {
     if (error.response.data.notification) {
       showNotification(error.response.data.notification, 500);
@@ -488,8 +566,20 @@ const activeQuarters = ref({
   t: def,
 });
 const showPdrbAndResult = ref({
-  adhb: false,
-  adhk: false,
+  adhb: {
+    quarter_1: false,
+    quarter_2: false,
+    quarter_3: false,
+    quarter_4: false,
+    quarter_t: false,
+  },
+  adhk: {
+    quarter_1: false,
+    quarter_2: false,
+    quarter_3: false,
+    quarter_4: false,
+    quarter_t: false,
+  },
   result: false,
 });
 const setActiveTab = (value) => {
@@ -511,7 +601,13 @@ const quartersTab = (quarter) => {
 };
 const resetShowTable = () => {
   Object.keys(showPdrbAndResult.value).forEach((key) => {
-    showPdrbAndResult.value[key] = false;
+    if (key !== "result") {
+      Object.keys(showPdrbAndResult.value[key]).forEach((node) => {
+        showPdrbAndResult.value[key][node] = false;
+      });
+    } else {
+      showPdrbAndResult.value.result = false;
+    }
   });
 };
 const showTab = async (tab) => {
@@ -522,19 +618,15 @@ const showTab = async (tab) => {
 
   resetShowTable();
   if (tab == "adhb") {
-    showPdrbAndResult.value.adhb = true;
-    await nextTick();
-    await new Promise((resolve) => setTimeout(resolve, 300));
-    let disk = calculateDiskrepansi();
-    if (disk) {
-      calculateData.value.adhb = disk.adhb;
-      calculateData.value.adhk = disk.adhk;
-    }
+    tableColumn.value[0].label = "Diskrepansi";
+    showPdrbAndResult.value.adhb["quarter_" + quarterCap.value] = true;
   }
   if (tab == "adhk") {
-    showPdrbAndResult.value.adhk = true;
+    tableColumn.value[0].label = "Diskrepansi";
+    showPdrbAndResult.value.adhk["quarter_" + quarterCap.value] = true;
   }
   if (tab == "dist") {
+    tableColumn.value[0].label = "Selisih";
     showPdrbAndResult.value.result = true;
     computedData.value = showDist("adhb_now");
   }
@@ -830,15 +922,10 @@ const showGIYtoY = (adhbnow, adhbprev, adhknow, adhkprev) => {
   });
   return result;
 };
-const calculateDiskrepansi = () => {
-  tableColumn.value[0].label = "Diskrepansi";
+const calculateDiskrepansi = (thisquarter = quarterCap.value) => {
   if (Object.entries(dataOnDemand.value["adhb_now"]).length > 0) {
-    let adhbDisk = removeSpaceOnKomponen(
-      dataOnDemand.value["adhb_now"][quarterCap.value]
-    );
-    let adhkDisk = removeSpaceOnKomponen(
-      dataOnDemand.value["adhk_now"][quarterCap.value]
-    );
+    let adhbDisk = removeSpaceOnKomponen(dataOnDemand.value["adhb_now"][thisquarter]);
+    let adhkDisk = removeSpaceOnKomponen(dataOnDemand.value["adhk_now"][thisquarter]);
     const parseNumber = (value) =>
       value ? Number(value.replaceAll(".", "").replaceAll(",", ".")) : 0;
     let resultAdhb = {},

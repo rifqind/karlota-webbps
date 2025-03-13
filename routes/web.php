@@ -135,6 +135,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/edit/{id}', [UserController::class, 'edit'])
             ->name('edit');
         Route::post('/edit', [UserController::class, 'edit']);
+        Route::get('/question', [UserController::class, 'question'])->name('question');
+        Route::post('/question', [UserController::class, 'question']);
+        Route::delete('/delete-question/{id}', [UserController::class, 'question']);
+        Route::get('/fetch-question/{id}', [UserController::class, 'fetchQuestion'])->name('fetch-question');
     });
 });
 

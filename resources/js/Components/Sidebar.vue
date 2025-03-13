@@ -181,6 +181,13 @@
         >
           Edit Profil Akun</NavLinkSidebar
         >
+        <NavLinkSidebar
+          :navIcon="'fa-solid fa-file-circle-question'"
+          :href="route('user.question')"
+          :currentRoute="currentRoute == 'user.question'"
+        >
+          Permasalahan Aplikasi</NavLinkSidebar
+        >
       </ul>
       <br />
       <div class="text-center">
