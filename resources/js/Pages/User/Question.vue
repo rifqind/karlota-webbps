@@ -35,7 +35,10 @@
             >
               Tanggal
             </th>
-            <th class="text-center th-order deleted" v-if="page.props.auth.user == 'niu'">
+            <th
+              class="text-center th-order deleted"
+              v-if="page.props.auth.user.name == 'niu'"
+            >
               Edit/Hapus
             </th>
           </tr>
