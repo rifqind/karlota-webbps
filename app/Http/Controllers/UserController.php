@@ -193,7 +193,7 @@ class UserController extends Controller
                 DB::rollBack();
                 $message = [
                     'type' => 'error',
-                    'message' => $th->getMessage(),
+                    'message' => 'Ada kesalahan ketika mengedit akun',
                     'error' => $th->getMessage()
                 ];
                 array_push($notification, $message);
@@ -202,7 +202,7 @@ class UserController extends Controller
         }
     }
 
-    public function question(Request $request)
+    public function question(Request $request, String $id = null)
     {
         if ($request->isMethod('get')) {
             if ($request->paginated) $paginated = $request->paginated;
@@ -213,12 +213,20 @@ class UserController extends Controller
             $query = Question::query();
             $number = 1;
             $dataToCounted = $query->join('users', 'users.id', '=', 'questions.user_id')
-                ->select('*');
+                ->select([
+                    'questions.id',
+                    'questions.location',
+                    'questions.problem',
+                    // 'questions.reason',
+                    'questions.fix',
+                    'users.name as username',
+                    'questions.updated_at as time'
+                ]);
             if ($request->orderAttribute) {
                 $order = $request->orderAttribute;
                 if (sizeof($order) > 2) $query->orderBy($order['label'], $order['value']);
-                else $query->orderBy('updated_at', 'desc');
-            } else $query->orderBy('updated_at', 'desc');
+                else $query->orderBy('questions.updated_at', 'desc');
+            } else $query->orderBy('questions.updated_at', 'desc');
 
             if ($request->ArrayFilter) {
                 $filter = $request->ArrayFilter;
@@ -238,7 +246,7 @@ class UserController extends Controller
                     $query->where('users.name', 'like', '%' . $filter['username'] . '%');
                 }
                 if (!empty($filter['updated_at'])) {
-                    $query->where('updated_at', 'like', '%' . $filter['updated_at'] . '%');
+                    $query->where('questions.updated_at', 'like', '%' . $filter['updated_at'] . '%');
                 }
             }
             $countData = $dataToCounted->count();
@@ -267,16 +275,70 @@ class UserController extends Controller
                 //code...
                 DB::beginTransaction();
                 if ($request->id) {
-
+                    $validated['fix'] = $request->fix ?? null;
+                    Question::where('id', $request->id)
+                        ->update($validated);
+                    $message = [
+                        'type' => 'message',
+                        'message' => 'Berhasil'
+                    ];
+                    array_push($notification, $message);
                 } else {
                     $validated['user_id'] = auth()->user()->id;
                     $new_data = Question::create($validated);
+                    $message = [
+                        'type' => 'message',
+                        'message' => 'Berhasil mengajukan permasalahan'
+                    ];
+                    array_push($notification, $message);
                 }
                 DB::commit();
+                return redirect()->route('user.question')->with('notification', $notification);
             } catch (\Throwable $th) {
                 //throw $th;
                 DB::rollBack();
+                $message = [
+                    'type' => 'error',
+                    'message' => 'Ada kesalahan di server',
+                    'error' => $th->getMessage()
+                ];
+                array_push($notification, $message);
+                return redirect()->route('user.question')->with('notification', $notification);
+            }
+        } else if ($request->isMethod('delete')) {
+            $notification = [];
+            try {
+                //code...
+                DB::beginTransaction();
+                $data_to_delete = Question::findOrFail($id);
+                $data_to_delete->delete();
+                $message = [
+                    'type' => 'message',
+                    'message' => 'Berhasil menghapus'
+                ];
+                array_push($notification, $message);
+                DB::commit();
+                return redirect()->route('user.question')->with('notification', $notification);
+            } catch (\Throwable $th) {
+                //throw $th;
+                DB::rollBack();
+                $message = [
+                    'type' => 'error',
+                    'message' => 'Ada kesalahan ketika menghapus',
+                    'error' => $th->getMessage()
+                ];
+                return redirect()->route('user.question')->with('notification', $notification);
             }
         }
+    }
+
+    public function destroyQuestion(String $id) {
+        
+    }
+
+    public function fetchQuestion(String $id)
+    {
+        $data = Question::find($id);
+        return response()->json(['data' => $data]);
     }
 }

@@ -1,5 +1,6 @@
 <template>
   <Head title="Permasalahan Aplikasi" />
+  <SpinnerBorder v-if="triggerSpinner" />
   <GeneralLayout>
     <FlashFetch :notifications="notifications" />
     <div class="mb-2 flex flex-wrap items-center justify-between">
@@ -24,9 +25,6 @@
               Permasalahan
             </th>
             <th class="text-center th-order" @click="clickToOrder('location')">Lokasi</th>
-            <th class="text-center th-order" @click="clickToOrder('reason')">
-              Reason Error dari Admin
-            </th>
             <th class="text-center th-order" @click="clickToOrder('fix')">
               Fix/Solusi dari Admin
             </th>
@@ -37,7 +35,9 @@
             >
               Tanggal
             </th>
-            <th class="text-center th-order deleted">Edit/Hapus</th>
+            <th class="text-center th-order deleted" v-if="page.props.auth.user == 'niu'">
+              Edit/Hapus
+            </th>
           </tr>
           <tr class="">
             <td class="search-header"></td>
@@ -56,13 +56,6 @@
               />
             </td>
             <td class="search-header">
-              <input
-                v-model.trim="searchReason"
-                type="text"
-                class="input-fordone w-full"
-              />
-            </td>
-            <td class="search-header">
               <input v-model.trim="searchFix" type="text" class="input-fordone w-full" />
             </td>
             <td class="search-header">
@@ -71,7 +64,10 @@
             <td class="search-header">
               <input v-model.trim="searchDate" type="text" class="input-fordone w-full" />
             </td>
-            <td class="search-header deleted"></td>
+            <td
+              v-if="page.props.auth.user.name == 'niu'"
+              class="search-header deleted"
+            ></td>
           </tr>
         </thead>
         <tbody>
@@ -79,11 +75,14 @@
             <td>{{ data.number }}</td>
             <td>{{ data.location }}</td>
             <td>{{ data.problem }}</td>
-            <td>{{ data.reason }}</td>
             <td>{{ data.fix }}</td>
-            <td>{{ data.username }}</td>
-            <td>{{ data.updated_at }}</td>
-            <td class="text-center">
+            <td>
+              <span class="badge badge-info">
+                {{ data.username }}
+              </span>
+            </td>
+            <td>{{ data.time }}</td>
+            <td v-if="page.props.auth.user.name == 'niu'" class="text-center">
               <a @click="toggleUpdateModal(data.id)">
                 <font-awesome-icon
                   icon="fa-solid fa-pencil"
@@ -146,17 +145,24 @@
               :searchable="true"
               placeholder="-- Pilih Menu--"
             />
+            <div v-if="form.errors.location" class="text-danger">
+              {{ form.errors.location }}
+            </div>
           </div>
-          <div class="mb-3 space-y-2">
+          <div class="space-y-2">
             <label for="tahun">Masalah</label>
             <textarea
               class="input-fordone w-full"
               v-model="form.problem"
               placeholder="Isikan permasalahan yang ditemukan user"
             />
+            <div v-if="form.errors.problem" class="text-danger">
+              {{ form.errors.problem }}
+            </div>
           </div>
           <div class="mb-3 space-y-2" v-if="isUpdate">
-            <label for="triwulan">Status</label>
+            <label for="triwulan">Fix</label>
+            <textarea class="input-fordone w-full" v-model="form.fix" />
           </div>
         </div>
       </template>
@@ -166,13 +172,42 @@
         </button>
       </template>
     </ModalBs>
+    <ModalBs
+      :-modal-status="deleteModalStatus"
+      @close="
+        () => {
+          deleteModalStatus = false;
+          form.reset();
+        }
+      "
+      :title="'Hapus ini'"
+    >
+      <template #modalBody>
+        <div class="form-group">
+          <div>
+            <label>Apakah Anda yakin ingin menghapus ini?</label>
+          </div>
+        </div>
+      </template>
+      <template #modalFunction>
+        <button
+          type="button"
+          class="btn-red-fordone btn-sm"
+          @click.prevent="deleteSubmit"
+        >
+          Hapus
+        </button>
+      </template>
+    </ModalBs>
   </GeneralLayout>
 </template>
 
 <script setup>
+import { triggerSpinner } from "@/axiosSetup";
 import FlashFetch from "@/Components/FlashFetch.vue";
 import ModalBs from "@/Components/ModalBs.vue";
 import Pagination from "@/Components/Pagination.vue";
+import SpinnerBorder from "@/Components/SpinnerBorder.vue";
 import { debounce } from "@/debounce";
 import GeneralLayout from "@/Layouts/GeneralLayout.vue";
 import { Head, useForm, usePage } from "@inertiajs/vue3";
@@ -188,7 +223,7 @@ const isUpdate = ref(false);
 const deleteModalStatus = ref(false);
 const searchLocation = ref(null);
 const searchProblem = ref(null);
-const searchReason = ref(null);
+// const searchReason = ref(null);
 const searchFix = ref(null);
 const searchUser = ref(null);
 const searchDate = ref(null);
@@ -212,7 +247,7 @@ const showNotification = (notification) => {
 const ArrayBigObjects = [
   { key: "location", valueFilter: searchLocation },
   { key: "problem", valueFilter: searchProblem },
-  { key: "reason", valueFilter: searchReason },
+  // { key: "reason", valueFilter: searchReason },
   { key: "fix", valueFilter: searchFix },
   { key: "username", valueFilter: searchUser },
   { key: "updated_at", valueFilter: searchDate },
@@ -263,7 +298,7 @@ const fetchData = async () => {
         ArrayFilter: {
           location: searchLocation.value,
           problem: searchProblem.value,
-          reason: searchReason.value,
+          // reason: searchReason.value,
           fix: searchFix.value,
           username: searchUser.value,
           updated_at: searchDate.value,
@@ -291,6 +326,66 @@ const clickToOrder = (value) => {
   } else orderAttribute.value.value = "asc";
   orderAttribute.value.before = value;
   fetchData();
+};
+const submit = async () => {
+  try {
+    const response = await axios.get(route("token"));
+    form._token = response.data;
+    if (form.processing) return;
+    form.post("/user/question", {
+      onSuccess: (response) => {
+        showNotification(response.props.notification);
+        if (response.props.notification[0].type == "message") {
+          createModalStatus.value = false;
+          fetchData();
+          form.reset();
+        }
+      },
+    });
+  } catch (error) {
+    console.error(error);
+  }
+};
+const deleteSubmit = async () => {
+  try {
+    const response = await axios.get(route("token"));
+    form._token = response.data;
+    if (form.processing) return;
+    form.delete("/user/delete-question/" + form.id, {
+      onSuccess: (response) => {
+        showNotification(response.props.notification);
+        if (response.props.notification[0].type == "message") {
+          deleteModalStatus.value = false;
+          fetchData();
+          form.reset();
+        }
+      },
+    });
+  } catch (error) {
+    console.error(error);
+  }
+};
+const toggleUpdateModal = async (id) => {
+  try {
+    const response = await axios.get(route("user.fetch-question", { id }));
+    form.id = response.data.data.id;
+    form.location = response.data.data.location;
+    form.problem = response.data.data.problem;
+    form.fix = response.data.data.fix;
+    createModalStatus.value = true;
+    isUpdate.value = true;
+  } catch (error) {
+    console.error(error);
+  }
+};
+const deleteUpdateModal = async (id) => {
+  try {
+    const response = await axios.get(route("user.fetch-question", { id }));
+    form.id = response.data.data.id;
+    deleteModalStatus.value = true;
+  } catch (error) {
+    console.error(error);
+  }
 };
 </script>
 
