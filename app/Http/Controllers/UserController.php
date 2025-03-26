@@ -82,9 +82,17 @@ class UserController extends Controller
             if ($request->id) {
                 $request->validate(['email' => ['required', 'string', 'lowercase', 'email', 'max:255', Rule::unique('users')->ignore($request->id)]]);
                 $updated_data = User::findOrFail($request->id);
-                $updated_data->update($validated);
+                if ($request->password) {
+                    $updated_data->update([
+                        'name' => $validated['name'],
+                        'email' => $validated['email'],
+                        'satker_id' => $validated['satker_id'],
+                        'role' => $validated['role'],
+                        'password' => Hash::make($request->password),
+                    ]);
+                } else $updated_data->update($validated);
                 $message = [
-                    'type' => 'message',
+                    'type' => 'success',
                     'message' => 'Berhasil mengedit user tersebut'
                 ];
                 array_push($notification, $message);
@@ -100,7 +108,7 @@ class UserController extends Controller
                 'satker_id' => $validated['satker_id'],
             ]);
             $message = [
-                'type' => 'message',
+                'type' => 'success',
                 'message' => 'Berhasil menambah pengguna baru'
             ];
             array_push($notification, $message);
@@ -332,9 +340,7 @@ class UserController extends Controller
         }
     }
 
-    public function destroyQuestion(String $id) {
-        
-    }
+    public function destroyQuestion(String $id) {}
 
     public function fetchQuestion(String $id)
     {
