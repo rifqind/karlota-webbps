@@ -67,6 +67,7 @@ const submit = () => {
         />
 
         <InputError class="mt-2" :message="form.errors.password" />
+        <InputError class="mt-2" :message="form.errors.credentials" />
       </div>
 
       <div class="mt-4 flex items-center justify-end">
