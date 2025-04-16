@@ -615,7 +615,8 @@ tbody td {
 }
 textarea {
   font-size: smaller;
-  line-height: 0;
+  line-height: 1;
+  text-align: justify;
 }
 tbody tr {
   height: 50px;
