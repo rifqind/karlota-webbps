@@ -101,6 +101,7 @@
             @update:update-data-contents="updateDataContents"
             @update:handle-input="handleInput"
             @update:handle-paste="handlePaste"
+            @update:set-default-data="setDefaultData"
           />
         </table>
       </div>

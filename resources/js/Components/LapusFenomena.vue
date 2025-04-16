@@ -21,6 +21,7 @@
           </td>
           <td v-for="node in fenomenaValue">
             <textarea
+              spellcheck="false"
               :disabled="setDisabled()"
               :id="
                 nodeSubsectors.sector.category_id + '-' + null + '-' + null + '-' + node
@@ -56,6 +57,7 @@
           </td>
           <td v-for="node in fenomenaValue">
             <textarea
+              spellcheck="false"
               :disabled="setDisabled()"
               :id="
                 nodeSubsectors.sector.category_id +
@@ -115,6 +117,7 @@
           </td>
           <td v-for="node in fenomenaValue">
             <textarea
+              spellcheck="false"
               :disabled="setDisabled()"
               :id="
                 nodeSubsectors.sector.category_id +
@@ -178,6 +181,7 @@
           </td>
           <td v-for="node in fenomenaValue">
             <textarea
+              spellcheck="false"
               :disabled="setDisabled()"
               :id="
                 nodeSubsectors.sector.category_id +
@@ -241,6 +245,7 @@
           </td>
           <td v-for="node in fenomenaValue">
             <textarea
+              spellcheck="false"
               :disabled="setDisabled()"
               :id="
                 nodeSubsectors.sector.category_id +
@@ -448,7 +453,6 @@ onMounted(() => {
       tempData.push(data);
     }
     if (element.code != null && element.sector.category.type == "Pengeluaran") {
-      label = element.code + ". " + element.name;
       data = {
         id: null,
         fenomena_sets: null,
@@ -611,6 +615,7 @@ tbody td {
 }
 textarea {
   font-size: smaller;
+  line-height: 0;
 }
 tbody tr {
   height: 50px;
