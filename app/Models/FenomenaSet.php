@@ -10,7 +10,6 @@ class FenomenaSet extends Model
     //
     use HasFactory;
     protected $guarded = ['id'];
-    public $timestamps = false;
     protected $fillable = [
         'type', 'region_id', 'year', 'quarter', 'status'
     ];

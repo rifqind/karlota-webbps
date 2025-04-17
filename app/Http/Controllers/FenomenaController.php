@@ -120,7 +120,8 @@ class FenomenaController extends Controller
                             ->where('subsector_id', $value['subsector_id'])
                             ->first();
                         if ($this_fenomena) {
-                            Fenomena::where('category_id', $value['category_id'])
+                            Fenomena::where('fenomena_sets', $request->id)
+                                ->where('category_id', $value['category_id'])
                                 ->where('sector_id', $value['sector_id'])
                                 ->where('subsector_id', $value['subsector_id'])
                                 ->update([
@@ -205,7 +206,8 @@ class FenomenaController extends Controller
                             ->where('subsector_id', $value['subsector_id'])
                             ->first();
                         if ($this_fenomena) {
-                            Fenomena::where('category_id', $value['category_id'])
+                            Fenomena::where('fenomena_sets', $request->id)
+                                ->where('category_id', $value['category_id'])
                                 ->where('sector_id', $value['sector_id'])
                                 ->where('subsector_id', $value['subsector_id'])
                                 ->update([

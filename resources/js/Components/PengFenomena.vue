@@ -16,6 +16,7 @@
           </td>
           <td v-for="node in fenomenaValue">
             <textarea
+              rows="8"
               spellcheck="false"
               :disabled="setDisabled()"
               :id="
@@ -76,6 +77,7 @@
           </td>
           <td v-for="node in fenomenaValue">
             <textarea
+              rows="8"
               spellcheck="false"
               :disabled="setDisabled()"
               :id="
@@ -137,6 +139,7 @@
           </td>
           <td v-for="node in fenomenaValue">
             <textarea
+              rows="8"
               spellcheck="false"
               :disabled="setDisabled()"
               :id="
@@ -413,9 +416,11 @@ const handlePaste = (event) => {
       items[i].getAsString((text) => {
         const columnIndex = event.target.closest("td").cellIndex;
         const rowIndex = event.target.closest("tr").rowIndex;
-        const lines = text.trim().split("\n");
-        lines.forEach((line, index) => {
-          const cells = line.trim().split("\t");
+        // const lines = text.trim().split("\n");
+        const parsedRows = parseTSVWithQuotes(text);
+        // lines.forEach((line, index) => {
+        parsedRows.forEach((cells, index) => {
+          // const cells = line.trim().split("\t");
           cells.forEach((cell, subIndex) => {
             const row = rowIndex + index;
             const col = columnIndex + subIndex;
@@ -456,6 +461,48 @@ const handlePaste = (event) => {
       });
     }
   }
+};
+const parseTSVWithQuotes = (text) => {
+  const rows = [];
+  let currentRow = [];
+  let currentCell = "";
+  let inQuotes = false;
+
+  for (let i = 0; i < text.length; i++) {
+    const char = text[i];
+    const nextChar = text[i + 1];
+
+    if (char === '"') {
+      if (inQuotes && nextChar === '"') {
+        // Escaped quote
+        currentCell += '"';
+        i++; // skip next quote
+      } else {
+        inQuotes = !inQuotes; // toggle quotes
+      }
+    } else if (char === "\t" && !inQuotes) {
+      currentRow.push(currentCell);
+      currentCell = "";
+    } else if ((char === "\n" || char === "\r") && !inQuotes) {
+      if (currentCell || currentCell === "") {
+        currentRow.push(currentCell);
+        currentCell = "";
+      }
+      if (currentRow.length > 0) {
+        rows.push(currentRow);
+        currentRow = [];
+      }
+      if (char === "\r" && nextChar === "\n") i++; // Windows \r\n
+    } else {
+      currentCell += char;
+    }
+  }
+
+  // Add last cell and row
+  if (currentCell || currentCell === "") currentRow.push(currentCell);
+  if (currentRow.length > 0) rows.push(currentRow);
+
+  return rows;
 };
 </script>
 
@@ -507,7 +554,7 @@ tbody td {
 }
 textarea {
   font-size: smaller;
-  line-height: 1;
+  line-height: 1.5;
   text-align: justify;
 }
 tbody tr {
