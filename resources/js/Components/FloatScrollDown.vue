@@ -6,7 +6,7 @@ const isAtBottom = ref(false);
 
 const handleScroll = () => {
   const scrollPosition = window.innerHeight + window.scrollY;
-  const documentHeight = document.documentElement.scrollHeight;
+  const documentHeight = document.body.scrollHeight;
   const atBottom = scrollPosition >= documentHeight;
 
   showScrollButton.value = !atBottom || window.scrollY > 200; // Show when scrolling
@@ -15,7 +15,7 @@ const handleScroll = () => {
 
 const scrollToTarget = () => {
   window.scrollTo({
-    top: isAtBottom.value ? 0 : document.documentElement.scrollHeight,
+    top: isAtBottom.value ? 0 : document.body.scrollHeight,
     behavior: "smooth",
   });
 };
