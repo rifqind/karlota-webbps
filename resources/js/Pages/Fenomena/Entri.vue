@@ -250,6 +250,34 @@ const submit = async () => {
     }
   }
 };
+const getData = async () => {
+  dataContents.value = JSON.parse(JSON.stringify(defaultData.value));
+  const response = await axios.get(route("fenomena.show"), {
+    params: {
+      type: page.props.type,
+      year: form.year,
+      quarter: form.quarter,
+      regions: form.regions,
+    },
+  });
+  response.data.data.forEach((element) => {
+    const theIndex = dataContents.value.findIndex((x) => {
+      return (
+        x.category_id == element.category_id &&
+        x.sector_id == element.sector_id &&
+        x.subsector_id == element.subsector_id
+      );
+    });
+    if (theIndex !== -1) {
+      dataContents.value[theIndex].id = element.id;
+      dataContents.value[theIndex].fenomena_sets = element.fenomena_sets;
+      dataContents.value[theIndex].qtoq = element.qtoq;
+      dataContents.value[theIndex].yony = element.yony;
+      dataContents.value[theIndex].implisit = element.implisit;
+    }
+  });
+  fenomenasets.value = response.data.fenomena_set;
+};
 const saveEntri = async () => {
   const thisForm = useForm({
     dataContents: dataContents.value,
@@ -263,6 +291,7 @@ const saveEntri = async () => {
   thisForm.post(route("fenomena.save-fenomena"), {
     onSuccess: (response) => {
       showNotification(response.props.notification);
+      getData();
     },
   });
 };
@@ -279,6 +308,7 @@ const submitEntri = async () => {
   thisForm.post(route("fenomena.submit-fenomena"), {
     onSuccess: (response) => {
       showNotification(response.props.notification);
+      getData();
       if (response.props.notification[0].type == "success")
         fenomenasets.value.status = "Submitted";
     },
