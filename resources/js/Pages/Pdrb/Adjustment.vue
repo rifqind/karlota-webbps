@@ -110,12 +110,21 @@
             <button v-if="listTab['t']" @click="showTab('t')" :class="setActiveTab('t')">
               Tahunan
             </button>
+            <button
+              @click="freezeColumn = !freezeColumn"
+              class="btn btn-warning-fordone ml-auto"
+            >
+              Freeze Column
+            </button>
           </div>
         </div>
       </div>
-      <div class="overflow-x-scroll mb-2">
+      <div
+        class="overflow-x-scroll mb-2"
+        :class="{ 'table-wrapper overflow-y-auto max-h-[720px]': freezeColumn }"
+      >
         <table class="table shadow-md w-full mb-2" id="tabel-entry">
-          <thead>
+          <thead :class="{ 'freeze-thead': freezeColumn }">
             <tr>
               <th class="fixed-thead" rowspan="2">Wilayah</th>
               <th colspan="3">ADHB</th>
@@ -262,6 +271,7 @@ const activeTab = ref({
   q4: def,
   t: def,
 });
+const freezeColumn = ref(false);
 const setActiveTab = (value) => {
   return activeTab.value[value];
 };
@@ -591,13 +601,32 @@ const saveAdjustment = async () => {
   font-size: 13px;
 }
 
+/* First row of thead */
+.freeze-thead tr:first-child th {
+  position: sticky;
+  top: 0;
+  background-color: #175676;
+  color: whitesmoke;
+  z-index: 3;
+}
+
+/* Second row of thead */
+.freeze-thead tr:nth-child(2) th {
+  position: sticky;
+  top: 40px; /* adjust based on your first row height */
+  background-color: #175676;
+  color: whitesmoke;
+  z-index: 2;
+}
+
 .fixed-thead {
   position: sticky;
   min-width: 250px;
   left: 0;
+  top: 0;
   background-color: #175676;
   color: whitesmoke;
-  z-index: 1;
+  z-index: 4;
   box-shadow: 2px 0 5px -2px rgba(0, 0, 0, 0.2);
   border-right: 1px solid #ccc;
   border-left: 1px solid #ccc;

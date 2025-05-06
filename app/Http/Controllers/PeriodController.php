@@ -157,7 +157,11 @@ class PeriodController extends Controller
 
     public function fetchPeriod(Request $request)
     {
-        $data = Period::where('type', $request->type)
+        $query = Period::query();
+        if ($request->start == 'true') {
+            $query->whereNot('status', 'Final');
+        }
+        $data = $query->where('type', $request->type)
             ->where('year', $request->year)
             ->where('quarter', $request->quarter)
             ->get()
