@@ -2,7 +2,7 @@
   <aside class="bg-white shadow-lg min-h-screen fixed top-0 left-0 w-[300px] z-[1200]">
     <div class="px-6 py-4 flex items-center border-b h-[56px]">
       <img
-        src="../../images/karlota-logo.png"
+        src="../../images/karlota-logo.ico"
         alt="Logo"
         class="w-10 h-10 rounded-full shadow-lg opacity-80"
       />

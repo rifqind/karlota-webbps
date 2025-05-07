@@ -266,10 +266,18 @@ const getData = (subsectors, quarter) => {
   });
   if (theData) {
     let formattedResult;
-    formattedResult =
-      theData[props.type] == "" || theData[props.type] == null
-        ? null
-        : formatNumberGerman(Number(theData[props.type]), 0, 9);
+    if (theData[props.type] == "" || theData[props.type] == null) {
+      formattedResult = null;
+    } else {
+      let number;
+      if (theData[props.type] == "-") number = 0;
+      else number = Number(theData[props.type]);
+      formattedResult = formatNumberGerman(number, 0, 9);
+    }
+    // formattedResult =
+    //   theData[props.type] == "" || theData[props.type] == null
+    //     ? null
+    //     : formatNumberGerman(Number(theData[props.type]), 0, 9);
     return formattedResult;
   }
 };
@@ -386,6 +394,7 @@ const formatNumberGerman = (num, min = 2, max = 5) => {
 // #region Section: HANDLE_FUNCTION
 const handleInput = (event, subsector, quarter) => {
   let value = event.target.value;
+  if (value == "-") value = String(0);
   value = String(value).replaceAll(".", "").replace(",", ".");
   const theIndex = dataHere.value.findIndex((x) => {
     return x.quarter == quarter && x.subsector_id == subsector;
@@ -418,6 +427,7 @@ const handlePaste = (event, subsector, quarter) => {
                   const subsector = input.id.split("-")[1];
                   const quarter = input.id.split("-")[2];
                   input = cell;
+                  if (cell == "-") cell = String(0);
                   let formatCell = String(cell).replaceAll(".", "").replace(",", ".");
                   const theIndex = dataHere.value.findIndex((x) => {
                     return x.quarter == quarter && x.subsector_id == subsector;
@@ -496,6 +506,7 @@ const captureTableData = (type) => {
 
 .input-fordone {
   text-align: right;
+  font-size: smaller;
 }
 
 tbody td {

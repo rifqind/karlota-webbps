@@ -2,16 +2,16 @@
   <tbody ref="tableRef">
     <tr>
       <td class="fixed-column">
-        <label>Konsumsi Akhir Non Publik</label>
+        <label>Konsumsi Rumah Tangga</label>
       </td>
       <td v-for="(node, index) in quarters" class="text-right">
-        {{ getData("kanp", node.label) }}
+        {{ getData("krt", node.label) }}
       </td>
-      <td class="text-right">{{ getSumTotalFromVal("kanp") }}</td>
+      <td class="text-right">{{ getSumTotalFromVal("krt") }}</td>
     </tr>
     <tr>
       <td class="fixed-column">
-        <label>Konsumsi Akhir Publik</label>
+        <label>Konsumsi Pemerintah</label>
       </td>
       <td v-for="(node, index) in quarters" class="text-right">
         {{ getData("kap", node.label) }}
@@ -20,21 +20,21 @@
     </tr>
     <tr>
       <td class="fixed-column">
-        <label>Permintaan Akhir Institusi</label>
+        <label>Pembentukan Modal Tetap Bruto</label>
       </td>
       <td v-for="(node, index) in quarters" class="text-right">
-        {{ getData("pai", node.label) }}
+        {{ getData("pmtb", node.label) }}
       </td>
-      <td class="text-right">{{ getSumTotalFromVal("pai") }}</td>
+      <td class="text-right">{{ getSumTotalFromVal("pmtb") }}</td>
     </tr>
     <tr>
       <td class="fixed-column">
         <label>Lainnya</label>
       </td>
       <td v-for="(node, index) in quarters" class="text-right">
-        {{ getData("net_export_import", node.label) }}
+        {{ getData("lainnya", node.label) }}
       </td>
-      <td class="text-right">{{ getSumTotalFromVal("net_export_import") }}</td>
+      <td class="text-right">{{ getSumTotalFromVal("lainnya") }}</td>
     </tr>
     <tr class="PDRB-footer text-center">
       <td class="desc-col footer-column">

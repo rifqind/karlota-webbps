@@ -1175,6 +1175,7 @@ const unsubmitEntri = async () => {
   /* Ensures consistent column width */
   width: 100%;
   border-collapse: collapse;
+  font-size: smaller;
   /* Avoid extra spacing */
 }
 </style>

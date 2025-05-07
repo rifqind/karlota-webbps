@@ -1293,9 +1293,10 @@ class PdrbController extends Controller
                             SUM(pdrbs.adhb) as adhb,
                             SUM(pdrbs.adhk) as adhk,
                             CASE 
-                                WHEN subsector_id BETWEEN 56 AND 63 THEN 'kanp'
+                                WHEN subsector_id BETWEEN 56 AND 62 THEN 'krt'
                                 WHEN subsector_id = 64 THEN 'kap'
-                                WHEN subsector_id BETWEEN 65 AND 67 THEN 'pai'
+                                WHEN subsector_id BETWEEN 65 AND 66 THEN 'pmtb'
+                                WHEN subsector_id = 63 OR subsector_id = 67 THEN 'lainnya'
                                 WHEN subsector_id = 68 THEN 'export'
                                 WHEN subsector_id = 69 THEN 'import'
                             END as setdata
@@ -1305,6 +1306,7 @@ class PdrbController extends Controller
                     $previous_summary_set = $grouped->flatMap(function ($group) {
                         $export = $group->where('setdata', 'export')->first();
                         $import = $group->where('setdata', 'import')->first();
+                        $lainnya = $group->where('setdata', 'lainnya')->first();
 
                         $netExportImport = (object) [
                             'dataset_id' => $export->dataset_id ?? $import->dataset_id,
@@ -1314,7 +1316,11 @@ class PdrbController extends Controller
                             'adhk' => ($export->adhk ?? 0) - ($import->adhk ?? 0),
                             'setdata' => 'net_export_import',
                         ];
-                        return $group->push($netExportImport);
+                        if ($lainnya) {
+                            $lainnya->adhb += $netExportImport->adhb;
+                            $lainnya->adhk += $netExportImport->adhk;
+                        }
+                        return $group->filter(fn($item) => in_array($item->setdata, ['krt', 'kap', 'pmtb', 'lainnya']));
                     });
                 }
                 $message = [
@@ -1391,9 +1397,10 @@ class PdrbController extends Controller
                             SUM(pdrbs.adhb) as adhb,
                             SUM(pdrbs.adhk) as adhk,
                             CASE 
-                                WHEN subsector_id BETWEEN 56 AND 63 THEN 'kanp'
+                                WHEN subsector_id BETWEEN 56 AND 62 THEN 'krt'
                                 WHEN subsector_id = 64 THEN 'kap'
-                                WHEN subsector_id BETWEEN 65 AND 67 THEN 'pai'
+                                WHEN subsector_id BETWEEN 65 AND 66 THEN 'pmtb'
+                                WHEN subsector_id = 63 OR subsector_id = 67 THEN 'lainnya'
                                 WHEN subsector_id = 68 THEN 'export'
                                 WHEN subsector_id = 69 THEN 'import'
                             END as setdata
@@ -1403,6 +1410,7 @@ class PdrbController extends Controller
                     $current_summary_set = $grouped->flatMap(function ($group) {
                         $export = $group->where('setdata', 'export')->first();
                         $import = $group->where('setdata', 'import')->first();
+                        $lainnya = $group->where('setdata', 'lainnya')->first();
 
                         $netExportImport = (object) [
                             'dataset_id' => $export->dataset_id ?? $import->dataset_id,
@@ -1412,7 +1420,11 @@ class PdrbController extends Controller
                             'adhk' => ($export->adhk ?? 0) - ($import->adhk ?? 0),
                             'setdata' => 'net_export_import',
                         ];
-                        return $group->push($netExportImport);
+                        if ($lainnya) {
+                            $lainnya->adhb += $netExportImport->adhb;
+                            $lainnya->adhk += $netExportImport->adhk;
+                        }
+                        return $group->filter(fn($item) => in_array($item->setdata, ['krt', 'kap', 'pmtb', 'lainnya']));
                     });
                 }
                 $message = [

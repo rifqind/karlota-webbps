@@ -396,6 +396,7 @@ const captureTableData = (type) => {
 
 .input-fordone {
   text-align: right;
+  font-size: smaller;
 }
 
 tbody td {

@@ -645,6 +645,7 @@ const showSummary = (tab) => {
     isFull.value = false;
   }
 };
+const enabletoFixed = ref(true);
 const showDist = (data) => {
   let dataset = dataOnDemand.value[data];
   let arrayPDRB = dataset["PDRB"];
@@ -660,7 +661,7 @@ const showDist = (data) => {
         let divisor = parseNumber(arrayPDRB[index]); // Get corresponding PDRB value
         let dividend = parseNumber(value); // Convert current value to number
         let dist = divisor !== 0 ? (dividend / divisor) * 100 : 0; // Avoid division by zero
-        return formatNumberGerman(dist.toFixed(4), 2, 4);
+        return formatNumberGerman(enabletoFixed.value ? dist.toFixed(4) : dist, 2);
       }
     });
   });
@@ -701,7 +702,7 @@ const showGQtoQ = (now, prev) => {
         }
         let growth =
           divisor !== 0 && dividend !== 0 ? (dividend / divisor) * 100 - 100 : 0;
-        return formatNumberGerman(growth.toFixed(4), 2, 4);
+        return formatNumberGerman(enabletoFixed.value ? growth.toFixed(4) : growth, 2);
       });
   });
   //   computedData.value = removeSpaceOnKomponen(result);
@@ -731,7 +732,7 @@ const showGYtoY = (now, prev) => {
 
         let growth =
           divisor !== 0 && dividend !== 0 ? (dividend / divisor) * 100 - 100 : 0;
-        return formatNumberGerman(growth.toFixed(4), 2, 4);
+        return formatNumberGerman(enabletoFixed.value ? growth.toFixed(4) : growth, 2);
       });
   });
 
@@ -763,7 +764,7 @@ const showGCtoC = (now, prev) => {
         divisor += parseNumber(previous_dataset[key][cumulative]);
       }
       let growth = divisor !== 0 && dividend !== 0 ? (dividend / divisor) * 100 - 100 : 0;
-      return formatNumberGerman(growth.toFixed(4), 2, 4);
+      return formatNumberGerman(enabletoFixed.value ? growth.toFixed(4) : growth, 2);
     });
   });
   //   computedData.value = removeSpaceOnKomponen(result);
@@ -784,7 +785,7 @@ const showIndeks = (now, prev) => {
       let dividend = parseNumber(value);
       let divisor = parseNumber(previous_dataset[key][index]);
       let indeks = divisor !== 0 ? (dividend / divisor) * 100 : 0;
-      return formatNumberGerman(indeks.toFixed(4), 2, 4);
+      return formatNumberGerman(enabletoFixed.value ? indeks.toFixed(4) : indeks, 2);
     });
   });
   //   computedData.value = removeSpaceOnKomponen(result);
@@ -816,7 +817,10 @@ const showGIQtoQ = (adhbnow, adhbprev, adhknow, adhkprev) => {
     let dividend = parseNumber(adhb_previous_dataset[key]);
     let divisor = parseNumber(adhk_previous_dataset[key]);
     let indeks = divisor !== 0 && dividend !== 0 ? (dividend / divisor) * 100 : 0;
-    indeks_implisit_previous[key] = formatNumberGerman(indeks.toFixed(4), 2, 4);
+    indeks_implisit_previous[key] = formatNumberGerman(
+      enabletoFixed.value ? indeks.toFixed(4) : indeks,
+      2
+    );
   });
   let indeks_implisit_current = {};
   Object.keys(adhb_current_dataset).forEach((key) => {
@@ -826,7 +830,7 @@ const showGIQtoQ = (adhbnow, adhbprev, adhknow, adhkprev) => {
         let dividend = parseNumber(value);
         let divisor = parseNumber(adhk_current_dataset[key][index]);
         let indeks = divisor !== 0 ? (dividend / divisor) * 100 : 0;
-        return formatNumberGerman(indeks.toFixed(4), 2, 4);
+        return formatNumberGerman(enabletoFixed.value ? indeks.toFixed(4) : indeks, 2);
       });
   });
   let result = {};
@@ -842,7 +846,7 @@ const showGIQtoQ = (adhbnow, adhbprev, adhknow, adhkprev) => {
         divisor = parseNumber(indeks_implisit_current[key][index - 1]);
       }
       let growth = divisor !== 0 && dividend !== 0 ? (dividend / divisor) * 100 - 100 : 0;
-      return formatNumberGerman(growth.toFixed(4), 2, 4);
+      return formatNumberGerman(enabletoFixed.value ? growth.toFixed(4) : growth, 2);
     });
   });
   //   computedData.value = result;
@@ -871,7 +875,7 @@ const showGIYtoY = (adhbnow, adhbprev, adhknow, adhkprev) => {
         let dividend = parseNumber(value);
         let divisor = parseNumber(adhk_previous_dataset[key][index]);
         let indeks = divisor !== 0 ? (dividend / divisor) * 100 : 0;
-        return formatNumberGerman(indeks.toFixed(4), 2, 4);
+        return formatNumberGerman(enabletoFixed.value ? indeks.toFixed(4) : indeks, 2);
       });
   });
   let indeks_implisit_current = {};
@@ -882,7 +886,7 @@ const showGIYtoY = (adhbnow, adhbprev, adhknow, adhkprev) => {
         let dividend = parseNumber(value);
         let divisor = parseNumber(adhk_current_dataset[key][index]);
         let indeks = divisor !== 0 ? (dividend / divisor) * 100 : 0;
-        return formatNumberGerman(indeks.toFixed(4), 2, 4);
+        return formatNumberGerman(enabletoFixed.value ? indeks.toFixed(4) : indeks, 2);
       });
   });
   let result = {};
@@ -891,7 +895,7 @@ const showGIYtoY = (adhbnow, adhbprev, adhknow, adhkprev) => {
       let dividend = parseNumber(value);
       let divisor = parseNumber(indeks_implisit_previous[key][index]);
       let growth = divisor !== 0 && dividend !== 0 ? (dividend / divisor) * 100 - 100 : 0;
-      return formatNumberGerman(growth.toFixed(4), 2, 4);
+      return formatNumberGerman(enabletoFixed.value ? growth.toFixed(4) : growth, 2);
     });
   });
   //   computedData.value = result;
@@ -910,7 +914,7 @@ const isObjectEmpty = (obj) => {
   return !obj || Object.keys(obj).length === 0;
 };
 
-const formatNumberGerman = (num, min = 2, max = 5) => {
+const formatNumberGerman = (num, min = 2, max = 6) => {
   return new Intl.NumberFormat("de-DE", {
     minimumFractionDigits: min,
     maximumFractionDigits: max,
@@ -919,6 +923,7 @@ const formatNumberGerman = (num, min = 2, max = 5) => {
 const downloadHasil = async (id) => {
   let list = {};
   triggerSpinner.value = true;
+  enabletoFixed.value = false;
   try {
     showSummary("full");
     await nextTick();
@@ -941,6 +946,7 @@ const downloadHasil = async (id) => {
     console.error(error);
   } finally {
     triggerSpinner.value = false;
+    enabletoFixed.value = true;
   }
 };
 // #endregion
