@@ -22,7 +22,7 @@
               :options="yearDrop"
               :searchable="true"
               placeholder="-- Pilih Tahun --"
-              @change="fetchQuarter"
+              @change="(event) => fetchQuarter(event, 'normal')"
             />
             <div class="text-danger text-left" v-if="true" id="error-dinas">
               {{ formError.year }}
@@ -35,7 +35,7 @@
               :options="quarterDrop"
               :searchable="true"
               placeholder="-- Pilih Triwulan --"
-              @change="fetchPeriod"
+              @change="(event) => fetchPeriod(event, 'normal')"
             />
             <div class="text-danger text-left" v-if="true" id="error-dinas">
               {{ formError.quarter }}
@@ -337,21 +337,21 @@
           <div class="mb-3 space-y-2">
             <label for="pdrb">Pilih Tahun</label>
             <Multiselect
-              v-model="form.year"
+              v-model="copyForm.year"
               :options="yearDrop"
               :searchable="true"
               placeholder="-- Pilih Tahun --"
-              @change="fetchQuarter"
+              @change="(event) => fetchQuarter(event, 'copy')"
             />
           </div>
           <div class="mb-3 space-y-2">
             <label for="year">Pilih Triwulan<span class="text-danger">*</span></label>
             <Multiselect
-              v-model="form.quarter"
-              :options="quarterDrop"
+              v-model="copyForm.quarter"
+              :options="quarterCopyList"
               :searchable="true"
               placeholder="-- Pilih Triwulan --"
-              @change="fetchPeriod"
+              @change="(event) => fetchPeriod(event, 'copy')"
             />
             <div class="text-danger text-left" v-if="true" id="error-dinas"></div>
           </div>
@@ -360,8 +360,8 @@
               >Pilih Periode Putaran<span class="text-danger">*</span></label
             >
             <Multiselect
-              v-model="form.description"
-              :options="descDrop"
+              v-model="copyForm.description"
+              :options="descCopyList"
               :searchable="true"
               placeholder="-- Pilih Periode Putaran --"
             />
@@ -386,21 +386,21 @@
           <div class="mb-3 space-y-2">
             <label for="pdrb">Pilih Tahun</label>
             <Multiselect
-              v-model="form.year"
+              v-model="copyFormAdjustment.year"
               :options="yearDrop"
               :searchable="true"
               placeholder="-- Pilih Tahun --"
-              @change="fetchQuarter"
+              @change="(event) => fetchQuarter(event, 'adj')"
             />
           </div>
           <div class="mb-3 space-y-2">
             <label for="year">Pilih Triwulan<span class="text-danger">*</span></label>
             <Multiselect
-              v-model="form.quarter"
-              :options="quarterDrop"
+              v-model="copyFormAdjustment.quarter"
+              :options="quarterAdjList"
               :searchable="true"
               placeholder="-- Pilih Triwulan --"
-              @change="fetchPeriod"
+              @change="(event) => fetchPeriod(event, 'adj')"
             />
             <div class="text-danger text-left" v-if="true" id="error-dinas"></div>
           </div>
@@ -409,8 +409,8 @@
               >Pilih Periode Putaran<span class="text-danger">*</span></label
             >
             <Multiselect
-              v-model="form.description"
-              :options="descDrop"
+              v-model="copyFormAdjustment.description"
+              :options="descAdjList"
               :searchable="true"
               placeholder="-- Pilih Periode Putaran --"
             />
@@ -465,6 +465,18 @@ const form = useForm({
   description: null,
   dataBefore: null,
   regions: null,
+});
+const copyForm = useForm({
+  _token: null,
+  year: null,
+  quarter: null,
+  description: null,
+});
+const copyFormAdjustment = useForm({
+  _token: null,
+  year: null,
+  quarter: null,
+  description: null,
 });
 const formError = ref({
   year: null,
@@ -528,7 +540,11 @@ const fetchYear = async () => {
     console.error(error);
   }
 };
-const fetchQuarter = async (value) => {
+const quarterCopyList = ref(null);
+const descCopyList = ref(null);
+const quarterAdjList = ref(null);
+const descAdjList = ref(null);
+const fetchQuarter = async (value, type = "normal") => {
   if (!copyModal.value) {
     form.quarter = null;
     form.description = null;
@@ -542,13 +558,19 @@ const fetchQuarter = async (value) => {
         },
       });
       let result = response.data;
-      quarterDrop.value = result;
+      if (type == "normal") {
+        quarterDrop.value = result;
+      } else if (type == "copy") {
+        quarterCopyList.value = result;
+      } else if (type == "adj") {
+        quarterAdjList.value = result;
+      }
     } catch (error) {
       console.error(error);
     }
   }
 };
-const fetchPeriod = async (value) => {
+const fetchPeriod = async (value, type = "normal") => {
   if (!copyModal.value) {
     form.description = null;
   }
@@ -557,12 +579,24 @@ const fetchPeriod = async (value) => {
       const response = await axios.get(route("period.fetchPeriod"), {
         params: {
           type: page.props.type,
-          year: form.year,
+          year:
+            type == "normal"
+              ? form.year
+              : type == "copy"
+              ? copyForm.year
+              : copyFormAdjustment.year,
           quarter: value,
+          start: type == "normal" ? true : false,
         },
       });
       let result = response.data;
-      descDrop.value = result;
+      if (type == "normal") {
+        descDrop.value = result;
+      } else if (type == "copy") {
+        descCopyList.value = result;
+      } else if (type == "adj") {
+        descAdjList.value = result;
+      }
     } catch (error) {
       console.error(error);
     }
@@ -635,20 +669,14 @@ const submit = async () => {
 };
 // #endregion
 // #region Section: COPY
-var searchFormDefault = {};
 const openCopyModal = () => {
   copyModal.value = true;
-  searchFormDefault = JSON.parse(JSON.stringify(form));
 };
 const openCopyHasil = () => {
   copyModalHasil.value = true;
-  searchFormDefault = JSON.parse(JSON.stringify(form));
 };
 const closeCopyModal = () => {
   copyModal.value = false;
-  for (const key in searchFormDefault) {
-    form[key] = searchFormDefault[key];
-  }
   modalError.value = {
     year: null,
     quarter: null,
@@ -657,9 +685,6 @@ const closeCopyModal = () => {
 };
 const closeCopyHasil = () => {
   copyModalHasil.value = false;
-  for (const key in searchFormDefault) {
-    form[key] = searchFormDefault[key];
-  }
   modalError.value = {
     year: null,
     quarter: null,
@@ -676,9 +701,9 @@ const copy = async () => {
     const response = await axios.get(route("pdrb.copy-entri"), {
       params: {
         type: page.props.type,
-        year: form.year,
-        quarter: form.quarter,
-        description: form.description,
+        year: copyForm.year,
+        quarter: copyForm.quarter,
+        description: copyForm.description,
         regions: form.regions,
       },
     });
@@ -716,9 +741,9 @@ const copyHasil = async () => {
     const response = await axios.get(route("pdrb.copy-hasil"), {
       params: {
         type: page.props.type,
-        year: form.year,
-        quarter: form.quarter,
-        description: form.description,
+        year: copyFormAdjustment.year,
+        quarter: copyFormAdjustment.quarter,
+        description: copyFormAdjustment.description,
         regions: form.regions,
       },
     });

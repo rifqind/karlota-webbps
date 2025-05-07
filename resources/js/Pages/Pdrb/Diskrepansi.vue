@@ -224,25 +224,27 @@
           </template>
           <template v-if="page.props.type == 'Pengeluaran'">
             <DiskrepansiPeng
-              v-show="showPdrbAndResult['adhb']"
+              v-for="(node, index) in ['1', '2', '3', '4', 't']"
+              v-show="showPdrbAndResult['adhb']['quarter_' + node]"
               :subsectors="page.props.subsectors"
               :table-column="tableColumn"
-              :data-contents="dataContents"
+              :data-contents="dataContents['quarter_' + node]"
               :type="'adhb'"
               :on-demand-type="'adhb_now'"
-              :quarter="quarterCap"
-              :calculate="calculateData.adhb"
+              :quarter="node"
+              :calculate="calculateData.adhb['quarter_' + node]"
               @update:update-d-o-d="updateDOD"
             />
             <DiskrepansiPeng
-              v-show="showPdrbAndResult['adhk']"
+              v-for="(node, index) in ['1', '2', '3', '4', 't']"
+              v-show="showPdrbAndResult['adhk']['quarter_' + node]"
               :subsectors="page.props.subsectors"
               :table-column="tableColumn"
-              :data-contents="dataContents"
+              :data-contents="dataContents['quarter_' + node]"
               :type="'adhk'"
               :on-demand-type="'adhk_now'"
-              :quarter="quarterCap"
-              :calculate="calculateData.adhk"
+              :quarter="node"
+              :calculate="calculateData.adhk['quarter_' + node]"
               @update:update-d-o-d="updateDOD"
             />
             <DiskrepansiPengResult
@@ -254,23 +256,25 @@
               :computed-data="computedData"
             />
             <DiskrepansiPeng
+              v-for="(node, index) in ['1', '2', '3', '4', 't']"
               v-show="false"
               :subsectors="page.props.subsectors"
               :table-column="tableColumn"
-              :data-contents="dataBefore"
+              :data-contents="dataBefore['quarter_' + node]"
               :type="'adhb'"
               :on-demand-type="'adhb_prev'"
-              :quarter="quarterCap"
+              :quarter="node"
               @update:update-d-o-d="updateDOD"
             />
             <DiskrepansiPeng
+              v-for="(node, index) in ['1', '2', '3', '4', 't']"
               v-show="false"
               :subsectors="page.props.subsectors"
               :table-column="tableColumn"
-              :data-contents="dataBefore"
+              :data-contents="dataBefore['quarter_' + node]"
               :type="'adhk'"
               :on-demand-type="'adhk_prev'"
-              :quarter="quarterCap"
+              :quarter="node"
               @update:update-d-o-d="updateDOD"
             />
           </template>
