@@ -150,8 +150,19 @@ const props = defineProps({
     required: true,
     default: "distribusi",
   },
+  watched: {
+    type: Boolean,
+    required: false,
+    default: false,
+  },
+  watchedType: {
+    type: String,
+    required: false,
+    default: "qtoq",
+  },
 });
 const quarters = [{ label: "1" }, { label: "2" }, { label: "3" }, { label: "4" }];
+const emits = defineEmits(["update:updateDOD"]);
 const thisData = ref(props.computedData);
 const tableRef = ref(null);
 watch(
@@ -176,6 +187,46 @@ watch(
     }
   }
 );
+var observer = null;
+onMounted(() => {
+  if (props.watched) {
+    setTimeout(() => {
+      if (tableRef.value) {
+        observer = new MutationObserver((mutations) => {
+          captureTableData(props.watchedType);
+        });
+      }
+      observer.observe(tableRef.value, {
+        childList: true,
+        subtree: true,
+        characterData: true,
+      });
+    }, 100);
+  }
+});
+
+// #region Section: CAPTURE_DATA
+const captureTableData = (type) => {
+  //   const tbody = tableRef.value.querySelector("tbody");
+  const rows = tableRef.value.querySelectorAll("tr");
+  let tempData = {};
+  rows.forEach((row) => {
+    const cells = row.querySelectorAll("td");
+    let rowData = [];
+    cells.forEach((cell, index) => {
+      const input = cell.querySelector("input");
+      if (input) {
+        rowData[index] = input.value.trim(); // Get input value
+      } else {
+        rowData[index] = cell.innerText.trim(); // Get text content
+      }
+    });
+    if (rowData.length > 1) tempData[rowData[0]] = rowData.slice(1);
+  });
+  //   dataOnDemand.value = tempData;
+  emits("update:updateDOD", { data: tempData, type: type });
+};
+// #endregion
 </script>
 
 <style scoped>

@@ -79,6 +79,13 @@
             </div>
           </div>
           <div class="flex items-center space-x-2 justify-end">
+            <button
+              @click="getWatchedData"
+              v-if="showTabPanel"
+              class="btn btn-success-fordone"
+            >
+              Watch Previous Data
+            </button>
             <div
               @click="openCopyHasil"
               class="btn-warning-fordone w-[300px] text-center"
@@ -181,6 +188,34 @@
             />
             <!-- #endregion -->
 
+            <LapusWatchedTable
+              v-show="false"
+              :subsectors="subsectors"
+              :data-contents="dataWatched"
+              :type="'adhk'"
+              :on-demand-type="'adhk_watched'"
+              @update:update-d-o-d="updateCOD"
+            />
+
+            <LapusWatchedTable
+              v-show="false"
+              :subsectors="subsectors"
+              :data-contents="dataWatched"
+              :type="'adhb'"
+              :on-demand-type="'adhb_watched'"
+              @update:update-d-o-d="updateCOD"
+            />
+
+            <LapusResultTable
+              v-show="false"
+              :subsectors="subsectors"
+              :type="'distribusi'"
+              :quarter-cap="quarterCap"
+              :computed-data="computedWatched"
+              :watched="true"
+              :watched-type="watchedType"
+              @update:update-d-o-d="updateCOD"
+            />
             <!-- #region Section: RESULT -->
             <LapusResultTable
               v-show="showPdrbAndResult['result']"
@@ -436,6 +471,7 @@ import FlashFetch from "@/Components/FlashFetch.vue";
 import FloatScrollDown from "@/Components/FloatScrollDown.vue";
 import LapusResultTable from "@/Components/LapusResultTable.vue";
 import LapusTable from "@/Components/LapusTable.vue";
+import LapusWatchedTable from "@/Components/LapusWatchedTable.vue";
 import ModalBs from "@/Components/ModalBs.vue";
 import PengResultTable from "@/Components/PengResultTable.vue";
 import PengTable from "@/Components/PengTable.vue";
@@ -443,19 +479,37 @@ import SpinnerBorder from "@/Components/SpinnerBorder.vue";
 import GeneralLayout from "@/Layouts/GeneralLayout.vue";
 import { Head, useForm, usePage } from "@inertiajs/vue3";
 import Multiselect from "@vueform/multiselect";
-import { onMounted, ref, watch } from "vue";
+import { nextTick, onMounted, ref, watch } from "vue";
 
 const page = usePage();
 const dataset = ref({});
 const subsectors = ref(page.props.subsectors);
 const dataContents = ref([]);
 const dataBefore = ref([]);
+const dataWatched = ref([]);
 const computedData = ref({});
+const computedWatched = ref({});
+const watchedType = ref("qtoq");
 const quarterCap = ref("4");
 const showTabPanel = ref(false);
 const copyModal = ref(false);
 const copyModalHasil = ref(false);
-const dataOnDemand = ref({ adhb_now: {}, adhb_prev: {}, adhk_now: {}, adhk_prev: {} });
+const dataOnDemand = ref({
+  adhb_now: {},
+  adhb_prev: {},
+  adhk_now: {},
+  adhk_prev: {},
+});
+const computedOnDemand = ref({
+  adhk_watched: {},
+  adhb_watched: {},
+  qtoq: {},
+  yony: {},
+  ctoc: {},
+  idx: {},
+  iqtoq: {},
+  iyony: {},
+});
 const form = useForm({
   dataContents: null,
   _token: null,
@@ -504,6 +558,9 @@ onMounted(() => {
 });
 const updateDOD = (data) => {
   dataOnDemand.value[data.type] = data.data;
+};
+const updateCOD = (data) => {
+  computedOnDemand.value[data.type] = data.data;
 };
 const updateDataContents = (data) => {
   dataContents.value = data;
@@ -667,6 +724,72 @@ const submit = async () => {
   }
   // triggerSpinner.value = false;
 };
+const getWatchedData = async () => {
+  try {
+    const response = await axios.get(route("pdrb.watch-previous"), {
+      params: {
+        type: page.props.type,
+        year: form.year,
+        quarter: form.quarter,
+        regions: form.regions,
+      },
+    });
+    dataWatched.value = response.data.watched_data;
+
+    watchedType.value = "qtoq";
+    computedWatched.value = showGQtoQ(
+      computedOnDemand.value["adhk_watched"],
+      dataOnDemand.value["adhk_prev"]
+    );
+    await nextTick();
+    await delay(800);
+
+    watchedType.value = "yony";
+    computedWatched.value = showGYtoY(
+      computedOnDemand.value["adhk_watched"],
+      dataOnDemand.value["adhk_prev"]
+    );
+    await nextTick();
+    await delay(800);
+
+    watchedType.value = "ctoc";
+    computedWatched.value = showGCtoC(
+      computedOnDemand.value["adhk_watched"],
+      dataOnDemand.value["adhk_prev"]
+    );
+    await nextTick();
+    await delay(800);
+
+    watchedType.value = "iqtoq";
+    computedWatched.value = showGIQtoQ(
+      computedOnDemand.value["adhb_watched"],
+      computedOnDemand.value["adhk_watched"],
+      dataOnDemand.value["adhb_prev"],
+      dataOnDemand.value["adhk_prev"]
+    );
+    await nextTick();
+    await delay(800);
+
+    watchedType.value = "iyony";
+    computedWatched.value = showGIYtoY(
+      computedOnDemand.value["adhb_watched"],
+      computedOnDemand.value["adhk_watched"],
+      dataOnDemand.value["adhb_prev"],
+      dataOnDemand.value["adhk_prev"]
+    );
+    await nextTick();
+    await delay(800);
+  } catch (error) {
+    console.error("Error when fetching data", error);
+  }
+};
+const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+const resultWatchedData = async () => {
+  try {
+  } catch (error) {
+    console.error(error);
+  }
+};
 // #endregion
 // #region Section: COPY
 const openCopyModal = () => {
@@ -815,35 +938,56 @@ const showTab = (tab) => {
   }
   if (tab == "dist") {
     showPdrbAndResult.value.result = true;
-    showDist();
+    computedData.value = showDist(dataOnDemand.value["adhb_now"]);
   }
   if (tab == "g_qtoq") {
     showPdrbAndResult.value.result = true;
-    showGQtoQ();
+    computedData.value = showGQtoQ(
+      dataOnDemand.value["adhk_now"],
+      dataOnDemand.value["adhk_prev"]
+    );
   }
   if (tab == "g_ytoy") {
     showPdrbAndResult.value.result = true;
-    showGYtoY();
+    computedData.value = showGYtoY(
+      dataOnDemand.value["adhk_now"],
+      dataOnDemand.value["adhk_prev"]
+    );
   }
   if (tab == "g_ctoc") {
     showPdrbAndResult.value.result = true;
-    showGCtoC();
+    computedData.value = showGCtoC(
+      dataOnDemand.value["adhk_now"],
+      dataOnDemand.value["adhk_prev"]
+    );
   }
   if (tab == "indeks") {
     showPdrbAndResult.value.result = true;
-    showIndeks();
+    computedData.value = showIndeks(
+      dataOnDemand.value["adhb_now"],
+      dataOnDemand.value["adhk_now"]
+    );
   }
   if (tab == "gi_qtoq") {
     showPdrbAndResult.value.result = true;
-    showGIQtoQ();
+    computedData.value = showGIQtoQ(
+      dataOnDemand.value["adhb_now"],
+      dataOnDemand.value["adhk_now"],
+      dataOnDemand.value["adhb_prev"],
+      dataOnDemand.value["adhk_prev"]
+    );
   }
   if (tab == "gi_ytoy") {
     showPdrbAndResult.value.result = true;
-    showGIYtoY();
+    computedData.value = showGIYtoY(
+      dataOnDemand.value["adhb_now"],
+      dataOnDemand.value["adhk_now"],
+      dataOnDemand.value["adhb_prev"],
+      dataOnDemand.value["adhk_prev"]
+    );
   }
 };
-const showDist = () => {
-  let dataset = dataOnDemand.value["adhb_now"];
+const showDist = (dataset) => {
   let arrayPDRB = dataset["PDRB"];
   let stake = Number(quarterCap.value); // Current quarter
   // Helper function to parse numbers safely
@@ -861,12 +1005,10 @@ const showDist = () => {
       }
     });
   });
-  computedData.value = removeSpaceOnKomponen(result);
+  return removeSpaceOnKomponen(result);
 };
 
-const showGQtoQ = () => {
-  let current_dataset = dataOnDemand.value["adhk_now"];
-  let previous_dataset = dataOnDemand.value["adhk_prev"];
+const showGQtoQ = (current_dataset, previous_dataset) => {
   // Clean up spaces
   current_dataset = removeSpaceOnKomponen(current_dataset);
   previous_dataset = removeSpaceOnKomponen(previous_dataset);
@@ -900,12 +1042,12 @@ const showGQtoQ = () => {
         return formatNumberGerman(growth.toFixed(4), 2, 4);
       });
   });
-  computedData.value = removeSpaceOnKomponen(result);
+  return removeSpaceOnKomponen(result);
 };
 
-const showGYtoY = () => {
-  let current_dataset = removeSpaceOnKomponen(dataOnDemand.value["adhk_now"]);
-  let previous_dataset = removeSpaceOnKomponen(dataOnDemand.value["adhk_prev"]);
+const showGYtoY = (current, previous) => {
+  let current_dataset = removeSpaceOnKomponen(current);
+  let previous_dataset = removeSpaceOnKomponen(previous);
   if (isObjectEmpty(previous_dataset)) {
     let notif = [{ message: "Data Tahun sebelumnya masih kosong", type: "error" }];
     showNotification(notif);
@@ -930,12 +1072,12 @@ const showGYtoY = () => {
       });
   });
 
-  computedData.value = removeSpaceOnKomponen(result);
+  return removeSpaceOnKomponen(result);
 };
 
-const showGCtoC = () => {
-  let current_dataset = removeSpaceOnKomponen(dataOnDemand.value["adhk_now"]);
-  let previous_dataset = removeSpaceOnKomponen(dataOnDemand.value["adhk_prev"]);
+const showGCtoC = (current, previous) => {
+  let current_dataset = removeSpaceOnKomponen(current);
+  let previous_dataset = removeSpaceOnKomponen(previous);
   if (isObjectEmpty(previous_dataset)) {
     let notif = [{ message: "Data Tahun sebelumnya masih kosong", type: "error" }];
     showNotification(notif);
@@ -960,13 +1102,13 @@ const showGCtoC = () => {
       return formatNumberGerman(growth.toFixed(4), 2, 4);
     });
   });
-  computedData.value = removeSpaceOnKomponen(result);
+  return removeSpaceOnKomponen(result);
 };
 
-const showIndeks = () => {
+const showIndeks = (current, previous) => {
   // current = ADHB, previous = ADHK
-  let current_dataset = removeSpaceOnKomponen(dataOnDemand.value["adhb_now"]);
-  let previous_dataset = removeSpaceOnKomponen(dataOnDemand.value["adhk_now"]);
+  let current_dataset = removeSpaceOnKomponen(current);
+  let previous_dataset = removeSpaceOnKomponen(previous);
   let stake = Number(quarterCap.value); // Defines the quarter limit
   // Helper function to parse numbers
   const parseNumber = (value) =>
@@ -980,14 +1122,14 @@ const showIndeks = () => {
       return formatNumberGerman(indeks.toFixed(4), 2, 4);
     });
   });
-  computedData.value = removeSpaceOnKomponen(result);
+  return removeSpaceOnKomponen(result);
 };
 
-const showGIQtoQ = () => {
-  let adhb_current_dataset = removeSpaceOnKomponen(dataOnDemand.value["adhb_now"]);
-  let adhk_current_dataset = removeSpaceOnKomponen(dataOnDemand.value["adhk_now"]);
-  let adhb_previous_dataset = removeSpaceOnKomponen(dataOnDemand.value["adhb_prev"]);
-  let adhk_previous_dataset = removeSpaceOnKomponen(dataOnDemand.value["adhk_prev"]);
+const showGIQtoQ = (adhb_current, adhk_current, adhb_previous, adhk_previous) => {
+  let adhb_current_dataset = removeSpaceOnKomponen(adhb_current);
+  let adhk_current_dataset = removeSpaceOnKomponen(adhk_current);
+  let adhb_previous_dataset = removeSpaceOnKomponen(adhb_previous);
+  let adhk_previous_dataset = removeSpaceOnKomponen(adhk_previous);
   if (isObjectEmpty(adhb_previous_dataset)) {
     let notif = [{ message: "Data Tahun sebelumnya masih kosong", type: "error" }];
     showNotification(notif);
@@ -1037,13 +1179,13 @@ const showGIQtoQ = () => {
       return formatNumberGerman(growth.toFixed(4), 2, 4);
     });
   });
-  computedData.value = result;
+  return result;
 };
-const showGIYtoY = () => {
-  let adhb_current_dataset = removeSpaceOnKomponen(dataOnDemand.value["adhb_now"]);
-  let adhk_current_dataset = removeSpaceOnKomponen(dataOnDemand.value["adhk_now"]);
-  let adhb_previous_dataset = removeSpaceOnKomponen(dataOnDemand.value["adhb_prev"]);
-  let adhk_previous_dataset = removeSpaceOnKomponen(dataOnDemand.value["adhk_prev"]);
+const showGIYtoY = (adhb_current, adhk_current, adhb_previous, adhk_previous) => {
+  let adhb_current_dataset = removeSpaceOnKomponen(adhb_current);
+  let adhk_current_dataset = removeSpaceOnKomponen(adhk_current);
+  let adhb_previous_dataset = removeSpaceOnKomponen(adhb_previous);
+  let adhk_previous_dataset = removeSpaceOnKomponen(adhk_previous);
   if (isObjectEmpty(adhb_previous_dataset)) {
     let notif = [{ message: "Data Tahun sebelumnya masih kosong", type: "error" }];
     showNotification(notif);
@@ -1084,7 +1226,7 @@ const showGIYtoY = () => {
       return formatNumberGerman(growth.toFixed(4), 2, 4);
     });
   });
-  computedData.value = result;
+  return result;
 };
 // #endregion
 const removeSpaceOnKomponen = (object) => {

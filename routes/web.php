@@ -77,6 +77,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
         ->name('pdrb.copy-entri');
     Route::get('/copy-hasil', [PdrbController::class, 'copyHasil'])
         ->name('pdrb.copy-hasil');
+    Route::get('/watch-previous', [PdrbController::class, 'watchPrevious'])
+        ->name('pdrb.watch-previous');
 
     //Adjustment
     Route::get('/get-adjustment', [PdrbController::class, 'getAdjustment'])

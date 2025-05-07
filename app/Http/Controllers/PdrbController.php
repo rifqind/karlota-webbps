@@ -225,6 +225,63 @@ class PdrbController extends Controller
         }
     }
 
+    public function watchPrevious(Request $request)
+    {
+        $validated = $request->validate([
+            'type' => ['required', 'string'],
+            'year' => ['required', 'integer'],
+            'quarter' => ['required', 'integer'],
+            'regions' => ['required', 'integer'],
+        ]);
+        $notification = [];
+        try {
+            //code...
+            DB::beginTransaction();
+            $watched_period = Period::where('type', $validated['type'])
+                ->where('year', $validated['year'])
+                ->where('quarter', $validated['quarter'] - 1)
+                ->where('status', 'Final')
+                ->orderBy('updated_at', 'desc')
+                ->value('id');
+            $watched_dataset = Dataset::where('period_id', $watched_period)
+                ->where('region_id', $validated['regions'])
+                ->value('id');
+            if ($watched_dataset) {
+                $watched_data = Pdrb::where('dataset_id', $watched_dataset)
+                    ->orderBy('subsector_id')
+                    ->get();
+                $message = [
+                    'type' => 'success',
+                    'message' => 'Berhasil mengambil data untuk dibandingkan'
+                ];
+                array_push($notification, $message);
+            } else {
+                $watched_data = collect([]);
+                $message = [
+                    'type' => 'error',
+                    'message' => 'Tidak ada data tersebut'
+                ];
+                array_push($notification, $message);
+            }
+            $watched_period = Period::find($watched_period);
+            DB::commit();
+            return response()->json([
+                'watched_data' => $watched_data,
+                'watched_period' => $watched_period,
+                'notification' => $notification,
+            ]);
+        } catch (\Throwable $th) {
+            //throw $th;
+            DB::rollBack();
+            $message = [
+                'type' => 'error',
+                'message' => 'Ada kesalahan ketika mengambil data dari database'
+            ];
+            array_push($notification, $message);
+            return response()->json(['notification' => $notification], 500);
+        }
+    }
+
     public function submitEntri(Request $request)
     {
         $notification = [];
