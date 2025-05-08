@@ -147,7 +147,7 @@ const props = defineProps({
   },
   type: {
     type: String,
-    required: true,
+    required: false,
     default: "distribusi",
   },
   watched: {
@@ -162,7 +162,7 @@ const props = defineProps({
   },
 });
 const quarters = [{ label: "1" }, { label: "2" }, { label: "3" }, { label: "4" }];
-const emits = defineEmits(["update:updateDOD"]);
+const emits = defineEmits(["update:updateROD", "update:updateCOD"]);
 const thisData = ref(props.computedData);
 const tableRef = ref(null);
 watch(
@@ -189,25 +189,22 @@ watch(
 );
 var observer = null;
 onMounted(() => {
-  if (props.watched) {
-    setTimeout(() => {
-      if (tableRef.value) {
-        observer = new MutationObserver((mutations) => {
-          captureTableData(props.watchedType);
-        });
-      }
-      observer.observe(tableRef.value, {
-        childList: true,
-        subtree: true,
-        characterData: true,
+  setTimeout(() => {
+    if (tableRef.value) {
+      observer = new MutationObserver((mutations) => {
+        captureTableData();
       });
-    }, 100);
-  }
+    }
+    observer.observe(tableRef.value, {
+      childList: true,
+      subtree: true,
+      characterData: true,
+    });
+  }, 100);
 });
 
 // #region Section: CAPTURE_DATA
 const captureTableData = (type) => {
-  //   const tbody = tableRef.value.querySelector("tbody");
   const rows = tableRef.value.querySelectorAll("tr");
   let tempData = {};
   rows.forEach((row) => {
@@ -223,8 +220,11 @@ const captureTableData = (type) => {
     });
     if (rowData.length > 1) tempData[rowData[0]] = rowData.slice(1);
   });
-  //   dataOnDemand.value = tempData;
-  emits("update:updateDOD", { data: tempData, type: type });
+  if (props.watched) {
+    emits("update:updateCOD", { data: tempData, type: props.watchedType });
+  } else {
+    emits("update:updateROD", { data: tempData, type: props.type });
+  }
 };
 // #endregion
 </script>

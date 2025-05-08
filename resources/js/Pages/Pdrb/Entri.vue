@@ -84,7 +84,7 @@
               v-if="showTabPanel"
               class="btn btn-success-fordone"
             >
-              Watch Previous Data
+              {{ !watchPeriod ? "Watch Previous Data" : `Watching Data ${watchPeriod}` }}
             </button>
             <div
               @click="openCopyHasil"
@@ -144,6 +144,13 @@
             <button @click="showTab('gi_ytoy')" :class="setActiveTab('gi_ytoy')">
               Laju Implisit (Y-to-Y)
             </button>
+            <button
+              v-if="showButtonReport"
+              @click="showTab('report')"
+              :class="setActiveTab('report')"
+            >
+              Show Report
+            </button>
           </div>
         </div>
       </div>
@@ -188,6 +195,7 @@
             />
             <!-- #endregion -->
 
+            <!-- #region Section: WATCHED -->
             <LapusWatchedTable
               v-show="false"
               :subsectors="subsectors"
@@ -214,15 +222,17 @@
               :computed-data="computedWatched"
               :watched="true"
               :watched-type="watchedType"
-              @update:update-d-o-d="updateCOD"
+              @update:update-c-o-d="updateCOD"
             />
+            <!-- #endregion -->
             <!-- #region Section: RESULT -->
             <LapusResultTable
               v-show="showPdrbAndResult['result']"
               :subsectors="subsectors"
-              :type="'distribusi'"
+              :type="resultType"
               :quarter-cap="quarterCap"
               :computed-data="computedData"
+              @update:update-r-o-d="updateROD"
             />
             <!-- #endregion -->
 
@@ -284,14 +294,44 @@
               @update:updateDataContents="updateDataContents"
             />
             <!-- #endregion -->
+            <!-- #region Section: WATCHED -->
+            <PengWatchedTable
+              v-show="false"
+              :subsectors="subsectors"
+              :data-contents="dataWatched"
+              :type="'adhk'"
+              :on-demand-type="'adhk_watched'"
+              @update:update-d-o-d="updateCOD"
+            />
 
+            <PengWatchedTable
+              v-show="false"
+              :subsectors="subsectors"
+              :data-contents="dataWatched"
+              :type="'adhb'"
+              :on-demand-type="'adhb_watched'"
+              @update:update-d-o-d="updateCOD"
+            />
+
+            <PengResultTable
+              v-show="false"
+              :subsectors="subsectors"
+              :type="'distribusi'"
+              :quarter-cap="quarterCap"
+              :computed-data="computedWatched"
+              :watched="true"
+              :watched-type="watchedType"
+              @update:update-c-o-d="updateCOD"
+            />
+            <!-- #endregion -->
             <!-- #region Section: RESULT -->
             <PengResultTable
               v-show="showPdrbAndResult['result']"
               :subsectors="subsectors"
-              :type="'distribusi'"
+              :type="resultType"
               :quarter-cap="quarterCap"
               :computed-data="computedData"
+              @update:update-r-o-d="updateROD"
             />
             <!-- #endregion -->
 
@@ -327,6 +367,7 @@
           </template>
         </table>
       </div>
+      <ReportList v-if="showReport" :report-list="reportList" />
       <div
         v-if="showTabPanel"
         class="bg-white shadow-md mb-2 rounded-sm border border-gray-200 mb-3"
@@ -475,6 +516,8 @@ import LapusWatchedTable from "@/Components/LapusWatchedTable.vue";
 import ModalBs from "@/Components/ModalBs.vue";
 import PengResultTable from "@/Components/PengResultTable.vue";
 import PengTable from "@/Components/PengTable.vue";
+import PengWatchedTable from "@/Components/PengWatchedTable.vue";
+import ReportList from "@/Components/ReportList.vue";
 import SpinnerBorder from "@/Components/SpinnerBorder.vue";
 import GeneralLayout from "@/Layouts/GeneralLayout.vue";
 import { Head, useForm, usePage } from "@inertiajs/vue3";
@@ -490,6 +533,10 @@ const dataWatched = ref([]);
 const computedData = ref({});
 const computedWatched = ref({});
 const watchedType = ref("qtoq");
+const resultType = ref("distribusi");
+const showReport = ref(false);
+const showButtonReport = ref(false);
+const watchPeriod = ref(null);
 const quarterCap = ref("4");
 const showTabPanel = ref(false);
 const copyModal = ref(false);
@@ -499,6 +546,14 @@ const dataOnDemand = ref({
   adhb_prev: {},
   adhk_now: {},
   adhk_prev: {},
+});
+const resultOnDemand = ref({
+  g_qtoq: {},
+  g_ytoy: {},
+  g_ctoc: {},
+  indeks: {},
+  gi_qtoq: {},
+  gi_ytoy: {},
 });
 const computedOnDemand = ref({
   adhk_watched: {},
@@ -510,6 +565,7 @@ const computedOnDemand = ref({
   iqtoq: {},
   iyony: {},
 });
+const reportList = ref({});
 const form = useForm({
   dataContents: null,
   _token: null,
@@ -558,6 +614,9 @@ onMounted(() => {
 });
 const updateDOD = (data) => {
   dataOnDemand.value[data.type] = data.data;
+};
+const updateROD = (data) => {
+  resultOnDemand.value[data.type] = data.data;
 };
 const updateCOD = (data) => {
   computedOnDemand.value[data.type] = data.data;
@@ -735,30 +794,55 @@ const getWatchedData = async () => {
       },
     });
     dataWatched.value = response.data.watched_data;
-
+    resultWatchedData();
+    if (response.data.watched_period) {
+      let text = `Triwulan ${response.data.watched_period.quarter} - ${response.data.watched_period.description}`;
+      watchPeriod.value = text;
+    }
+  } catch (error) {
+    console.error("Error when fetching data", error);
+  }
+};
+const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+const reportWatching = ref({
+  qtoq: {},
+  yony: {},
+  ctoc: {},
+  iqtoq: {},
+  iyony: {},
+});
+const resultWatchedData = async () => {
+  triggerSpinner.value = true;
+  try {
+    await nextTick();
+    await delay(300);
     watchedType.value = "qtoq";
     computedWatched.value = showGQtoQ(
       computedOnDemand.value["adhk_watched"],
       dataOnDemand.value["adhk_prev"]
     );
+    showTab("g_qtoq");
+
     await nextTick();
-    await delay(800);
+    await delay(300);
 
     watchedType.value = "yony";
     computedWatched.value = showGYtoY(
       computedOnDemand.value["adhk_watched"],
       dataOnDemand.value["adhk_prev"]
     );
+    showTab("g_ytoy");
     await nextTick();
-    await delay(800);
+    await delay(300);
 
     watchedType.value = "ctoc";
     computedWatched.value = showGCtoC(
       computedOnDemand.value["adhk_watched"],
       dataOnDemand.value["adhk_prev"]
     );
+    showTab("g_ctoc");
     await nextTick();
-    await delay(800);
+    await delay(300);
 
     watchedType.value = "iqtoq";
     computedWatched.value = showGIQtoQ(
@@ -767,8 +851,9 @@ const getWatchedData = async () => {
       dataOnDemand.value["adhb_prev"],
       dataOnDemand.value["adhk_prev"]
     );
+    showTab("gi_qtoq");
     await nextTick();
-    await delay(800);
+    await delay(300);
 
     watchedType.value = "iyony";
     computedWatched.value = showGIYtoY(
@@ -777,18 +862,72 @@ const getWatchedData = async () => {
       dataOnDemand.value["adhb_prev"],
       dataOnDemand.value["adhk_prev"]
     );
+    showTab("gi_ytoy");
     await nextTick();
-    await delay(800);
-  } catch (error) {
-    console.error("Error when fetching data", error);
-  }
-};
-const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
-const resultWatchedData = async () => {
-  try {
+    await delay(300);
+
+    reportWatching.value.qtoq = checkWatched(
+      resultOnDemand.value.g_qtoq,
+      computedOnDemand.value.qtoq
+    );
+    reportWatching.value.yony = checkWatched(
+      resultOnDemand.value.g_ytoy,
+      computedOnDemand.value.yony
+    );
+    reportWatching.value.ctoc = checkWatched(
+      resultOnDemand.value.g_ctoc,
+      computedOnDemand.value.ctoc
+    );
+    reportWatching.value.iqtoq = checkWatched(
+      resultOnDemand.value.gi_qtoq,
+      computedOnDemand.value.iqtoq
+    );
+    reportWatching.value.iyony = checkWatched(
+      resultOnDemand.value.gi_ytoy,
+      computedOnDemand.value.iyony
+    );
+    showTab("adhb");
+    showButtonReport.value = true;
   } catch (error) {
     console.error(error);
+  } finally {
+    triggerSpinner.value = false;
   }
+};
+
+const checkWatched = (dataset, watched) => {
+  let report = {};
+  let compare = {};
+  for (const rows in dataset) {
+    const datasetRow = dataset[rows];
+    const watchedRow = watched[rows];
+
+    if (!Array.isArray(datasetRow) || !Array.isArray(watchedRow)) continue;
+    report[rows] = [];
+    compare[rows] = [];
+
+    for (let i = 0; i < datasetRow.length; i++) {
+      let dataValue = datasetRow[i]
+        ? Number(datasetRow[i].replaceAll(".", "").replaceAll(",", "."))
+        : 0;
+      let watchedValue = watchedRow[i]
+        ? Number(watchedRow[i].replaceAll(".", "").replaceAll(",", "."))
+        : 0;
+      let diff = Math.abs(dataValue - watchedValue);
+      let status = "not problem";
+      if ((dataValue > 0 && watchedValue < 0) || (dataValue < 0 && watchedValue > 0))
+        status = "beda arah";
+      else if (diff >= 5) status = "ekstrim (> 5)";
+      if (quarterCap.value - 1 == i) {
+        status = "-";
+      }
+      if (i == 4 && quarterCap.value == 4) {
+        status = "-";
+      }
+      report[rows].push(status);
+    }
+  }
+  return report;
 };
 // #endregion
 // #region Section: COPY
@@ -912,6 +1051,7 @@ const activeTab = ref({
   indeks: def,
   gi_qtoq: def,
   gi_ytoy: def,
+  report: def,
 });
 const setActiveTab = (value) => {
   return activeTab.value[value];
@@ -930,6 +1070,7 @@ const showTab = (tab) => {
   activeTab.value[tab] = "btn-success-fordone";
 
   resetShowTable();
+  resultType.value = tab;
   if (tab == "adhb") {
     showPdrbAndResult.value.adhb = true;
   }
@@ -985,6 +1126,23 @@ const showTab = (tab) => {
       dataOnDemand.value["adhb_prev"],
       dataOnDemand.value["adhk_prev"]
     );
+  }
+  if (tab == "report") {
+    showReport.value = true;
+    Object.keys(reportWatching.value).forEach((type) => {
+      let reports = [];
+      for (const rows in reportWatching.value[type]) {
+        const datasets = reportWatching.value[type][rows];
+        for (let i = 0; i < datasets.length; i++) {
+          let words = null;
+          if (datasets[i] == "beda arah") words = `${rows} Triwulan ${i + 1} beda arah`;
+          else if (datasets[i] == "ekstrim (> 5)")
+            words = `${rows} Triwulan ${i + 1} ekstrim (> 5)`;
+          if (words) reports.push(words);
+        }
+      }
+      reportList.value[type] = reports;
+    });
   }
 };
 const showDist = (dataset) => {
