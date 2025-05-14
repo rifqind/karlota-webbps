@@ -361,14 +361,14 @@ const getSumLvlOne = (value, region_id) => {
   filteredData = dataHere.value.filter(
     (x) =>
       (region_id == "total" ? x.region_id != 1 : x.region_id == region_id) &&
-      subsectorIds.includes(x.subsector_id) &&
+      subsectorIds.includes(Number(x.subsector_id)) &&
       x.quarter == quarters.value
   );
   if (quarters.value == "t") {
     filteredData = dataHere.value.filter(
       (x) =>
         (region_id == "total" ? x.region_id != 1 : x.region_id == region_id) &&
-        subsectorIds.includes(x.subsector_id)
+        subsectorIds.includes(Number(x.subsector_id))
     );
   }
   // Sum the values from the filtered data
@@ -388,14 +388,14 @@ const getSumLvlTwo = (value, region_id) => {
   filteredData = dataHere.value.filter(
     (x) =>
       (region_id == "total" ? x.region_id != 1 : x.region_id == region_id) &&
-      subsectorIds.includes(x.subsector_id) &&
+      subsectorIds.includes(Number(x.subsector_id)) &&
       x.quarter == quarters.value
   );
   if (quarters.value == "t") {
     filteredData = dataHere.value.filter(
       (x) =>
         (region_id == "total" ? x.region_id != 1 : x.region_id == region_id) &&
-        subsectorIds.includes(x.subsector_id)
+        subsectorIds.includes(Number(x.subsector_id))
     );
   }
   // Sum the values from the filtered data
@@ -429,14 +429,14 @@ const getPDRBNonMigas = (region_id) => {
   filteredData = dataHere.value.filter(
     (x) =>
       (region_id == "total" ? x.region_id != 1 : x.region_id == region_id) &&
-      ![10, 15].includes(x.subsector_id) &&
+      ![10, 15].includes(Number(x.subsector_id)) &&
       x.quarter == quarters.value
   );
   if (quarters.value == "t") {
     filteredData = dataHere.value.filter(
       (x) =>
         (region_id == "total" ? x.region_id != 1 : x.region_id == region_id) &&
-        ![10, 15].includes(x.subsector_id)
+        ![10, 15].includes(Number(x.subsector_id))
     );
   }
   const result = filteredData.reduce((sum, item) => sum + Number(item[props.type]), 0);

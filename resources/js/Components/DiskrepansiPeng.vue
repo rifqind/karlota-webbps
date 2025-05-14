@@ -295,14 +295,14 @@ const getSumLvlTwo = (value, region_id) => {
     filteredData = dataHere.value.filter(
       (x) =>
         (region_id == "total" ? x.region_id != 1 : x.region_id == region_id) &&
-        subsectorIds.includes(x.subsector_id) &&
+        subsectorIds.includes(Number(x.subsector_id)) &&
         x.quarter == quarters.value
     );
     if (quarters.value == "t") {
       filteredData = dataHere.value.filter(
         (x) =>
           (region_id == "total" ? x.region_id != 1 : x.region_id == region_id) &&
-          subsectorIds.includes(x.subsector_id)
+          subsectorIds.includes(Number(x.subsector_id))
       );
     }
     result = filteredData.reduce((sum, item) => sum + Number(item[props.type]), 0);
@@ -318,7 +318,7 @@ const getPDRB = (region_id) => {
     filteredData = dataHere.value.filter(
       (x) =>
         (region_id == "total" ? x.region_id != 1 : x.region_id == region_id) &&
-        ![69].includes(x.subsector_id)
+        ![69].includes(Number(x.subsector_id))
     );
     importData = dataHere.value.filter(
       (x) =>
@@ -330,7 +330,7 @@ const getPDRB = (region_id) => {
       (x) =>
         (region_id == "total" ? x.region_id != 1 : x.region_id == region_id) &&
         x.quarter == quarters.value &&
-        ![69].includes(x.subsector_id)
+        ![69].includes(Number(x.subsector_id))
     );
     importData = dataHere.value.filter(
       (x) =>

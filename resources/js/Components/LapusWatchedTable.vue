@@ -216,7 +216,7 @@ const getSumLvlOne = (value, quarter) => {
     .map((x) => x.id);
   // Get all matching data where quarter matches and subsector_id is in the subsector list
   const filteredData = dataHere.value.filter(
-    (x) => x.quarter == quarter && subsectorIds.includes(x.subsector_id)
+    (x) => x.quarter == quarter && subsectorIds.includes(Number(x.subsector_id))
   );
   // Sum the values from the filtered data
   const result = filteredData.reduce((sum, item) => sum + Number(item[props.type]), 0);
@@ -232,7 +232,7 @@ const getSumLvlTwo = (value, quarter) => {
     .filter((x) => x.sector.category_id == value)
     .map((x) => x.id);
   const filteredData = dataHere.value.filter(
-    (x) => x.quarter == quarter && subsectorIds.includes(x.subsector_id)
+    (x) => x.quarter == quarter && subsectorIds.includes(Number(x.subsector_id))
   );
   // Sum the values from the filtered data
   const result = filteredData.reduce((sum, item) => sum + Number(item[props.type]), 0);
@@ -289,7 +289,7 @@ const getPDRB = (quarter) => {
 
 const getPDRBNonMigas = (quarter) => {
   const filteredData = dataHere.value.filter(
-    (x) => x.quarter == quarter && ![10, 15].includes(x.subsector_id)
+    (x) => x.quarter == quarter && ![10, 15].includes(Number(x.subsector_id))
   );
   const result = filteredData.reduce((sum, item) => sum + Number(item[props.type]), 0);
   if (!lvlPDRB.value["PDRB-NonMigas"]) lvlPDRB.value["PDRB-NonMigas"] = {};

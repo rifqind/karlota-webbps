@@ -153,7 +153,7 @@ const getSumLvlOne = (value, quarter) => {
     .map((x) => x.id);
   // Get all matching data where quarter matches and subsector_id is in the subsector list
   const filteredData = dataHere.value.filter(
-    (x) => x.quarter == quarter && subsectorIds.includes(x.subsector_id)
+    (x) => x.quarter == quarter && subsectorIds.includes(Number(x.subsector_id))
   );
   // Sum the values from the filtered data
   const result = filteredData.reduce((sum, item) => sum + Number(item[props.type]), 0);
@@ -169,7 +169,7 @@ const getSumLvlTwo = (value, quarter) => {
     .filter((x) => x.sector.id == value)
     .map((x) => x.id);
   const filteredData = dataHere.value.filter(
-    (x) => x.quarter == quarter && subsectorIds.includes(x.subsector_id)
+    (x) => x.quarter == quarter && subsectorIds.includes(Number(x.subsector_id))
   );
   let result = 0;
   // Sum the values from the filtered data
@@ -225,7 +225,7 @@ const getSumRowSector = (value) => {
 const lvlPDRB = ref({});
 const getPDRB = (quarter) => {
   const filteredData = dataHere.value.filter(
-    (x) => x.quarter == quarter && ![69].includes(x.subsector_id)
+    (x) => x.quarter == quarter && ![69].includes(Number(x.subsector_id))
   );
   let result = filteredData.reduce((sum, item) => sum + Number(item[props.type]), 0);
   let importData = dataHere.value.filter(
