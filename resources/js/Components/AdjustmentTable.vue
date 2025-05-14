@@ -67,6 +67,11 @@ const props = defineProps({
     type: String,
     required: true,
   },
+  toFixed: {
+    type: Number,
+    required: false,
+    default: 2,
+  },
 });
 const emits = defineEmits([
   "update:updateDataOnDemand",
@@ -177,7 +182,7 @@ const showThisVal = (region, type) => {
       formattedResult =
         theData["adhb"] == "" || theData["adhb"] == null ? null : theData["adhb"];
       setAdjustmentVal(region, type, Number(formattedResult));
-      return formatNumberGerman(Number(formattedResult), 0, 9);
+      return formatNumberGerman(Number(formattedResult).toFixed(props.toFixed), 0, 9);
     }
   } else if (type == "adhk_initial") {
     if (region == "Total Kabupaten/Kota") return getTotalKabkot("adhk", region, type);
@@ -188,7 +193,7 @@ const showThisVal = (region, type) => {
       formattedResult =
         theData["adhk"] == "" || theData["adhk"] == null ? null : theData["adhk"];
       setAdjustmentVal(region, type, Number(formattedResult));
-      return formatNumberGerman(Number(formattedResult), 0, 9);
+      return formatNumberGerman(Number(formattedResult).toFixed(props.toFixed), 0, 9);
     }
   } else if (type == "adhb_berjalan" || type == "adhk_berjalan") {
     if (!isNaN(Number(region))) return getBerjalan(region, type);
@@ -242,7 +247,7 @@ const getTotalKabkot = (typeOfData, region, type) => {
     return x.region == region;
   });
   if (theIndex !== -1) adjustmentVal.value[theIndex].adjVal[type] = result;
-  return formatNumberGerman(result, 0, 9);
+  return formatNumberGerman(result.toFixed(props.toFixed), 0, 9);
 };
 const getTotalKabkotBerjalan = (type) => {
   const filteredData = adjustmentVal.value.filter(
@@ -250,7 +255,7 @@ const getTotalKabkotBerjalan = (type) => {
   );
   const result = filteredData.reduce((sum, item) => sum + Number(item.adjVal[type]), 0);
   setAdjustmentVal("Total Kabupaten/Kota", type, result);
-  return formatNumberGerman(result, 0, 9);
+  return formatNumberGerman(result.toFixed(props.toFixed), 0, 9);
 };
 const getSelisih = (type) => {
   const provVal = adjustmentVal.value.find((x) => {
@@ -260,7 +265,7 @@ const getSelisih = (type) => {
     return x.region == "Total Kabupaten/Kota";
   });
   let selisih = provVal.adjVal[type] - totalKabkot.adjVal[type];
-  return formatNumberGerman(selisih, 0, 9);
+  return formatNumberGerman(selisih.toFixed(props.toFixed), 0, 9);
 };
 const getDiskrepansi = (type) => {
   const provVal = adjustmentVal.value.find((x) => {
@@ -268,7 +273,7 @@ const getDiskrepansi = (type) => {
   });
   const selisih = String(getSelisih(type)).replaceAll(".", "").replaceAll(",", ".");
   let diskrepansi = (Number(selisih) / provVal.adjVal[type]) * 100;
-  return formatNumberGerman(diskrepansi, 2, 4);
+  return formatNumberGerman(diskrepansi.toFixed(props.toFixed), 2, 4);
 };
 const getBerjalan = (region, type) => {
   const data = adjustmentVal.value.find((x) => {
@@ -277,11 +282,11 @@ const getBerjalan = (region, type) => {
   if (type == "adhb_berjalan") {
     const berjalan = data.adjVal["adhb_initial"] + data.adjVal["adhb_adjust"];
     setAdjustmentVal(region, type, berjalan);
-    return formatNumberGerman(berjalan, 0, 9);
+    return formatNumberGerman(berjalan.toFixed(props.toFixed), 0, 9);
   } else if (type == "adhk_berjalan") {
     const berjalan = data.adjVal["adhk_initial"] + data.adjVal["adhk_adjust"];
     setAdjustmentVal(region, type, berjalan);
-    return formatNumberGerman(berjalan, 0, 9);
+    return formatNumberGerman(berjalan.toFixed(props.toFixed), 0, 9);
   }
 };
 const getData = (key, region) => {
@@ -293,7 +298,7 @@ const getData = (key, region) => {
     formattedResult =
       theData.adjVal[key] == "" || theData.adjVal[key] == null
         ? null
-        : formatNumberGerman(Number(theData.adjVal[key]), 0, 9);
+        : formatNumberGerman(Number(theData.adjVal[key]).toFixed(props.toFixed), 0, 9);
     return formattedResult;
   }
 };
@@ -366,7 +371,7 @@ const gQtoQ = (region, type, typeAdjust) => {
   }
   let growth = divisor !== 0 && dividend !== 0 ? (dividend / divisor) * 100 - 100 : 0;
   setAdjustmentVal(region, typeAdjust, growth);
-  return formatNumberGerman(growth.toFixed(4), 2, 4);
+  return formatNumberGerman(growth.toFixed(props.toFixed), 2, 4);
 };
 const gYonY = (region, type, typeAdjust) => {
   let quarter = Number(props.quarterCap);
@@ -392,7 +397,7 @@ const gYonY = (region, type, typeAdjust) => {
   }
   let growth = divisor !== 0 && dividend !== 0 ? (dividend / divisor) * 100 - 100 : 0;
   setAdjustmentVal(region, typeAdjust, growth);
-  return formatNumberGerman(growth.toFixed(4), 2, 4);
+  return formatNumberGerman(growth.toFixed(props.toFixed), 2, 4);
 };
 const gCtoC = (region, type, typeAdjust) => {
   let quarter = Number(props.quarterCap);
@@ -420,7 +425,7 @@ const gCtoC = (region, type, typeAdjust) => {
   }
   let growth = divisor !== 0 && dividend !== 0 ? (dividend / divisor) * 100 - 100 : 0;
   setAdjustmentVal(region, typeAdjust, growth);
-  return formatNumberGerman(growth.toFixed(4), 2, 4);
+  return formatNumberGerman(growth.toFixed(props.toFixed), 2, 4);
 };
 const gIQtoQ = (region, adhb, adhk, type) => {
   let quarter = Number(props.quarterCap);
@@ -478,7 +483,7 @@ const gIQtoQ = (region, adhb, adhk, type) => {
   let growth =
     idxPrevious !== 0 && idxCurrent !== 0 ? (idxCurrent / idxPrevious) * 100 - 100 : 0;
   setAdjustmentVal(region, type, growth);
-  return formatNumberGerman(growth.toFixed(4), 2, 4);
+  return formatNumberGerman(growth.toFixed(props.toFixed), 2, 4);
 };
 const getKontribusi = (type, region, typeAdjust) => {
   if (region == 1) return;
@@ -490,7 +495,7 @@ const getKontribusi = (type, region, typeAdjust) => {
   });
   let kontribusi = (dividend.adjVal[type] / totalKabkot.adjVal[type]) * 100;
   setAdjustmentVal(region, typeAdjust, kontribusi);
-  return formatNumberGerman(kontribusi, 2, 4);
+  return formatNumberGerman(kontribusi.toFixed(props.toFixed), 2, 4);
 };
 // #endregion
 

@@ -111,9 +111,15 @@
               Tahunan
             </button>
             <button
-              @click="freezeColumn = !freezeColumn"
-              class="btn btn-warning-fordone ml-auto"
+              class="btn btn-success-fordone ml-auto"
+              @click="addToFixedValue(true)"
             >
+              0,00 ->>
+            </button>
+            <button class="btn btn-red-fordone" @click="addToFixedValue(false)">
+              <<- 0,00
+            </button>
+            <button @click="freezeColumn = !freezeColumn" class="btn btn-warning-fordone">
               Freeze Column
             </button>
           </div>
@@ -163,6 +169,7 @@
             :data-on-demand="dataOnDemand"
             :data-before="dataBefore"
             :type-data="typeData"
+            :to-fixed="toFixed"
             @update:set-adjustment-default="setAdjustmentDefault"
             @update:update-data-on-demand="updateDataOnDemand"
             @update:update-data-contents="updateDataContents"
@@ -176,6 +183,7 @@
             :data-on-demand="dataOnDemand"
             :data-before="dataBefore"
             :type-data="typeData"
+            :to-fixed="toFixed"
             @update:set-adjustment-default="setAdjustmentDefault"
             @update:update-data-on-demand="updateDataOnDemand"
             @update:update-data-contents="updateDataContents"
@@ -189,6 +197,7 @@
             :data-on-demand="dataOnDemand"
             :data-before="dataBefore"
             :type-data="typeData"
+            :to-fixed="toFixed"
             @update:set-adjustment-default="setAdjustmentDefault"
             @update:update-data-on-demand="updateDataOnDemand"
             @update:update-data-contents="updateDataContents"
@@ -202,6 +211,7 @@
             :data-on-demand="dataOnDemand"
             :data-before="dataBefore"
             :type-data="typeData"
+            :to-fixed="toFixed"
             @update:set-adjustment-default="setAdjustmentDefault"
             @update:update-data-on-demand="updateDataOnDemand"
             @update:update-data-contents="updateDataContents"
@@ -214,6 +224,7 @@
             :data-adjustment="dataOnDemand['t']"
             :data-on-demand="dataOnDemand"
             :data-before="dataBefore"
+            :to-fixed="toFixed"
             @update:update-data-on-demand="updateDataOnDemand"
           />
         </table>
@@ -324,6 +335,16 @@ const updateDataContents = (data) => {
 };
 const setAdjustmentDefault = (data) => {
   defaultAdjustment.value = data;
+};
+const toFixed = ref(2);
+const addToFixedValue = (up) => {
+  if (up) {
+    if (toFixed.value == 8) return;
+    else toFixed.value = toFixed.value + 1;
+  } else {
+    if (toFixed.value == 0) return;
+    else toFixed.value = toFixed.value - 1;
+  }
 };
 const yearDrop = ref([]);
 const quarterDrop = ref([]);
