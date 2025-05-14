@@ -240,18 +240,18 @@ const showThisVal = (region, type) => {
 };
 const getTotalKabkot = (typeOfData, region, type) => {
   const filteredData = dataHere.value.filter(
-    (x) => x.quarter == props.quarterCap && x.region_id !== 1
+    (x) => x.quarter == props.quarterCap && x.region_id != 1
   );
   const result = filteredData.reduce((sum, item) => sum + Number(item[typeOfData]), 0);
   const theIndex = adjustmentVal.value.findIndex((x) => {
     return x.region == region;
   });
-  if (theIndex !== -1) adjustmentVal.value[theIndex].adjVal[type] = result;
+  if (theIndex != -1) adjustmentVal.value[theIndex].adjVal[type] = result;
   return formatNumberGerman(result.toFixed(props.toFixed), 0, 9);
 };
 const getTotalKabkotBerjalan = (type) => {
   const filteredData = adjustmentVal.value.filter(
-    (x) => x.region !== 1 && !isNaN(Number(x.region))
+    (x) => x.region != 1 && !isNaN(Number(x.region))
   );
   const result = filteredData.reduce((sum, item) => sum + Number(item.adjVal[type]), 0);
   setAdjustmentVal("Total Kabupaten/Kota", type, result);
@@ -309,11 +309,11 @@ const handleInput = (event, key, region, quarter) => {
   const dataContentIndex = dataHere.value.findIndex(
     (x) => x.region_id == region && x.quarter == quarter
   );
-  if (theIndex !== -1) adjustmentVal.value[theIndex].adjVal[key] = Number(value);
+  if (theIndex != -1) adjustmentVal.value[theIndex].adjVal[key] = Number(value);
   let type;
   if (key == "adhb_adjust") type = "adj_adhb";
   else if (key == "adhk_adjust") type = "adj_adhk";
-  if (dataContentIndex !== -1) {
+  if (dataContentIndex != -1) {
     dataHere.value[dataContentIndex][type] = Number(value);
   }
 };
@@ -324,7 +324,7 @@ const setAdjustmentVal = (region, type, result) => {
   const theIndex = adjustmentVal.value.findIndex((x) => {
     return x.region == region;
   });
-  if (theIndex !== -1) adjustmentVal.value[theIndex].adjVal[type] = result;
+  if (theIndex != -1) adjustmentVal.value[theIndex].adjVal[type] = result;
 };
 watch(dataHere.value, (value) => {
   emits("update:updateDataContents", value);
@@ -348,7 +348,7 @@ const gQtoQ = (region, type, typeAdjust) => {
   }
   // Get the dividend safely
   dividend = Number(current?.adjVal?.[type]) ?? 0;
-  if (quarter - 1 !== 0) {
+  if (quarter - 1 != 0) {
     if (
       props.dataOnDemand[quarter - 1] &&
       Array.isArray(props.dataOnDemand[quarter - 1])
@@ -364,12 +364,12 @@ const gQtoQ = (region, type, typeAdjust) => {
       divisor = Number(previous?.adhk) ?? 0;
     } else {
       const filteredData = dataHereBefore.value.filter(
-        (x) => x.quarter == "4" && x.region_id !== 1
+        (x) => x.quarter == "4" && x.region_id != 1
       );
       divisor = filteredData.reduce((sum, item) => sum + (Number(item?.adhk) ?? 0), 0);
     }
   }
-  let growth = divisor !== 0 && dividend !== 0 ? (dividend / divisor) * 100 - 100 : 0;
+  let growth = divisor != 0 && dividend != 0 ? (dividend / divisor) * 100 - 100 : 0;
   setAdjustmentVal(region, typeAdjust, growth);
   return formatNumberGerman(growth.toFixed(props.toFixed), 2, 4);
 };
@@ -391,11 +391,11 @@ const gYonY = (region, type, typeAdjust) => {
     divisor = Number(previous?.adhk) ?? 0;
   } else {
     const filteredData = dataHereBefore.value.filter(
-      (x) => x.quarter == props.quarterCap && x.region_id !== 1
+      (x) => x.quarter == props.quarterCap && x.region_id != 1
     );
     divisor = filteredData.reduce((sum, item) => sum + (Number(item?.adhk) ?? 0), 0);
   }
-  let growth = divisor !== 0 && dividend !== 0 ? (dividend / divisor) * 100 - 100 : 0;
+  let growth = divisor != 0 && dividend != 0 ? (dividend / divisor) * 100 - 100 : 0;
   setAdjustmentVal(region, typeAdjust, growth);
   return formatNumberGerman(growth.toFixed(props.toFixed), 2, 4);
 };
@@ -418,12 +418,12 @@ const gCtoC = (region, type, typeAdjust) => {
       divisor += Number(previous?.adhk) ?? 0;
     } else {
       const filteredData = dataHereBefore.value.filter(
-        (x) => x.quarter == String(index) && x.region_id !== 1
+        (x) => x.quarter == String(index) && x.region_id != 1
       );
       divisor += filteredData.reduce((sum, item) => sum + (Number(item?.adhk) ?? 0), 0);
     }
   }
-  let growth = divisor !== 0 && dividend !== 0 ? (dividend / divisor) * 100 - 100 : 0;
+  let growth = divisor != 0 && dividend != 0 ? (dividend / divisor) * 100 - 100 : 0;
   setAdjustmentVal(region, typeAdjust, growth);
   return formatNumberGerman(growth.toFixed(props.toFixed), 2, 4);
 };
@@ -445,8 +445,8 @@ const gIQtoQ = (region, adhb, adhk, type) => {
   adhbCurrent = Number(current?.adjVal?.[adhb]) ?? 0;
   adhkCurrent = Number(current?.adjVal?.[adhk]) ?? 0;
   idxCurrent =
-    adhbCurrent !== 0 && adhkCurrent !== 0 ? (adhbCurrent / adhkCurrent) * 100 : 0;
-  if (quarter - 1 !== 0) {
+    adhbCurrent != 0 && adhkCurrent != 0 ? (adhbCurrent / adhkCurrent) * 100 : 0;
+  if (quarter - 1 != 0) {
     if (
       props.dataOnDemand[quarter - 1] &&
       Array.isArray(props.dataOnDemand[quarter - 1])
@@ -456,7 +456,7 @@ const gIQtoQ = (region, adhb, adhk, type) => {
     adhbPrevious = Number(previous?.adjVal?.[adhb]) ?? 0;
     adhkPrevious = Number(previous?.adjVal?.[adhk]) ?? 0;
     idxPrevious =
-      adhbPrevious !== 0 && adhkPrevious !== 0 ? (adhbPrevious / adhkPrevious) * 100 : 0;
+      adhbPrevious != 0 && adhkPrevious != 0 ? (adhbPrevious / adhkPrevious) * 100 : 0;
   } else {
     if (!isNaN(Number(region))) {
       previous =
@@ -466,7 +466,7 @@ const gIQtoQ = (region, adhb, adhk, type) => {
       adhkPrevious = Number(previous?.adhk) ?? 0;
     } else {
       const filteredData = dataHereBefore.value.filter(
-        (x) => x.quarter == "4" && x.region_id !== 1
+        (x) => x.quarter == "4" && x.region_id != 1
       );
       adhbPrevious = filteredData.reduce(
         (sum, item) => sum + (Number(item?.adhb) ?? 0),
@@ -478,10 +478,10 @@ const gIQtoQ = (region, adhb, adhk, type) => {
       );
     }
     idxPrevious =
-      adhbPrevious !== 0 && adhkPrevious !== 0 ? (adhbPrevious / adhkPrevious) * 100 : 0;
+      adhbPrevious != 0 && adhkPrevious != 0 ? (adhbPrevious / adhkPrevious) * 100 : 0;
   }
   let growth =
-    idxPrevious !== 0 && idxCurrent !== 0 ? (idxCurrent / idxPrevious) * 100 - 100 : 0;
+    idxPrevious != 0 && idxCurrent != 0 ? (idxCurrent / idxPrevious) * 100 - 100 : 0;
   setAdjustmentVal(region, type, growth);
   return formatNumberGerman(growth.toFixed(props.toFixed), 2, 4);
 };

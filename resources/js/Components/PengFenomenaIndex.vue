@@ -295,7 +295,7 @@ const getData = (id, quarter, category_id, sector_id, subsector_id, type) => {
         x.subsector_id == subsector_id
       );
     });
-    if (theIndex !== -1) {
+    if (theIndex != -1) {
       let text = shortData.value[theIndex][type];
       return text;
     }
@@ -312,7 +312,7 @@ const isHidden = (region_id, quarter, category_id, sector_id, subsector_id, type
         x.subsector_id == subsector_id
       );
     });
-    if (theIndex !== -1) {
+    if (theIndex != -1) {
       return shortData.value[theIndex]["short_" + type];
     }
   }
@@ -327,7 +327,7 @@ const showText = (region_id, quarter, category_id, sector_id, subsector_id, type
       x.subsector_id == subsector_id
     );
   });
-  if (theIndex !== -1) {
+  if (theIndex != -1) {
     if (shortData.value[theIndex]["short_" + type] == true) {
       shortData.value[theIndex][type] = thisData.value[theIndex][type];
       shortData.value[theIndex]["short_" + type] = false;

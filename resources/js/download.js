@@ -22,7 +22,7 @@ const tableToJson = (idTabel, type = 'number') => {
     const tBody = table.querySelectorAll('tbody');
     tBody.forEach((body) => {
         // Check if the body is visible
-        if (window.getComputedStyle(body).display !== 'none') {
+        if (window.getComputedStyle(body).display != 'none') {
             const bodyRows = body.querySelectorAll('tr');
             bodyRows.forEach((row) => {
                 const rowData = {};
@@ -33,7 +33,7 @@ const tableToJson = (idTabel, type = 'number') => {
                     const header = headers[index] || `column_${index}`; // Fallback for missing headers
                     let val = cell.textContent.trim(); // Trim whitespace
 
-                    if (index !== 0) { // Skip the first column
+                    if (index != 0) { // Skip the first column
                         if (type == 'number') {
                             val = val.replace(/\./g, "").replace(/,/g, "."); // Convert German numeric format
                             val = parseFloat(val); // Convert to a number

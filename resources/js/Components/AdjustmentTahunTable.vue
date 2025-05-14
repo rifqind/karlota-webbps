@@ -190,17 +190,17 @@ const showThisVal = (region, type) => {
   }
 };
 const getTotalKabkot = (typeOfData, region, type) => {
-  const filteredData = dataHere.value.filter((x) => x.region_id !== 1);
+  const filteredData = dataHere.value.filter((x) => x.region_id != 1);
   const result = filteredData.reduce((sum, item) => sum + Number(item[typeOfData]), 0);
   const theIndex = adjustmentVal.value.findIndex((x) => {
     return x.region == region;
   });
-  if (theIndex !== -1) adjustmentVal.value[theIndex].adjVal[type] = result;
+  if (theIndex != -1) adjustmentVal.value[theIndex].adjVal[type] = result;
   return formatNumberGerman(result.toFixed(props.toFixed), 0, 9);
 };
 const getTotalKabkotBerjalan = (type) => {
   const filteredData = adjustmentVal.value.filter(
-    (x) => x.region !== 1 && !isNaN(Number(x.region))
+    (x) => x.region != 1 && !isNaN(Number(x.region))
   );
   const result = filteredData.reduce((sum, item) => sum + Number(item.adjVal[type]), 0);
   setAdjustmentVal("Total Kabupaten/Kota", type, result);
@@ -229,9 +229,9 @@ const getBerjalan = (region, type) => {
     adhk = 0;
   for (let index = 1; index <= 4; index++) {
     const data = props.dataOnDemand[index].find((x) => x.region == region);
-    if (type === "adhb_berjalan") {
+    if (type == "adhb_berjalan") {
       adhb += Number(data?.adjVal?.[type]) || 0; // Use || instead of ??
-    } else if (type === "adhk_berjalan") {
+    } else if (type == "adhk_berjalan") {
       adhk += Number(data?.adjVal?.[type]) || 0;
     }
   }
@@ -245,7 +245,7 @@ const getBerjalan = (region, type) => {
 };
 const setAdjustmentVal = (region, type, result) => {
   const theIndex = adjustmentVal.value.findIndex((x) => x.region == region);
-  if (theIndex !== -1) {
+  if (theIndex != -1) {
     adjustmentVal.value[theIndex].adjVal[type] = result;
   }
 };
@@ -275,12 +275,12 @@ const gYonY = (region, type, typeAdjust) => {
       divisor += Number(previous?.adhk) ?? 0;
     } else {
       const filteredData = dataHereBefore.value.filter(
-        (x) => x.quarter == String(index) && x.region_id !== 1
+        (x) => x.quarter == String(index) && x.region_id != 1
       );
       divisor += filteredData.reduce((sum, item) => sum + (Number(item?.adhk) ?? 0), 0);
     }
   }
-  let growth = divisor !== 0 && dividend !== 0 ? (dividend / divisor) * 100 - 100 : 0;
+  let growth = divisor != 0 && dividend != 0 ? (dividend / divisor) * 100 - 100 : 0;
   setAdjustmentVal(region, typeAdjust, growth);
   return formatNumberGerman(growth.toFixed(props.toFixed), 2, 4);
 };
@@ -303,12 +303,12 @@ const gCtoC = (region, type, typeAdjust) => {
       divisor += Number(previous?.adhk) ?? 0;
     } else {
       const filteredData = dataHereBefore.value.filter(
-        (x) => x.quarter == String(index) && x.region_id !== 1
+        (x) => x.quarter == String(index) && x.region_id != 1
       );
       divisor += filteredData.reduce((sum, item) => sum + (Number(item?.adhk) ?? 0), 0);
     }
   }
-  let growth = divisor !== 0 && dividend !== 0 ? (dividend / divisor) * 100 - 100 : 0;
+  let growth = divisor != 0 && dividend != 0 ? (dividend / divisor) * 100 - 100 : 0;
   setAdjustmentVal(region, typeAdjust, growth);
   return formatNumberGerman(growth.toFixed(props.toFixed), 2, 4);
 };

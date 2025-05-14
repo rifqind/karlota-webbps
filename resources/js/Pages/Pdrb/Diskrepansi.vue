@@ -605,7 +605,7 @@ const quartersTab = (quarter) => {
 };
 const resetShowTable = () => {
   Object.keys(showPdrbAndResult.value).forEach((key) => {
-    if (key !== "result") {
+    if (key != "result") {
       Object.keys(showPdrbAndResult.value[key]).forEach((node) => {
         showPdrbAndResult.value[key][node] = false;
       });
@@ -695,7 +695,7 @@ const showDist = (data) => {
     result[key] = dataset[key].map((value, index) => {
       let divisor = parseNumber(arrayPDRB[index]); // Get corresponding PDRB value
       let dividend = parseNumber(value); // Convert current value to number
-      let dist = divisor !== 0 ? (dividend / divisor) * 100 : 0; // Avoid division by zero
+      let dist = divisor != 0 ? (dividend / divisor) * 100 : 0; // Avoid division by zero
       return formatNumberGerman(dist.toFixed(4), 2, 4);
     });
   });
@@ -725,7 +725,7 @@ const showGQtoQ = (now, prev) => {
           ? Number(previous_quarter[key][index].replaceAll(".", "").replaceAll(",", "."))
           : 0;
       }
-      let growth = divisor !== 0 && dividend !== 0 ? (dividend / divisor) * 100 - 100 : 0;
+      let growth = divisor != 0 && dividend != 0 ? (dividend / divisor) * 100 - 100 : 0;
       return formatNumberGerman(growth.toFixed(4), 2, 4);
     });
   });
@@ -749,7 +749,7 @@ const showGYtoY = (now, prev) => {
       let divisor = previous_dataset[key][index]
         ? Number(previous_dataset[key][index].replaceAll(".", "").replaceAll(",", "."))
         : 0;
-      let growth = divisor !== 0 && dividend !== 0 ? (dividend / divisor) * 100 - 100 : 0;
+      let growth = divisor != 0 && dividend != 0 ? (dividend / divisor) * 100 - 100 : 0;
       return formatNumberGerman(growth.toFixed(4), 2, 4);
     });
   });
@@ -780,7 +780,7 @@ const showGCtoC = (now, prev) => {
         dividend += parseNumber(current_quarter[key][index]);
         divisor += parseNumber(previous_quarter[key][index]);
       }
-      let growth = divisor !== 0 && dividend !== 0 ? (dividend / divisor) * 100 - 100 : 0;
+      let growth = divisor != 0 && dividend != 0 ? (dividend / divisor) * 100 - 100 : 0;
       return formatNumberGerman(growth.toFixed(4), 2, 4);
     });
   });
@@ -798,7 +798,7 @@ const showIndeks = (now, prev) => {
     result[key] = current_dataset[key].map((value, index) => {
       let dividend = parseNumber(value);
       let divisor = parseNumber(previous_dataset[key][index]);
-      let indeks = divisor !== 0 ? (dividend / divisor) * 100 : 0;
+      let indeks = divisor != 0 ? (dividend / divisor) * 100 : 0;
       return formatNumberGerman(indeks.toFixed(4), 2, 4);
     });
   });
@@ -826,7 +826,7 @@ const showGIQtoQ = (adhbnow, adhbprev, adhknow, adhkprev) => {
     indeks_implisit_previous[key] = adhb_previous_dataset[key].map((_, index) => {
       let dividend = parseNumber(adhb_previous_dataset[key][index]);
       let divisor = parseNumber(adhk_previous_dataset[key][index]);
-      let indeks = divisor !== 0 && dividend !== 0 ? (dividend / divisor) * 100 : 0;
+      let indeks = divisor != 0 && dividend != 0 ? (dividend / divisor) * 100 : 0;
       return formatNumberGerman(indeks.toFixed(4), 2, 4);
     });
   });
@@ -835,7 +835,7 @@ const showGIQtoQ = (adhbnow, adhbprev, adhknow, adhkprev) => {
     indeks_implisit_current[key] = adhb_current_dataset[key].map((value, index) => {
       let dividend = parseNumber(value);
       let divisor = parseNumber(adhk_current_dataset[key][index]);
-      let indeks = divisor !== 0 ? (dividend / divisor) * 100 : 0;
+      let indeks = divisor != 0 ? (dividend / divisor) * 100 : 0;
       return formatNumberGerman(indeks.toFixed(4), 2, 4);
     });
   });
@@ -855,7 +855,7 @@ const showGIQtoQ = (adhbnow, adhbprev, adhknow, adhkprev) => {
         (value, index) => {
           let dividend = parseNumber(value);
           let divisor = parseNumber(previous_quarter_adhk[key][index]);
-          let indeks = divisor !== 0 ? (dividend / divisor) * 100 : 0;
+          let indeks = divisor != 0 ? (dividend / divisor) * 100 : 0;
           return formatNumberGerman(indeks.toFixed(4), 2, 4);
         }
       );
@@ -870,7 +870,7 @@ const showGIQtoQ = (adhbnow, adhbprev, adhknow, adhkprev) => {
       } else {
         divisor = parseNumber(indeks_implisit_quarter_previous[key][index]);
       }
-      let growth = divisor !== 0 && dividend !== 0 ? (dividend / divisor) * 100 - 100 : 0;
+      let growth = divisor != 0 && dividend != 0 ? (dividend / divisor) * 100 - 100 : 0;
       return formatNumberGerman(growth.toFixed(4), 2, 4);
     });
   });
@@ -902,7 +902,7 @@ const showGIYtoY = (adhbnow, adhbprev, adhknow, adhkprev) => {
     indeks_implisit_previous[key] = adhb_previous_dataset[key].map((value, index) => {
       let dividend = parseNumber(value);
       let divisor = parseNumber(adhk_previous_dataset[key][index]);
-      let indeks = divisor !== 0 ? (dividend / divisor) * 100 : 0;
+      let indeks = divisor != 0 ? (dividend / divisor) * 100 : 0;
       return formatNumberGerman(indeks.toFixed(4), 2, 4);
     });
   });
@@ -911,7 +911,7 @@ const showGIYtoY = (adhbnow, adhbprev, adhknow, adhkprev) => {
     indeks_implisit_current[key] = adhb_current_dataset[key].map((value, index) => {
       let dividend = parseNumber(value);
       let divisor = parseNumber(adhk_current_dataset[key][index]);
-      let indeks = divisor !== 0 ? (dividend / divisor) * 100 : 0;
+      let indeks = divisor != 0 ? (dividend / divisor) * 100 : 0;
       return formatNumberGerman(indeks.toFixed(4), 2, 4);
     });
   });
@@ -920,7 +920,7 @@ const showGIYtoY = (adhbnow, adhbprev, adhknow, adhkprev) => {
     result[key] = indeks_implisit_current[key].map((value, index) => {
       let dividend = parseNumber(value);
       let divisor = parseNumber(indeks_implisit_previous[key][index]);
-      let growth = divisor !== 0 && dividend !== 0 ? (dividend / divisor) * 100 - 100 : 0;
+      let growth = divisor != 0 && dividend != 0 ? (dividend / divisor) * 100 - 100 : 0;
       return formatNumberGerman(growth.toFixed(4), 2, 4);
     });
   });
@@ -941,7 +941,7 @@ const calculateDiskrepansi = (thisquarter = quarterCap.value) => {
         if (index > 0) {
           prov = parseNumber(adhbDisk[key][1]);
           selisih = prov - parseNumber(adhbDisk[key][2]);
-          let disk = selisih !== 0 && prov !== 0 ? (selisih / prov) * 100 : 0;
+          let disk = selisih != 0 && prov != 0 ? (selisih / prov) * 100 : 0;
           return formatNumberGerman(disk, 2, 4);
         }
       });
@@ -951,7 +951,7 @@ const calculateDiskrepansi = (thisquarter = quarterCap.value) => {
         if (index > 0) {
           prov = parseNumber(adhkDisk[key][1]);
           selisih = prov - parseNumber(adhkDisk[key][2]);
-          let disk = selisih !== 0 && prov !== 0 ? (selisih / prov) * 100 : 0;
+          let disk = selisih != 0 && prov != 0 ? (selisih / prov) * 100 : 0;
           return formatNumberGerman(disk, 2, 4);
         }
       });
@@ -967,7 +967,7 @@ const removeSpaceOnKomponen = (object) => {
   return result;
 };
 const isObjectEmpty = (obj) => {
-  return !obj || Object.keys(obj).length === 0;
+  return !obj || Object.keys(obj).length == 0;
 };
 const formatNumberGerman = (num, min = 2, max = 5) => {
   return new Intl.NumberFormat("de-DE", {

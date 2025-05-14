@@ -230,7 +230,7 @@
         </table>
       </div>
       <div
-        v-if="showTabPanel"
+        v-if="showTabPanel && page.props.auth.user.role == 'admin'"
         class="bg-white shadow-md mb-2 rounded-sm border border-gray-200 mb-3"
       >
         <div class="p-5">
@@ -579,7 +579,7 @@ const submit = async () => {
     response.data.current_data.forEach((element) => {
       const quarterData = dataOnDemand.value[Number(element.quarter)];
       const theIndex = quarterData.findIndex((x) => x.region == element.region_id);
-      if (theIndex !== -1) {
+      if (theIndex != -1) {
         quarterData[theIndex].adjVal["adhb_adjust"] = Number(element.adj_adhb);
         quarterData[theIndex].adjVal["adhk_adjust"] = Number(element.adj_adhk);
       }

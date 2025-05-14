@@ -430,7 +430,7 @@ class PdrbController extends Controller
         $prefix = request()->route()->getPrefix();
         if ($prefix == 'lapus') $type = 'Lapangan Usaha';
         else if ($prefix == 'peng') $type = 'Pengeluaran';
-        $regions = Region::getMyRegion();
+        $regions = Region::select(['id as value', 'name as label'])->get();
         $subsectors = Subsector::where('type', $type)
             ->with(['sector.category'])
             ->get();

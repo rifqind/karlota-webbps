@@ -224,7 +224,7 @@ const submit = async () => {
           x.subsector_id == element.subsector_id
         );
       });
-      if (theIndex !== -1) {
+      if (theIndex != -1) {
         dataContents.value[theIndex].id = element.id;
         dataContents.value[theIndex].fenomena_sets = element.fenomena_sets;
         dataContents.value[theIndex].qtoq = element.qtoq;
@@ -268,7 +268,7 @@ const getData = async () => {
         x.subsector_id == element.subsector_id
       );
     });
-    if (theIndex !== -1) {
+    if (theIndex != -1) {
       dataContents.value[theIndex].id = element.id;
       dataContents.value[theIndex].fenomena_sets = element.fenomena_sets;
       dataContents.value[theIndex].qtoq = element.qtoq;

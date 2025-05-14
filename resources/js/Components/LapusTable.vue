@@ -399,7 +399,7 @@ const handleInput = (event, subsector, quarter) => {
   const theIndex = dataHere.value.findIndex((x) => {
     return x.quarter == quarter && x.subsector_id == subsector;
   });
-  if (theIndex !== -1) dataHere.value[theIndex][props.type] = value;
+  if (theIndex != -1) dataHere.value[theIndex][props.type] = value;
 };
 const debounceHandleInput = debounce((event, subsector, quarter) => {
   handleInput(event, subsector, quarter);
@@ -407,7 +407,7 @@ const debounceHandleInput = debounce((event, subsector, quarter) => {
 const handlePaste = (event, subsector, quarter) => {
   const items = event.clipboardData.items;
   for (let i = 0; i < items.length; i++) {
-    if (items[i].type === "text/plain") {
+    if (items[i].type == "text/plain") {
       items[i].getAsString((text) => {
         const columnIndex = event.target.closest("td").cellIndex;
         const rowIndex = event.target.closest("tr").rowIndex;
@@ -432,7 +432,7 @@ const handlePaste = (event, subsector, quarter) => {
                   const theIndex = dataHere.value.findIndex((x) => {
                     return x.quarter == quarter && x.subsector_id == subsector;
                   });
-                  if (theIndex !== -1) {
+                  if (theIndex != -1) {
                     dataHere.value[theIndex][props.type] = formatCell;
                   }
                 }

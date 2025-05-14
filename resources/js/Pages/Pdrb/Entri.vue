@@ -629,11 +629,11 @@ const setWarningToUser = (mounted) => {
 };
 watch(form, (changedForm) => {
   if (
-    changedForm.year !== currentSearchSet.value.year ||
-    changedForm.quarter !== currentSearchSet.value.quarter ||
-    changedForm.description !== currentSearchSet.value.description ||
-    changedForm.dataBefore !== currentSearchSet.value.dataBefore ||
-    changedForm.regions !== currentSearchSet.value.regions
+    changedForm.year != currentSearchSet.value.year ||
+    changedForm.quarter != currentSearchSet.value.quarter ||
+    changedForm.description != currentSearchSet.value.description ||
+    changedForm.dataBefore != currentSearchSet.value.dataBefore ||
+    changedForm.regions != currentSearchSet.value.regions
   )
     warningToUser.value = true;
 });
@@ -977,7 +977,7 @@ const copy = async () => {
     const updatedDataContents = dataContents.value.map((item) => {
       const matched = response.data.current_data.find(
         (current) =>
-          current.subsector_id === item.subsector_id && current.quarter === item.quarter
+          current.subsector_id == item.subsector_id && current.quarter == item.quarter
       );
 
       return matched ? { ...item, adhb: matched.adhb, adhk: matched.adhk } : item;
@@ -1017,7 +1017,7 @@ const copyHasil = async () => {
     const updatedDataContents = dataContents.value.map((item) => {
       const matched = response.data.current_data.find(
         (current) =>
-          current.subsector_id === item.subsector_id && current.quarter === item.quarter
+          current.subsector_id == item.subsector_id && current.quarter == item.quarter
       );
 
       return matched ? { ...item, adhb: matched.adhb, adhk: matched.adhk } : item;
@@ -1155,10 +1155,10 @@ const showDist = (dataset) => {
   Object.keys(dataset).forEach((key) => {
     result[key] = dataset[key].map((value, index) => {
       // Include index 0 to (stake - 1) and always include index 4
-      if (index < stake || index === 4) {
+      if (index < stake || index == 4) {
         let divisor = parseNumber(arrayPDRB[index]); // Get corresponding PDRB value
         let dividend = parseNumber(value); // Convert current value to number
-        let dist = divisor !== 0 ? (dividend / divisor) * 100 : 0; // Avoid division by zero
+        let dist = divisor != 0 ? (dividend / divisor) * 100 : 0; // Avoid division by zero
         return formatNumberGerman(dist.toFixed(4), 2, 4);
       }
     });
@@ -1182,7 +1182,7 @@ const showGQtoQ = (current_dataset, previous_dataset) => {
       .map((value, index) => {
         let dividend = value ? Number(value.replaceAll(".", "").replaceAll(",", ".")) : 0;
         let divisor;
-        if (index === 0) {
+        if (index == 0) {
           // Use the previous dataset for the first quarter
           divisor = previous_dataset[key]
             ? Number(previous_dataset[key].replaceAll(".", "").replaceAll(",", "."))
@@ -1196,7 +1196,7 @@ const showGQtoQ = (current_dataset, previous_dataset) => {
             : 0;
         }
         let growth =
-          divisor !== 0 && dividend !== 0 ? (dividend / divisor) * 100 - 100 : 0;
+          divisor != 0 && dividend != 0 ? (dividend / divisor) * 100 - 100 : 0;
         return formatNumberGerman(growth.toFixed(4), 2, 4);
       });
   });
@@ -1225,7 +1225,7 @@ const showGYtoY = (current, previous) => {
           : 0;
 
         let growth =
-          divisor !== 0 && dividend !== 0 ? (dividend / divisor) * 100 - 100 : 0;
+          divisor != 0 && dividend != 0 ? (dividend / divisor) * 100 - 100 : 0;
         return formatNumberGerman(growth.toFixed(4), 2, 4);
       });
   });
@@ -1256,7 +1256,7 @@ const showGCtoC = (current, previous) => {
         dividend += parseNumber(current_dataset[key][cumulative]);
         divisor += parseNumber(previous_dataset[key][cumulative]);
       }
-      let growth = divisor !== 0 && dividend !== 0 ? (dividend / divisor) * 100 - 100 : 0;
+      let growth = divisor != 0 && dividend != 0 ? (dividend / divisor) * 100 - 100 : 0;
       return formatNumberGerman(growth.toFixed(4), 2, 4);
     });
   });
@@ -1276,7 +1276,7 @@ const showIndeks = (current, previous) => {
     result[key] = current_dataset[key].slice(0, stake).map((value, index) => {
       let dividend = parseNumber(value);
       let divisor = parseNumber(previous_dataset[key][index]);
-      let indeks = divisor !== 0 ? (dividend / divisor) * 100 : 0;
+      let indeks = divisor != 0 ? (dividend / divisor) * 100 : 0;
       return formatNumberGerman(indeks.toFixed(4), 2, 4);
     });
   });
@@ -1307,7 +1307,7 @@ const showGIQtoQ = (adhb_current, adhk_current, adhb_previous, adhk_previous) =>
   Object.keys(adhb_previous_dataset).forEach((key) => {
     let dividend = parseNumber(adhb_previous_dataset[key]);
     let divisor = parseNumber(adhk_previous_dataset[key]);
-    let indeks = divisor !== 0 && dividend !== 0 ? (dividend / divisor) * 100 : 0;
+    let indeks = divisor != 0 && dividend != 0 ? (dividend / divisor) * 100 : 0;
     indeks_implisit_previous[key] = formatNumberGerman(indeks.toFixed(4), 2, 4);
   });
   let indeks_implisit_current = {};
@@ -1317,7 +1317,7 @@ const showGIQtoQ = (adhb_current, adhk_current, adhb_previous, adhk_previous) =>
       .map((value, index) => {
         let dividend = parseNumber(value);
         let divisor = parseNumber(adhk_current_dataset[key][index]);
-        let indeks = divisor !== 0 ? (dividend / divisor) * 100 : 0;
+        let indeks = divisor != 0 ? (dividend / divisor) * 100 : 0;
         return formatNumberGerman(indeks.toFixed(4), 2, 4);
       });
   });
@@ -1326,14 +1326,14 @@ const showGIQtoQ = (adhb_current, adhk_current, adhb_previous, adhk_previous) =>
     result[key] = indeks_implisit_current[key].map((value, index) => {
       let dividend = parseNumber(value);
       let divisor;
-      if (index === 0) {
+      if (index == 0) {
         // Use the previous dataset for the first quarter
         divisor = parseNumber(indeks_implisit_previous[key]);
       } else {
         // Use the previous index from the same dataset
         divisor = parseNumber(indeks_implisit_current[key][index - 1]);
       }
-      let growth = divisor !== 0 && dividend !== 0 ? (dividend / divisor) * 100 - 100 : 0;
+      let growth = divisor != 0 && dividend != 0 ? (dividend / divisor) * 100 - 100 : 0;
       return formatNumberGerman(growth.toFixed(4), 2, 4);
     });
   });
@@ -1360,7 +1360,7 @@ const showGIYtoY = (adhb_current, adhk_current, adhb_previous, adhk_previous) =>
       .map((value, index) => {
         let dividend = parseNumber(value);
         let divisor = parseNumber(adhk_previous_dataset[key][index]);
-        let indeks = divisor !== 0 ? (dividend / divisor) * 100 : 0;
+        let indeks = divisor != 0 ? (dividend / divisor) * 100 : 0;
         return formatNumberGerman(indeks.toFixed(4), 2, 4);
       });
   });
@@ -1371,7 +1371,7 @@ const showGIYtoY = (adhb_current, adhk_current, adhb_previous, adhk_previous) =>
       .map((value, index) => {
         let dividend = parseNumber(value);
         let divisor = parseNumber(adhk_current_dataset[key][index]);
-        let indeks = divisor !== 0 ? (dividend / divisor) * 100 : 0;
+        let indeks = divisor != 0 ? (dividend / divisor) * 100 : 0;
         return formatNumberGerman(indeks.toFixed(4), 2, 4);
       });
   });
@@ -1380,7 +1380,7 @@ const showGIYtoY = (adhb_current, adhk_current, adhb_previous, adhk_previous) =>
     result[key] = indeks_implisit_current[key].map((value, index) => {
       let dividend = parseNumber(value);
       let divisor = parseNumber(indeks_implisit_previous[key][index]);
-      let growth = divisor !== 0 && dividend !== 0 ? (dividend / divisor) * 100 - 100 : 0;
+      let growth = divisor != 0 && dividend != 0 ? (dividend / divisor) * 100 - 100 : 0;
       return formatNumberGerman(growth.toFixed(4), 2, 4);
     });
   });
@@ -1401,7 +1401,7 @@ const formatNumberGerman = (num, min = 2, max = 5) => {
   }).format(num);
 };
 const isObjectEmpty = (obj) => {
-  return !obj || Object.keys(obj).length === 0;
+  return !obj || Object.keys(obj).length == 0;
 };
 // #region Section: Save & Submit & Unsubmit
 const saveEntri = async () => {

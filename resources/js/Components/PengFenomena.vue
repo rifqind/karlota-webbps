@@ -404,7 +404,7 @@ const handleInput = (event, category_id, sector_id, subsector_id, type) => {
       x.subsector_id == subsector_id
     );
   });
-  if (theIndex !== -1) {
+  if (theIndex != -1) {
     dataHere.value[theIndex][type] = value;
     emits("update:handleInput", { theIndex: theIndex, type: type, value: value });
   }
@@ -412,7 +412,7 @@ const handleInput = (event, category_id, sector_id, subsector_id, type) => {
 const handlePaste = (event) => {
   const items = event.clipboardData.items;
   for (let i = 0; i < items.length; i++) {
-    if (items[i].type === "text/plain") {
+    if (items[i].type == "text/plain") {
       items[i].getAsString((text) => {
         const columnIndex = event.target.closest("td").cellIndex;
         const rowIndex = event.target.closest("tr").rowIndex;
@@ -445,7 +445,7 @@ const handlePaste = (event) => {
                       x.subsector_id == subsector
                     );
                   });
-                  if (theIndex !== -1) {
+                  if (theIndex != -1) {
                     dataHere.value[theIndex][type] = input;
                     emits("update:handlePaste", {
                       theIndex: theIndex,
@@ -472,19 +472,19 @@ const parseTSVWithQuotes = (text) => {
     const char = text[i];
     const nextChar = text[i + 1];
 
-    if (char === '"') {
-      if (inQuotes && nextChar === '"') {
+    if (char == '"') {
+      if (inQuotes && nextChar == '"') {
         // Escaped quote
         currentCell += '"';
         i++; // skip next quote
       } else {
         inQuotes = !inQuotes; // toggle quotes
       }
-    } else if (char === "\t" && !inQuotes) {
+    } else if (char == "\t" && !inQuotes) {
       currentRow.push(currentCell);
       currentCell = "";
-    } else if ((char === "\n" || char === "\r") && !inQuotes) {
-      if (currentCell || currentCell === "") {
+    } else if ((char == "\n" || char == "\r") && !inQuotes) {
+      if (currentCell || currentCell == "") {
         currentRow.push(currentCell);
         currentCell = "";
       }
@@ -492,14 +492,14 @@ const parseTSVWithQuotes = (text) => {
         rows.push(currentRow);
         currentRow = [];
       }
-      if (char === "\r" && nextChar === "\n") i++; // Windows \r\n
+      if (char == "\r" && nextChar == "\n") i++; // Windows \r\n
     } else {
       currentCell += char;
     }
   }
 
   // Add last cell and row
-  if (currentCell || currentCell === "") currentRow.push(currentCell);
+  if (currentCell || currentCell == "") currentRow.push(currentCell);
   if (currentRow.length > 0) rows.push(currentRow);
 
   return rows;

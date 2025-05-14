@@ -273,7 +273,7 @@ const fetchData = () => {
   getDataCache.value.clear();
   for (const nodeS of props.subsectors) {
     for (const node of props.tableColumn) {
-      if (node.value !== "calculate") {
+      if (node.value != "calculate") {
         const cacheKey = `${nodeS.id}-${node.value}-${quarters.value}`;
         const result = getData(nodeS.id, node.value);
         getDataCache.value.set(cacheKey, result);
@@ -330,7 +330,7 @@ const getData = (subsectors, regions) => {
     if (regions == "total") {
       const filteredData = dataHere.value.filter(
         (x) =>
-          x.region_id !== 1 && x.subsector_id == subsectors && x.quarter == quarters.value
+          x.region_id != 1 && x.subsector_id == subsectors && x.quarter == quarters.value
       );
       let result;
       if (filteredData)
