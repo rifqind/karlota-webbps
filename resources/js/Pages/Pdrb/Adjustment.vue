@@ -608,8 +608,8 @@ const saveAdjustment = async () => {
   thisForm._token = response.data;
   if (thisForm.processing) return;
   thisForm.post(route("pdrb.save-adjustment"), {
+    preserveScroll: true,
     onSuccess: (response) => {
-      console.log(response.props.notification);
       showNotification(response.props.notification, 1500);
     },
   });
