@@ -535,6 +535,15 @@ const setClass = (region, type) => {
 </script>
 
 <style scoped>
+.huge-display tr td:not(:nth-child(1)) {
+  padding-top: 1.5px;
+  padding-bottom: 1.5px;
+}
+
+.huge-display .fixed-column {
+  padding-top: 1.5px;
+  padding-bottom: 1.5px;
+}
 .fixed-column {
   position: sticky;
   width: 400px;

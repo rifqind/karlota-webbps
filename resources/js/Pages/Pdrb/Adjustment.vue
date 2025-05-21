@@ -122,6 +122,9 @@
             <button @click="freezeColumn = !freezeColumn" class="btn btn-warning-fordone">
               Freeze Column
             </button>
+            <button @click="hugeDisplay = !hugeDisplay" class="btn btn-warning-fordone">
+              Adjust Display
+            </button>
           </div>
         </div>
       </div>
@@ -129,7 +132,11 @@
         class="overflow-x-scroll mb-2"
         :class="{ 'table-wrapper overflow-y-auto max-h-[720px]': freezeColumn }"
       >
-        <table class="table shadow-md w-full mb-2" id="tabel-entry">
+        <table
+          class="table shadow-md w-full mb-2"
+          :class="{ 'huge-display': hugeDisplay }"
+          id="tabel-entry"
+        >
           <thead :class="{ 'freeze-thead': freezeColumn }">
             <tr>
               <th class="fixed-thead" rowspan="2">Wilayah</th>
@@ -283,6 +290,7 @@ const activeTab = ref({
   t: def,
 });
 const freezeColumn = ref(false);
+const hugeDisplay = ref(true);
 const setActiveTab = (value) => {
   return activeTab.value[value];
 };
@@ -618,9 +626,9 @@ const saveAdjustment = async () => {
 </script>
 
 <style scoped>
-.table {
+/* .table {
   font-size: 13px;
-}
+} */
 
 /* First row of thead */
 .freeze-thead tr:first-child th {
