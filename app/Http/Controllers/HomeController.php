@@ -11,9 +11,21 @@ class HomeController extends Controller
     //
     public function index()
     {
-        $active_periode = Period::where('status', 'Aktif')->get();
+        $active_periode_lapus = Period::where('type', 'Lapangan Usaha')
+            ->where('status', 'Aktif')
+            ->orderBy('created_at', 'desc')
+            ->take(3)
+            ->select(['type', 'description'])
+            ->get();
+        $active_periode_peng = Period::where('type', 'Pengeluaran')
+            ->where('status', 'Aktif')
+            ->orderBy('created_at', 'desc')
+            ->take(3)
+            ->select(['type', 'description'])
+            ->get();
         return Inertia::render('Dashboard', [
-            'data' => $active_periode
+            'lapus' => $active_periode_lapus,
+            'peng' => $active_periode_peng,
         ]);
     }
 }
