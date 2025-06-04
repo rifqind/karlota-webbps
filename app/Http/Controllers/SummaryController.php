@@ -11,15 +11,14 @@ use App\Models\Sector;
 use App\Models\Subsector;
 use App\Models\SummaryPdrb;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 
 class SummaryController extends Controller
 {
     //
-    public function index()
+    public function index(Request $request)
     {
-        $category = Category::pluck('id');
-        $sector = Sector::pluck('id');
-        $subsector = Subsector::pluck('id');
+        set_time_limit(0);
         $region = Region::pluck('id');
 
         $lapus_PERIOD = Period::where('type', 'Lapangan Usaha')
@@ -47,7 +46,44 @@ class SummaryController extends Controller
             ->orWhere('period_id', $peng_period_before)
             ->pluck('id');
 
-        foreach ($category as $key => $cat) {
+        $setup = $request->setup;
+        if ($setup == 'category') {
+            $this->setupCategory($dataset_before, $dataset);
+        } else if ($setup == 'sector') {
+            $this->setupSector($dataset_before, $dataset);
+        } else {
+            $this->setupSubsector($dataset_before, $dataset);
+        }
+
+        $summary_per_regions = SummaryPdrb::orderBy('region_id', 'asc')
+            ->whereNot('subsector_id', null)
+            ->groupBy('region_id', 'quarter')
+            ->selectRaw('quarter, SUM(adhb) as total_adhb, region_id')
+            ->get();
+
+        foreach ($summary_per_regions as $keyReg => $region) {
+            # code...
+            $summaries = SummaryPdrb::pluck('id');
+            foreach ($summaries as $key => $value) {
+                # code...
+                $this_pdrb = SummaryPdrb::where('id', $value)->value('adhb');
+                $dist = SummaryPdrb::where('id', $value)
+                    ->where('quarter', $region->quarter)
+                    ->where('region_id', $region->region_id)
+                    ->update([
+                        'dist' => ($this_pdrb != 0 && $region->total_adhb != 0) ? ($this_pdrb / $region->total_adhb) * 100 : 0
+                    ]);
+            }
+        }
+        return response()->json([
+            'message' => $setup . ' done'
+        ]);
+    }
+
+    private function setupCategory($dataset_before, $dataset)
+    {
+        $category = Category::pluck('id');
+        foreach ($category as $keyCat => $cat) {
             # code...
             $sectorForSearch = Sector::where('category_id', $cat)->pluck('id');
             $subsectorForSearch = Subsector::whereIn('sector_id', $sectorForSearch)->pluck('id');
@@ -105,16 +141,16 @@ class SummaryController extends Controller
                 });
             foreach ($data as $key => $value) {
                 # code...
-                $result = $this->buildValue($data_before, $value, $data);
-                $updating_summary = SummaryPdrb::where('region_id', $value->region_id)
-                    ->where('quarter', $value->quarter)
-                    ->where('category_id', $value->category_id)
+                $result = $this->buildValue($data_before, $value, $data, 'category_id', 'category');
+                $updating_summary = SummaryPdrb::where('region_id', $value['region_id'])
+                    ->where('quarter', $value['quarter'])
+                    ->where('category_id', $value['category_id'])
                     ->where('sector_id', null)
                     ->where('subsector_id', null)
                     ->update(
                         [
-                            'adhb' => $value->adhb,
-                            'adhk' => $value->adhk,
+                            'adhb' => $value['adhb'],
+                            'adhk' => $value['adhk'],
                             'qtoq' => $result['qtoq'],
                             'yony' => $result['yony'],
                             'ctoc' => $result['ctoc'],
@@ -125,8 +161,12 @@ class SummaryController extends Controller
                     );
             }
         }
+    }
 
-        foreach ($sector as $key => $set) {
+    private function setupSector($dataset_before, $dataset)
+    {
+        $sector = Sector::pluck('id');
+        foreach ($sector as $keySet => $set) {
             # code...
             $subsectorForSearch = Subsector::where('sector_id', $set)->pluck('id');
             if ($set == '54') {
@@ -288,19 +328,63 @@ class SummaryController extends Controller
             }
             foreach ($data as $key => $value) {
                 # code...
-                $result = $this->buildValue($data_before, $value, $data);
-                $updating_summary = SummaryPdrb::where('region_id', $value->region_id)
-                    ->where('quarter', $value->quarter)
-                    ->where('sector_id', $value->sector_id)
+                $result = $this->buildValue($data_before, $value, $data, 'sector_id', 'sector');
+                $updating_summary = SummaryPdrb::where('region_id', $value['region_id'])
+                    ->where('quarter', $value['quarter'])
+                    ->where('sector_id', $value['sector_id'])
                     ->where('subsector_id', null)
                     ->update(
-                        ['adhb' => $value->adhb, 'adhk' => $value->adhk]
+                        [
+                            'adhb' => $value['adhb'],
+                            'adhk' => $value['adhk'],
+                            'qtoq' => $result['qtoq'],
+                            'yony' => $result['yony'],
+                            'ctoc' => $result['ctoc'],
+                            'idx' => $result['idx'],
+                            'iqtoq' => $result['iqtoq'],
+                            'iyony' => $result['iyony']
+                        ]
                     );
             }
         }
+    }
 
-        foreach ($subsector as $key => $sub) {
+    private function setupSubsector($dataset_before, $dataset)
+    {
+        $subsector = Subsector::pluck('id');
+        foreach ($subsector as $keySub => $sub) {
             # code...
+
+            $data_before = Pdrb::leftJoin('adjustments as adj', 'adj.pdrb_id', '=', 'pdrbs.id')
+                ->join('datasets as d', 'd.id', '=', 'pdrbs.dataset_id')
+                ->whereIn('pdrbs.dataset_id', $dataset_before)
+                ->where('pdrbs.subsector_id', $sub)
+                ->orderBy('d.region_id', 'asc')
+                ->select(
+                    'pdrbs.id',
+                    'pdrbs.dataset_id',
+                    'pdrbs.year',
+                    'pdrbs.quarter',
+                    'pdrbs.subsector_id',
+                    'pdrbs.adhb',
+                    'pdrbs.adhk',
+                    'adj.adhb as adj_adhb',
+                    'adj.adhk as adj_adhk',
+                    'd.region_id as region_id'
+                )
+                ->get()
+                ->map(function ($item) {
+                    return [
+                        'id' => $item->id,
+                        'year' => $item->year,
+                        'quarter' => $item->quarter,
+                        'subsector_id' => $item->subsector_id,
+                        'adhb' => $item->adhb + ($item->adj_adhb ?? 0),
+                        'adhk' => $item->adhk + ($item->adj_adhk ?? 0),
+                        'region_id' => $item->region_id
+                    ];
+                });
+
             $data = Pdrb::leftJoin('adjustments as adj', 'adj.pdrb_id', '=', 'pdrbs.id')
                 ->join('datasets as d', 'd.id', '=', 'pdrbs.dataset_id')
                 ->whereIn('pdrbs.dataset_id', $dataset)
@@ -332,92 +416,92 @@ class SummaryController extends Controller
                 });
             foreach ($data as $key => $value) {
                 # code...
-                $updating_summary = SummaryPdrb::where('region_id', $value->region_id)
-                    ->where('quarter', $value->quarter)
-                    ->where('subsector_id', $value->subsector_id)
+                $result = $this->buildValue($data_before, $value, $data, 'subsector_id', 'subsector');
+                $updating_summary = SummaryPdrb::where('region_id', $value['region_id'])
+                    ->where('quarter', $value['quarter'])
+                    ->where('subsector_id', $value['subsector_id'])
                     ->update(
-                        ['adhb' => $value->adhb, 'adhk' => $value->adhk]
+                        [
+                            'adhb' => $value['adhb'],
+                            'adhk' => $value['adhk'],
+                            'qtoq' => $result['qtoq'],
+                            'yony' => $result['yony'],
+                            'ctoc' => $result['ctoc'],
+                            'idx' => $result['idx'],
+                            'iqtoq' => $result['iqtoq'],
+                            'iyony' => $result['iyony']
+                        ]
                     );
-            }
-        }
-
-        $summary_per_regions = SummaryPdrb::orderBy('region_id', 'asc')
-            ->whereNot('subsector_id', null)
-            ->groupBy('region_id', 'quarter')
-            ->selectRaw('quarter, SUM(adhb) as total_adhb, region_id')
-            ->get();
-
-        foreach ($summary_per_regions as $key => $region) {
-            # code...
-            $summaries = SummaryPdrb::pluck('id');
-            foreach ($summaries as $value) {
-                # code...
-                $this_pdrb = SummaryPdrb::where('id', $value)->value('adhb');
-                $dist = SummaryPdrb::where('id', $value)
-                    ->where('quarter', $region->quarter)
-                    ->where('region_id', $region->region_id)
-                    ->update([
-                        'dist' => ($this_pdrb / $region->total_adhb) * 100
-                    ]);
             }
         }
     }
 
-    private function buildValue($past, $present, $presentObject)
+    public function getProgress()
+    {
+        return response()->json([
+            'category' => Cache::get('category'),
+            'sector' => Cache::get('sector'),
+            'subsector' => Cache::get('subsector'),
+            'dist' => Cache::get('dist'),
+            'progress' => Cache::get('progress'),
+        ]);
+    }
+
+    private function buildValue($past, $present, $presentObject, $type, $typeAttribute)
     {
         $qtoq = 0;
         $yony = 0;
         $ctoc = 0;
-        $idx = ($present->adhb != 0) && ($present->adhk != 0) ? ($present->adhb / $present->adhk) * 100 : 0;
+        $idx = ($present['adhb'] != 0) && ($present['adhk'] != 0) ? ($present['adhb'] / $present['adhk']) * 100 : 0;
         $idx_before_qtoq = 0;
         $idx_before_yony = 0;
         $iqtoq = 0;
         $iyony = 0;
-        $adhb_before_yony = $past->where('quarter', $present->quarter)
-            ->where('category_id', $present->category_id)
-            ->where('region_id', $present->region_id)
+        $adhb_before_yony = $past->where('quarter', $present['quarter'])
+            ->where($type, ($typeAttribute == 'category') ? $present['category_id'] : (($typeAttribute == 'sector') ? $present['sector_id'] : $present['subsector_id']))
+            ->where('region_id', $present['region_id'])
             ->value('adhb');
-        $adhk_before_yony = $past->where('quarter', $present->quarter)
-            ->where('category_id', $present->category_id)
-            ->where('region_id', $present->region_id)
+        $adhk_before_yony = $past->where('quarter', $present['quarter'])
+            ->where($type, ($typeAttribute == 'category') ? $present['category_id'] : (($typeAttribute == 'sector') ? $present['sector_id'] : $present['subsector_id']))
+            ->where('region_id', $present['region_id'])
             ->value('adhk');
         $idx_before_yony = ($adhb_before_yony != 0) && ($adhk_before_yony != 0) ? ($adhb_before_yony / $adhk_before_yony) * 100 : 0;
-        if ($present->quarter == 1) {
+        if ($present['quarter'] == 1) {
             $adhb_before_qtoq = $past->where('quarter', 4)
-                ->where('category_id', $present->category_id)
-                ->where('region_id', $present->region_id)
+                ->where($type, ($typeAttribute == 'category') ? $present['category_id'] : (($typeAttribute == 'sector') ? $present['sector_id'] : $present['subsector_id']))
+                ->where('region_id', $present['region_id'])
                 ->value('adhb');
             $adhk_before_qtoq = $past->where('quarter', 4)
-                ->where('category_id', $present->category_id)
-                ->where('region_id', $present->region_id)
+                ->where($type, ($typeAttribute == 'category') ? $present['category_id'] : (($typeAttribute == 'sector') ? $present['sector_id'] : $present['subsector_id']))
+                ->where('region_id', $present['region_id'])
                 ->value('adhk');
         } else {
-            $adhb_before_qtoq = $presentObject->where('quarter', $present->quarter)
-                ->where('region_id', $present->region_id)
-                ->where('category_id', $present->category_id)
+            $adhb_before_qtoq = $presentObject->where('quarter', $present['quarter'])
+                ->where('region_id', $present['region_id'])
+                ->where($type, ($typeAttribute == 'category') ? $present['category_id'] : (($typeAttribute == 'sector') ? $present['sector_id'] : $present['subsector_id']))
                 ->value('adhb');
-            $adhk_before_qtoq = $presentObject->where('quarter', $present->quarter)
-                ->where('region_id', $present->region_id)
-                ->where('category_id', $present->category_id)
+            $adhk_before_qtoq = $presentObject->where('quarter', $present['quarter'])
+                ->where('region_id', $present['region_id'])
+                ->where($type, ($typeAttribute == 'category') ? $present['category_id'] : (($typeAttribute == 'sector') ? $present['sector_id'] : $present['subsector_id']))
                 ->value('adhk');
         }
         $idx_before_qtoq = ($adhb_before_qtoq != 0) && ($adhk_before_qtoq != 0) ? ($adhb_before_qtoq / $adhk_before_qtoq) * 100 : 0;
         $before_cumulative = 0;
         $present_cumulative = 0;
-        for ($i = 1; $i <= $present->quarter; $i++) {
+        for ($i = 1; $i <= $present['quarter']; $i++) {
             # code...
             $before_cumulative += $past->where('quarter', $i)
-                ->where('category_id', $present->category_id)
-                ->where('region_id', $present->region_id)
+                ->where($type, ($typeAttribute == 'category') ? $present['category_id'] : (($typeAttribute == 'sector') ? $present['sector_id'] : $present['subsector_id']))
+                ->where('region_id', $present['region_id'])
                 ->value('adhk');
             $present_cumulative += $presentObject->where('quarter', $i)
-                ->where('category_id', $present->category_id)
-                ->where('region_id', $present->region_id)
+                ->where($type, ($typeAttribute == 'category') ? $present['category_id'] : (($typeAttribute == 'sector') ? $present['sector_id'] : $present['subsector_id']))
+                ->where('region_id', $present['region_id'])
                 ->value('adhk');
         }
         $ctoc = ($before_cumulative != 0) && ($present_cumulative != 0) ? ($present_cumulative / $before_cumulative) * 100 - 100 : 0;
-        $qtoq = ($adhk_before_qtoq != 0) && ($present->adhk != 0) ? ($present->adhk / $adhk_before_qtoq) * 100 - 100 : 0;
-        $yony = ($adhk_before_yony != 0) && ($present->adhk != 0) ? ($present->adhk / $adhk_before_yony) * 100 - 100 : 0;
+        $qtoq = ($adhk_before_qtoq != 0) && ($present['adhk'] != 0) ? ($present['adhk'] / $adhk_before_qtoq) * 100 - 100 : 0;
+        $yony = ($adhk_before_yony != 0) && ($present['adhk'] != 0) ? ($present['adhk'] / $adhk_before_yony) * 100 - 100 : 0;
         $iqtoq = ($idx_before_qtoq != 0) && ($idx != 0) ? ($idx / $idx_before_qtoq) * 100 - 100 : 0;
         $iyony = ($idx_before_yony != 0) && ($idx != 0) ? ($idx / $idx_before_yony) * 100 - 100 : 0;
 

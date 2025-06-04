@@ -39,6 +39,9 @@
           </div>
         </div>
       </div>
+      <div class="flex justify-end items-center">
+        <button @click="buildSummaries" class="btn btn-success-fordone">Summaries</button>
+      </div>
 
       <!-- <div
         class="bg-white shadow-md mb-2 rounded-md border border-gray-200 w-full md:w-full lg:w-6/12 xl:w-6/12 border-l-orange-500 border-l-4"
@@ -62,5 +65,20 @@ const props = defineProps({
     required: false,
   },
 });
+
+const buildSummaries = () => {
+  let setupArray = ["category", "sector", "subsector"];
+  setupArray.forEach(async (element) => {
+    try {
+      const response = await axios.get(route("home.index"), {
+        params: {
+          setup: element,
+        },
+      });
+    } catch (error) {
+      console.error(error);
+    }
+  });
+};
 </script>
 <style scoped></style>
