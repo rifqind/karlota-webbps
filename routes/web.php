@@ -19,6 +19,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         ->name('dashboard');
     Route::get('/index', [SummaryController::class, 'index'])->name('home.index');
     Route::get('/get-progress', [SummaryController::class, 'getProgress'])->name('home.get-progress');
+    Route::post('/update-time', [HomeController::class, 'updateSummaryTime'])->name('home.update-time');
     Route::prefix('period')->name('period.')->group(function () {
         Route::middleware(['role:admin'])->group(function () {
             Route::get('/index', [PeriodController::class, 'index'])

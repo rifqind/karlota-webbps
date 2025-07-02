@@ -103,6 +103,7 @@ class SummaryPdrbSeeder extends Seeder
                     ['category_id' => 15, 'sector_id' => 46, 'subsector_id' => 53, 'region_id' => $value, 'quarter' => $qt],
                     ['category_id' => 16, 'sector_id' => 47, 'subsector_id' => 54, 'region_id' => $value, 'quarter' => $qt],
                     ['category_id' => 17, 'sector_id' => 48, 'subsector_id' => 55, 'region_id' => $value, 'quarter' => $qt],
+                    ['region_id' => $value, 'quarter' => $qt],
                     ['category_id' => 18, 'sector_id' => 49, 'region_id' => $value, 'quarter' => $qt],
                     ['category_id' => 18, 'sector_id' => 49, 'subsector_id' => 56, 'region_id' => $value, 'quarter' => $qt],
                     ['category_id' => 18, 'sector_id' => 49, 'subsector_id' => 57, 'region_id' => $value, 'quarter' => $qt],
@@ -120,6 +121,7 @@ class SummaryPdrbSeeder extends Seeder
                     ['category_id' => 18, 'sector_id' => 54, 'region_id' => $value, 'quarter' => $qt],
                     ['category_id' => 18, 'sector_id' => 54, 'subsector_id' => 68, 'region_id' => $value, 'quarter' => $qt],
                     ['category_id' => 18, 'sector_id' => 54, 'subsector_id' => 69, 'region_id' => $value, 'quarter' => $qt],
+                    ['region_id' => $value, 'quarter' => $qt],
                 ];
                 foreach($data as $item) {
                     $normalized[] = array_merge($default, $item);

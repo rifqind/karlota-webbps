@@ -51,32 +51,36 @@ class SummaryController extends Controller
             $this->setupCategory($dataset_before, $dataset);
         } else if ($setup == 'sector') {
             $this->setupSector($dataset_before, $dataset);
-        } else {
+        } else if ($setup == 'subsector') {
             $this->setupSubsector($dataset_before, $dataset);
+        } else {
+            $this->setupTotal($dataset_before, $dataset);
         }
 
-        $summary_per_regions = SummaryPdrb::orderBy('region_id', 'asc')
-            ->whereNot('subsector_id', null)
-            ->groupBy('region_id', 'quarter')
-            ->selectRaw('quarter, SUM(adhb) as total_adhb, region_id')
-            ->get();
+        // $summary_per_regions = SummaryPdrb::orderBy('region_id', 'asc')
+        //     ->whereNot('subsector_id', null)
+        //     ->groupBy('region_id', 'quarter')
+        //     ->selectRaw('quarter, SUM(adhb) as total_adhb, region_id')
+        //     ->get();
 
-        foreach ($summary_per_regions as $keyReg => $region) {
-            # code...
-            $summaries = SummaryPdrb::pluck('id');
-            foreach ($summaries as $key => $value) {
-                # code...
-                $this_pdrb = SummaryPdrb::where('id', $value)->value('adhb');
-                $dist = SummaryPdrb::where('id', $value)
-                    ->where('quarter', $region->quarter)
-                    ->where('region_id', $region->region_id)
-                    ->update([
-                        'dist' => ($this_pdrb != 0 && $region->total_adhb != 0) ? ($this_pdrb / $region->total_adhb) * 100 : 0
-                    ]);
-            }
-        }
+        // foreach ($summary_per_regions as $keyReg => $region) {
+        //     # code...
+        //     $summaries = SummaryPdrb::pluck('id');
+        //     foreach ($summaries as $key => $value) {
+        //         # code...
+        //         $this_pdrb = SummaryPdrb::where('id', $value)->value('adhb');
+        //         $dist = SummaryPdrb::where('id', $value)
+        //             ->where('quarter', $region->quarter)
+        //             ->where('region_id', $region->region_id)
+        //             ->update([
+        //                 'dist' => ($this_pdrb != 0 && $region->total_adhb != 0) ? ($this_pdrb / $region->total_adhb) * 100 : 0
+        //             ]);
+        //     }
+        // }
         return response()->json([
-            'message' => $setup . ' done'
+            'message' => $setup . ' done',
+            'lapus_period' => $lapus_period,
+            'peng_period' => $peng_period
         ]);
     }
 
@@ -436,6 +440,118 @@ class SummaryController extends Controller
         }
     }
 
+    private function setupTotal($dataset_before, $dataset)
+    {
+        $subsector = Subsector::pluck('id');
+        $data_before = Pdrb::leftJoin('adjustments as adj', 'adj.pdrb_id', '=', 'pdrbs.id')
+            ->join('datasets as d', 'd.id', '=', 'pdrbs.dataset_id')
+            ->whereIn('pdrbs.dataset_id', $dataset_before)
+            ->orderBy('d.region_id', 'asc')
+            ->select(
+                'pdrbs.id',
+                'pdrbs.dataset_id',
+                'pdrbs.year',
+                'pdrbs.quarter',
+                'pdrbs.subsector_id',
+                'pdrbs.adhb',
+                'pdrbs.adhk',
+                'adj.adhb as adj_adhb',
+                'adj.adhk as adj_adhk',
+                'd.region_id as region_id'
+            )
+            ->get()
+            ->map(function ($item) {
+                return [
+                    'id' => $item->id,
+                    'year' => $item->year,
+                    'quarter' => $item->quarter,
+                    'subsector_id' => $item->subsector_id,
+                    'adhb' => $item->adhb + ($item->adj_adhb ?? 0),
+                    'adhk' => $item->adhk + ($item->adj_adhk ?? 0),
+                    'region_id' => $item->region_id
+                ];
+            });
+
+        $group_before = $data_before->groupBy(function ($item) {
+            return $item['region_id'] . '-' . $item['year'] . '-' .  $item['quarter'];
+        })->map(function ($group, $key) {
+            [$region_id, $year, $quarter] = explode('-', $key);
+            return [
+                'region_id' => (int) $region_id,
+                'year' => (int) $year,
+                'quarter' => (int) $quarter,
+                'adhb' => $group->sum('adhb'),
+                'adhk' => $group->sum('adhk')
+            ];
+        });
+        $data = Pdrb::leftJoin('adjustments as adj', 'adj.pdrb_id', '=', 'pdrbs.id')
+            ->join('datasets as d', 'd.id', '=', 'pdrbs.dataset_id')
+            ->whereIn('pdrbs.dataset_id', $dataset)
+            ->orderBy('d.region_id', 'asc')
+            ->select(
+                'pdrbs.id',
+                'pdrbs.dataset_id',
+                'pdrbs.year',
+                'pdrbs.quarter',
+                'pdrbs.subsector_id',
+                'pdrbs.adhb',
+                'pdrbs.adhk',
+                'adj.adhb as adj_adhb',
+                'adj.adhk as adj_adhk',
+                'd.region_id as region_id'
+            )
+            ->get()
+            ->map(function ($item) {
+                return [
+                    'id' => $item->id,
+                    'year' => $item->year,
+                    'quarter' => $item->quarter,
+                    'subsector_id' => $item->subsector_id,
+                    'adhb' => $item->adhb + ($item->adj_adhb ?? 0),
+                    'adhk' => $item->adhk + ($item->adj_adhk ?? 0),
+                    'region_id' => $item->region_id
+                ];
+            });
+
+        $group_now = $data->groupBy(function ($item) {
+            return $item['region_id'] . '-' . $item['year'] . '-' . $item['quarter'];
+        })->map(function ($group, $key) {
+            [$region_id, $year, $quarter] = explode('-', $key);
+            return [
+                'region_id' => (int) $region_id,
+                'year' => (int) $year,
+                'quarter' => (int) $quarter,
+                'adhb' => $group->sum('adhb'),
+                'adhk' => $group->sum('adhk')
+            ];
+        });
+        
+        $super_result = [];
+        foreach ($group_now as $key => $value) {
+            # code...
+            $result = $this->buildTotal($group_before, $value, $group_now);  
+            array_push($super_result,$result );      
+            // $updating_summary = SummaryPdrb::where('region_id', $value['region_id'])
+            //     ->where('quarter', $value['quarter'])
+            //     ->where('category_id', null)
+            //     ->where('sector_id', null)
+            //     ->where('subsector_id', null)
+            //     ->update(
+            //         [
+            //             'adhb' => $value['adhb'],
+            //             'adhk' => $value['adhk'],
+            //             'qtoq' => $result['qtoq'],
+            //             'yony' => $result['yony'],
+            //             'ctoc' => $result['ctoc'],
+            //             'idx' => $result['idx'],
+            //             'iqtoq' => $result['iqtoq'],
+            //             'iyony' => $result['iyony']
+            //         ]
+            //     );
+        }
+        dd($super_result);
+    }
+
     public function getProgress()
     {
         return response()->json([
@@ -498,6 +614,70 @@ class SummaryController extends Controller
                 ->where($type, ($typeAttribute == 'category') ? $present['category_id'] : (($typeAttribute == 'sector') ? $present['sector_id'] : $present['subsector_id']))
                 ->where('region_id', $present['region_id'])
                 ->value('adhk');
+        }
+        $ctoc = ($before_cumulative != 0) && ($present_cumulative != 0) ? ($present_cumulative / $before_cumulative) * 100 - 100 : 0;
+        $qtoq = ($adhk_before_qtoq != 0) && ($present['adhk'] != 0) ? ($present['adhk'] / $adhk_before_qtoq) * 100 - 100 : 0;
+        $yony = ($adhk_before_yony != 0) && ($present['adhk'] != 0) ? ($present['adhk'] / $adhk_before_yony) * 100 - 100 : 0;
+        $iqtoq = ($idx_before_qtoq != 0) && ($idx != 0) ? ($idx / $idx_before_qtoq) * 100 - 100 : 0;
+        $iyony = ($idx_before_yony != 0) && ($idx != 0) ? ($idx / $idx_before_yony) * 100 - 100 : 0;
+
+        $result = [
+            'qtoq' => $qtoq,
+            'yony' => $yony,
+            'ctoc' => $ctoc,
+            'idx' => $idx,
+            'iqtoq' => $iqtoq,
+            'iyony' => $iyony
+        ];
+        return $result;
+    }
+
+    private function buildTotal($past, $present, $presentObject)
+    {
+        $qtoq = 0;
+        $yony = 0;
+        $ctoc = 0;
+        $idx = ($present['adhb'] != 0) && ($present['adhk'] != 0) ? ($present['adhb'] / $present['adhk']) * 100 : 0;
+        $idx_before_qtoq = 0;
+        $idx_before_yony = 0;
+        $iqtoq = 0;
+        $iyony = 0;
+        $adhb_before_yony = $past->where('quarter', $present['quarter'])
+            ->where('region_id', $present['region_id'])
+            ->value('adhb');
+        $adhk_before_yony = $past->where('quarter', $present['quarter'])
+            ->where('region_id', $present['region_id'])
+            ->value('adhk');
+        $idx_before_yony = ($adhb_before_yony != 0) && ($adhk_before_yony != 0) ? ($adhb_before_yony / $adhk_before_yony) * 100 : 0;
+        if ($present['quarter'] == 1) {
+            $adhb_before_qtoq = $past->where('quarter', 4)
+                ->where('region_id', $present['region_id'])
+                ->value('adhb');
+            $adhk_before_qtoq = $past->where('quarter', 4)
+                ->where('region_id', $present['region_id'])
+                ->value('adhk');
+        } else {
+            $adhb_before_qtoq = $presentObject->where('quarter', $present['quarter'])
+                ->where('region_id', $present['region_id'])
+                ->value('adhb');
+            $adhk_before_qtoq = $presentObject->where('quarter', $present['quarter'])
+                ->where('region_id', $present['region_id'])
+                ->value('adhk');
+        }
+        $idx_before_qtoq = ($adhb_before_qtoq != 0) && ($adhk_before_qtoq != 0) ? ($adhb_before_qtoq / $adhk_before_qtoq) * 100 : 0;
+        $before_cumulative = 0;
+        $present_cumulative = 0;
+        for ($i = 1; $i <= $present['quarter']; $i++) {
+            # code...
+            $before_cumulative += $past->where('quarter', $i)
+                ->where('region_id', $present['region_id'])
+                ->value('adhk');
+            $present_cumulative += $presentObject->where('quarter', $i)
+                ->where('region_id', $present['region_id'])
+                ->value('adhk');
+        }
+        if ($present['region_id'] == '2') {
+            dd($adhk_before_qtoq, $present['adhk'], ($present['adhk'] / $adhk_before_qtoq) * 100 - 100);
         }
         $ctoc = ($before_cumulative != 0) && ($present_cumulative != 0) ? ($present_cumulative / $before_cumulative) * 100 - 100 : 0;
         $qtoq = ($adhk_before_qtoq != 0) && ($present['adhk'] != 0) ? ($present['adhk'] / $adhk_before_qtoq) * 100 - 100 : 0;

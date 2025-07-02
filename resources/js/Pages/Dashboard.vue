@@ -42,6 +42,9 @@
       <div class="flex justify-end items-center">
         <button @click="buildSummaries" class="btn btn-success-fordone">Summaries</button>
       </div>
+      <div v-for="item in sumTime" :key="item.id">
+        {{ item }}
+      </div>
 
       <!-- <div
         class="bg-white shadow-md mb-2 rounded-md border border-gray-200 w-full md:w-full lg:w-6/12 xl:w-6/12 border-l-orange-500 border-l-4"
@@ -53,7 +56,7 @@
 </template>
 
 <script setup>
-import { Head } from "@inertiajs/vue3";
+import { Head, useForm } from "@inertiajs/vue3";
 import GeneralLayout from "@/Layouts/GeneralLayout.vue";
 const props = defineProps({
   lapus: {
@@ -64,10 +67,19 @@ const props = defineProps({
     type: Array,
     required: false,
   },
+  sumTime: {
+    type: Array,
+    required: false,
+  },
 });
-
-const buildSummaries = () => {
-  let setupArray = ["category", "sector", "subsector"];
+const form = useForm({
+  _token: null,
+  lapus_id: null,
+  peng_id: null,
+});
+const buildSummaries = async () => {
+  // let setupArray = ["category", "sector", "subsector", "total"];
+  let setupArray = ["total"];
   setupArray.forEach(async (element) => {
     try {
       const response = await axios.get(route("home.index"), {
@@ -75,10 +87,15 @@ const buildSummaries = () => {
           setup: element,
         },
       });
+      form.lapus_id = response.data.lapus_period;
+      form.peng_id = response.data.peng_period;
     } catch (error) {
       console.error(error);
     }
   });
+  const _token = await axios.get(route("token"));
+  form._token = _token.data;
+  form.post(route("home.update-time"));
 };
 </script>
 <style scoped></style>
