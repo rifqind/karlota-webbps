@@ -1,5 +1,7 @@
 <template>
-  <aside class="bg-white shadow-lg min-h-screen fixed top-0 left-0 w-[300px] z-[1200]">
+  <aside
+    class="bg-white shadow-lg h-screen fixed top-0 left-0 w-[300px] z-[1200] overflow-y-auto"
+  >
     <div class="px-6 py-4 flex items-center border-b h-[56px]">
       <img
         src="../../images/karlota-logo.ico"
@@ -191,12 +193,12 @@
       </ul>
       <br />
       <div class="text-center">
-        <!-- <font-awesome-icon
+        <font-awesome-icon
           @click="pushSidebar"
           data-widget="pushmenu"
           icon="fa-solid fa-circle-chevron-left"
           class="edit-pen back-pen"
-        /> -->
+        />
       </div>
     </nav>
   </aside>

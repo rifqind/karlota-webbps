@@ -54,29 +54,38 @@ class SummaryController extends Controller
         } else if ($setup == 'subsector') {
             $this->setupSubsector($dataset_before, $dataset);
         } else {
-            $this->setupTotal($dataset_before, $dataset);
+            $dataset_lapus = Dataset::where('period_id', $lapus_period)
+                ->pluck('id');
+            $dataset_peng = Dataset::where('period_id', $peng_period)
+                ->pluck('id');
+            $dataset_lapus_before = Dataset::where('period_id', $lapus_period_before)
+                ->pluck('id');
+            $dataset_peng_before = Dataset::where('period_id', $peng_period_before)
+                ->pluck('id');
+            $this->setupTotal($dataset_lapus_before, $dataset_lapus, $dataset_peng_before, $dataset_peng);
         }
 
-        // $summary_per_regions = SummaryPdrb::orderBy('region_id', 'asc')
-        //     ->whereNot('subsector_id', null)
-        //     ->groupBy('region_id', 'quarter')
-        //     ->selectRaw('quarter, SUM(adhb) as total_adhb, region_id')
-        //     ->get();
+        $summary_per_regions = SummaryPdrb::orderBy('region_id', 'asc')
+            ->whereNot('subsector_id', null)
+            ->whereNotIn('subsector_id', [98, 99])
+            ->groupBy('region_id', 'quarter')
+            ->selectRaw('quarter, SUM(adhb) as total_adhb, region_id')
+            ->get();
 
-        // foreach ($summary_per_regions as $keyReg => $region) {
-        //     # code...
-        //     $summaries = SummaryPdrb::pluck('id');
-        //     foreach ($summaries as $key => $value) {
-        //         # code...
-        //         $this_pdrb = SummaryPdrb::where('id', $value)->value('adhb');
-        //         $dist = SummaryPdrb::where('id', $value)
-        //             ->where('quarter', $region->quarter)
-        //             ->where('region_id', $region->region_id)
-        //             ->update([
-        //                 'dist' => ($this_pdrb != 0 && $region->total_adhb != 0) ? ($this_pdrb / $region->total_adhb) * 100 : 0
-        //             ]);
-        //     }
-        // }
+        foreach ($summary_per_regions as $keyReg => $region) {
+            # code...
+            $summaries = SummaryPdrb::pluck('id');
+            foreach ($summaries as $key => $value) {
+                # code...
+                $this_pdrb = SummaryPdrb::where('id', $value)->value('adhb');
+                $dist = SummaryPdrb::where('id', $value)
+                    ->where('quarter', $region->quarter)
+                    ->where('region_id', $region->region_id)
+                    ->update([
+                        'dist' => ($this_pdrb != 0 && $region->total_adhb != 0) ? ($this_pdrb / $region->total_adhb) * 100 : 0
+                    ]);
+            }
+        }
         return response()->json([
             'message' => $setup . ' done',
             'lapus_period' => $lapus_period,
@@ -440,12 +449,12 @@ class SummaryController extends Controller
         }
     }
 
-    private function setupTotal($dataset_before, $dataset)
+    private function setupTotal($lapus_before, $lapus, $peng_before, $peng)
     {
-        $subsector = Subsector::pluck('id');
-        $data_before = Pdrb::leftJoin('adjustments as adj', 'adj.pdrb_id', '=', 'pdrbs.id')
+        // lapus
+        $data_lapus_before = Pdrb::leftJoin('adjustments as adj', 'adj.pdrb_id', '=', 'pdrbs.id')
             ->join('datasets as d', 'd.id', '=', 'pdrbs.dataset_id')
-            ->whereIn('pdrbs.dataset_id', $dataset_before)
+            ->whereIn('pdrbs.dataset_id', $lapus_before)
             ->orderBy('d.region_id', 'asc')
             ->select(
                 'pdrbs.id',
@@ -472,7 +481,7 @@ class SummaryController extends Controller
                 ];
             });
 
-        $group_before = $data_before->groupBy(function ($item) {
+        $group_lapus_before = $data_lapus_before->groupBy(function ($item) {
             return $item['region_id'] . '-' . $item['year'] . '-' .  $item['quarter'];
         })->map(function ($group, $key) {
             [$region_id, $year, $quarter] = explode('-', $key);
@@ -484,9 +493,10 @@ class SummaryController extends Controller
                 'adhk' => $group->sum('adhk')
             ];
         });
-        $data = Pdrb::leftJoin('adjustments as adj', 'adj.pdrb_id', '=', 'pdrbs.id')
+
+        $data_lapus = Pdrb::leftJoin('adjustments as adj', 'adj.pdrb_id', '=', 'pdrbs.id')
             ->join('datasets as d', 'd.id', '=', 'pdrbs.dataset_id')
-            ->whereIn('pdrbs.dataset_id', $dataset)
+            ->whereIn('pdrbs.dataset_id', $lapus)
             ->orderBy('d.region_id', 'asc')
             ->select(
                 'pdrbs.id',
@@ -513,7 +523,7 @@ class SummaryController extends Controller
                 ];
             });
 
-        $group_now = $data->groupBy(function ($item) {
+        $group_lapus_now = $data_lapus->groupBy(function ($item) {
             return $item['region_id'] . '-' . $item['year'] . '-' . $item['quarter'];
         })->map(function ($group, $key) {
             [$region_id, $year, $quarter] = explode('-', $key);
@@ -525,31 +535,246 @@ class SummaryController extends Controller
                 'adhk' => $group->sum('adhk')
             ];
         });
-        
+
+        //peng
+        $importId = ['69'];
+        $data_peng_before_total = Pdrb::leftJoin('adjustments as adj', 'adj.pdrb_id', '=', 'pdrbs.id')
+            ->join('datasets as d', 'd.id', '=', 'pdrbs.dataset_id')
+            ->whereIn('pdrbs.dataset_id', $peng_before)
+            ->whereNotIn('subsector_id', $importId)
+            ->orderBy('d.region_id', 'asc')
+            ->select(
+                'pdrbs.id',
+                'pdrbs.dataset_id',
+                'pdrbs.year',
+                'pdrbs.quarter',
+                'pdrbs.subsector_id',
+                'pdrbs.adhb',
+                'pdrbs.adhk',
+                'adj.adhb as adj_adhb',
+                'adj.adhk as adj_adhk',
+                'd.region_id as region_id'
+            )
+            ->get()
+            ->map(function ($item) {
+                return [
+                    'id' => $item->id,
+                    'year' => $item->year,
+                    'quarter' => $item->quarter,
+                    'subsector_id' => $item->subsector_id,
+                    'adhb' => $item->adhb + ($item->adj_adhb ?? 0),
+                    'adhk' => $item->adhk + ($item->adj_adhk ?? 0),
+                    'region_id' => $item->region_id
+                ];
+            });
+
+        $data_peng_before_import = Pdrb::leftJoin('adjustments as adj', 'adj.pdrb_id', '=', 'pdrbs.id')
+            ->join('datasets as d', 'd.id', '=', 'pdrbs.dataset_id')
+            ->whereIn('pdrbs.dataset_id', $peng_before)
+            ->whereIn('subsector_id', $importId)
+            ->orderBy('d.region_id', 'asc')
+            ->select(
+                'pdrbs.id',
+                'pdrbs.dataset_id',
+                'pdrbs.year',
+                'pdrbs.quarter',
+                'pdrbs.subsector_id',
+                'pdrbs.adhb',
+                'pdrbs.adhk',
+                'adj.adhb as adj_adhb',
+                'adj.adhk as adj_adhk',
+                'd.region_id as region_id'
+            )
+            ->get()
+            ->map(function ($item) {
+                return [
+                    'id' => $item->id,
+                    'year' => $item->year,
+                    'quarter' => $item->quarter,
+                    'subsector_id' => $item->subsector_id,
+                    'adhb' => $item->adhb + ($item->adj_adhb ?? 0),
+                    'adhk' => $item->adhk + ($item->adj_adhk ?? 0),
+                    'region_id' => $item->region_id
+                ];
+            });
+
+        // $data_peng_before = $data_peng_before_total - $data_peng_before_import (but it should corresponding w the region_id year and quarter)
+        $group_peng_before_total = $data_peng_before_total->groupBy(function ($item) {
+            return $item['region_id'] . '-' . $item['year'] . '-' .  $item['quarter'];
+        })->map(function ($group, $key) {
+            [$region_id, $year, $quarter] = explode('-', $key);
+            return [
+                'region_id' => (int) $region_id,
+                'year' => (int) $year,
+                'quarter' => (int) $quarter,
+                'adhb' => $group->sum('adhb'),
+                'adhk' => $group->sum('adhk')
+            ];
+        });
+        $group_peng_before_import = $data_peng_before_import->groupBy(function ($item) {
+            return $item['region_id'] . '-' . $item['year'] . '-' .  $item['quarter'];
+        })->map(function ($group, $key) {
+            [$region_id, $year, $quarter] = explode('-', $key);
+            return [
+                'region_id' => (int) $region_id,
+                'year' => (int) $year,
+                'quarter' => (int) $quarter,
+                'adhb' => $group->sum('adhb'),
+                'adhk' => $group->sum('adhk')
+            ];
+        });
+
+        $group_peng_before = $group_peng_before_total->map(function ($total, $key) use ($group_peng_before_import) {
+            $import = $group_peng_before_import->get($key, ['adhb' => 0, 'adhk' => 0]);
+            return [
+                'region_id' => $total['region_id'],
+                'year' => $total['year'],
+                'quarter' => $total['quarter'],
+                'adhb' => $total['adhb'] - $import['adhb'],
+                'adhk' => $total['adhk'] - $import['adhk'],
+            ];
+        });
+
+        $data_peng_total = Pdrb::leftJoin('adjustments as adj', 'adj.pdrb_id', '=', 'pdrbs.id')
+            ->join('datasets as d', 'd.id', '=', 'pdrbs.dataset_id')
+            ->whereIn('pdrbs.dataset_id', $peng)
+            ->whereNotIn('subsector_id', $importId)
+            ->orderBy('d.region_id', 'asc')
+            ->select(
+                'pdrbs.id',
+                'pdrbs.dataset_id',
+                'pdrbs.year',
+                'pdrbs.quarter',
+                'pdrbs.subsector_id',
+                'pdrbs.adhb',
+                'pdrbs.adhk',
+                'adj.adhb as adj_adhb',
+                'adj.adhk as adj_adhk',
+                'd.region_id as region_id'
+            )
+            ->get()
+            ->map(function ($item) {
+                return [
+                    'id' => $item->id,
+                    'year' => $item->year,
+                    'quarter' => $item->quarter,
+                    'subsector_id' => $item->subsector_id,
+                    'adhb' => $item->adhb + ($item->adj_adhb ?? 0),
+                    'adhk' => $item->adhk + ($item->adj_adhk ?? 0),
+                    'region_id' => $item->region_id
+                ];
+            });
+
+        $data_peng_import = Pdrb::leftJoin('adjustments as adj', 'adj.pdrb_id', '=', 'pdrbs.id')
+            ->join('datasets as d', 'd.id', '=', 'pdrbs.dataset_id')
+            ->whereIn('pdrbs.dataset_id', $peng)
+            ->whereIn('subsector_id', $importId)
+            ->orderBy('d.region_id', 'asc')
+            ->select(
+                'pdrbs.id',
+                'pdrbs.dataset_id',
+                'pdrbs.year',
+                'pdrbs.quarter',
+                'pdrbs.subsector_id',
+                'pdrbs.adhb',
+                'pdrbs.adhk',
+                'adj.adhb as adj_adhb',
+                'adj.adhk as adj_adhk',
+                'd.region_id as region_id'
+            )
+            ->get()
+            ->map(function ($item) {
+                return [
+                    'id' => $item->id,
+                    'year' => $item->year,
+                    'quarter' => $item->quarter,
+                    'subsector_id' => $item->subsector_id,
+                    'adhb' => $item->adhb + ($item->adj_adhb ?? 0),
+                    'adhk' => $item->adhk + ($item->adj_adhk ?? 0),
+                    'region_id' => $item->region_id
+                ];
+            });
+
+        $group_peng_total = $data_peng_total->groupBy(function ($item) {
+            return $item['region_id'] . '-' . $item['year'] . '-' .  $item['quarter'];
+        })->map(function ($group, $key) {
+            [$region_id, $year, $quarter] = explode('-', $key);
+            return [
+                'region_id' => (int) $region_id,
+                'year' => (int) $year,
+                'quarter' => (int) $quarter,
+                'adhb' => $group->sum('adhb'),
+                'adhk' => $group->sum('adhk')
+            ];
+        });
+        $group_peng_import = $data_peng_import->groupBy(function ($item) {
+            return $item['region_id'] . '-' . $item['year'] . '-' .  $item['quarter'];
+        })->map(function ($group, $key) {
+            [$region_id, $year, $quarter] = explode('-', $key);
+            return [
+                'region_id' => (int) $region_id,
+                'year' => (int) $year,
+                'quarter' => (int) $quarter,
+                'adhb' => $group->sum('adhb'),
+                'adhk' => $group->sum('adhk')
+            ];
+        });
+        $group_peng_now = $group_peng_total->map(function ($total, $key) use ($group_peng_import) {
+            $import = $group_peng_import->get($key, ['adhb' => 0, 'adhk' => 0]);
+            return [
+                'region_id' => $total['region_id'],
+                'year' => $total['year'],
+                'quarter' => $total['quarter'],
+                'adhb' => $total['adhb'] - $import['adhb'],
+                'adhk' => $total['adhk'] - $import['adhk'],
+            ];
+        });
+
         $super_result = [];
-        foreach ($group_now as $key => $value) {
+        foreach ($group_lapus_now as $key => $value) {
             # code...
-            $result = $this->buildTotal($group_before, $value, $group_now);  
-            array_push($super_result,$result );      
-            // $updating_summary = SummaryPdrb::where('region_id', $value['region_id'])
-            //     ->where('quarter', $value['quarter'])
-            //     ->where('category_id', null)
-            //     ->where('sector_id', null)
-            //     ->where('subsector_id', null)
-            //     ->update(
-            //         [
-            //             'adhb' => $value['adhb'],
-            //             'adhk' => $value['adhk'],
-            //             'qtoq' => $result['qtoq'],
-            //             'yony' => $result['yony'],
-            //             'ctoc' => $result['ctoc'],
-            //             'idx' => $result['idx'],
-            //             'iqtoq' => $result['iqtoq'],
-            //             'iyony' => $result['iyony']
-            //         ]
-            //     );
+            $result = $this->buildTotal($group_lapus_before, $value, $group_lapus_now);
+            array_push($super_result, $result);
+            $updating_summary = SummaryPdrb::where('region_id', $value['region_id'])
+                ->where('quarter', $value['quarter'])
+                ->where('category_id', 98)
+                ->where('sector_id', 98)
+                ->where('subsector_id', 98)
+                ->update(
+                    [
+                        'adhb' => $value['adhb'],
+                        'adhk' => $value['adhk'],
+                        'qtoq' => $result['qtoq'],
+                        'yony' => $result['yony'],
+                        'ctoc' => $result['ctoc'],
+                        'idx' => $result['idx'],
+                        'iqtoq' => $result['iqtoq'],
+                        'iyony' => $result['iyony']
+                    ]
+                );
         }
-        dd($super_result);
+        foreach ($group_peng_now as $key => $value) {
+            # code...
+            $result = $this->buildTotal($group_peng_before, $value, $group_peng_now);
+            array_push($super_result, $result);
+            $updating_summary = SummaryPdrb::where('region_id', $value['region_id'])
+                ->where('quarter', $value['quarter'])
+                ->where('category_id', 99)
+                ->where('sector_id', 99)
+                ->where('subsector_id', 99)
+                ->update(
+                    [
+                        'adhb' => $value['adhb'],
+                        'adhk' => $value['adhk'],
+                        'qtoq' => $result['qtoq'],
+                        'yony' => $result['yony'],
+                        'ctoc' => $result['ctoc'],
+                        'idx' => $result['idx'],
+                        'iqtoq' => $result['iqtoq'],
+                        'iyony' => $result['iyony']
+                    ]
+                );
+        }
     }
 
     public function getProgress()
@@ -675,9 +900,6 @@ class SummaryController extends Controller
             $present_cumulative += $presentObject->where('quarter', $i)
                 ->where('region_id', $present['region_id'])
                 ->value('adhk');
-        }
-        if ($present['region_id'] == '2') {
-            dd($adhk_before_qtoq, $present['adhk'], ($present['adhk'] / $adhk_before_qtoq) * 100 - 100);
         }
         $ctoc = ($before_cumulative != 0) && ($present_cumulative != 0) ? ($present_cumulative / $before_cumulative) * 100 - 100 : 0;
         $qtoq = ($adhk_before_qtoq != 0) && ($present['adhk'] != 0) ? ($present['adhk'] / $adhk_before_qtoq) * 100 - 100 : 0;

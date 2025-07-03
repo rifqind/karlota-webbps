@@ -20,6 +20,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/index', [SummaryController::class, 'index'])->name('home.index');
     Route::get('/get-progress', [SummaryController::class, 'getProgress'])->name('home.get-progress');
     Route::post('/update-time', [HomeController::class, 'updateSummaryTime'])->name('home.update-time');
+    Route::get('/home/get-summary', [HomeController::class, 'getSummary'])->name('home.get-summary');
     Route::prefix('period')->name('period.')->group(function () {
         Route::middleware(['role:admin'])->group(function () {
             Route::get('/index', [PeriodController::class, 'index'])

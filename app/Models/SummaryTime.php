@@ -15,6 +15,7 @@ class SummaryTime extends Model
     protected $fillable = [
         'type',
         'period_id',
+        'id_user',
         'timestamp'
     ];
 }
