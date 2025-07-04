@@ -84,7 +84,7 @@
                 <div class="flex items-center justify-between mb-2">
                   <h3 class="font-bold text-base">ADHB</h3>
                 </div>
-                <div>{{ summaryData.lapus.adhb }}</div>
+                <div>{{ summaryData.lapus.adhb.transformed }}</div>
               </div>
               <div class="flex flex-col">
                 <div class="flex items-center justify-between mb-2">
@@ -94,7 +94,7 @@
                     class="fa-xl text-indigo-500"
                   />
                 </div>
-                <div>{{ summaryData.lapus.adhk }}</div>
+                <div>{{ summaryData.lapus.adhk.transformed }}</div>
               </div>
             </div>
           </div>
@@ -109,58 +109,58 @@
           <!-- Row 2: Growth QtoQ, YonY, CtoC -->
           <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div class="flex flex-col">
-              <div class="flex items-center justify-between mb-2">
+              <div class="flex items-center space-x-2 mb-2">
                 <h3 class="font-bold text-base">Growth QtoQ</h3>
                 <font-awesome-icon
                   :icon="
-                    summaryData.lapus.qtoq > 0
+                    summaryData.lapus.qtoq.value > 0
                       ? 'fa-solid fa-arrow-trend-up'
                       : 'fa-solid fa-arrow-trend-down'
                   "
                   :class="
-                    summaryData.lapus.qtoq > 0
+                    summaryData.lapus.qtoq.value > 0
                       ? 'fa-xl text-green-500'
                       : 'fa-xl text-red-500'
                   "
                 />
               </div>
-              <div>{{ summaryData.lapus.qtoq }}</div>
+              <div>{{ summaryData.lapus.qtoq.transformed }}</div>
             </div>
             <div class="flex flex-col">
-              <div class="flex items-center justify-between mb-2">
+              <div class="flex items-center space-x-2 mb-2">
                 <h3 class="font-bold text-base">Growth YonY</h3>
                 <font-awesome-icon
                   :icon="
-                    summaryData.lapus.yony > 0
+                    summaryData.lapus.yony.value > 0
                       ? 'fa-solid fa-arrow-trend-up'
                       : 'fa-solid fa-arrow-trend-down'
                   "
                   :class="
-                    summaryData.lapus.yony > 0
+                    summaryData.lapus.yony.value > 0
                       ? 'fa-xl text-green-500'
                       : 'fa-xl text-red-500'
                   "
                 />
               </div>
-              <div>{{ summaryData.lapus.yony }}</div>
+              <div>{{ summaryData.lapus.yony.transformed }}</div>
             </div>
             <div class="flex flex-col">
-              <div class="flex items-center justify-between mb-2">
+              <div class="flex items-center space-x-2 mb-2">
                 <h3 class="font-bold text-base">Growth CtoC</h3>
                 <font-awesome-icon
                   :icon="
-                    summaryData.lapus.ctoc > 0
+                    summaryData.lapus.ctoc.value > 0
                       ? 'fa-solid fa-arrow-trend-up'
                       : 'fa-solid fa-arrow-trend-down'
                   "
                   :class="
-                    summaryData.lapus.ctoc > 0
+                    summaryData.lapus.ctoc.value > 0
                       ? 'fa-xl text-green-500'
                       : 'fa-xl text-red-500'
                   "
                 />
               </div>
-              <div>{{ summaryData.lapus.ctoc }}</div>
+              <div>{{ summaryData.lapus.ctoc.transformed }}</div>
             </div>
           </div>
         </div>
@@ -174,50 +174,50 @@
           <!-- Row 3: Indeks Implisit, IQtoQ, IYonY -->
           <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div class="flex flex-col">
-              <div class="flex items-center justify-between mb-2">
+              <div class="flex items-center space-x-2 mb-2">
                 <h3 class="font-bold text-base">Indeks Implisit</h3>
                 <font-awesome-icon
                   icon="fa-solid fa-percent"
                   class="fa-xl text-pink-500"
                 />
               </div>
-              <div>{{ summaryData.lapus.idx }}</div>
+              <div>{{ summaryData.lapus.idx.transformed }}</div>
             </div>
             <div class="flex flex-col">
-              <div class="flex items-center justify-between mb-2">
+              <div class="flex items-center space-x-2 mb-2">
                 <h3 class="font-bold text-base">Laju Implisit QtoQ</h3>
                 <font-awesome-icon
                   :icon="
-                    summaryData.lapus.iqtoq > 0
+                    summaryData.lapus.iqtoq.value > 0
                       ? 'fa-solid fa-arrow-trend-up'
                       : 'fa-solid fa-arrow-trend-down'
                   "
                   :class="
-                    summaryData.lapus.iqtoq > 0
+                    summaryData.lapus.iqtoq.value > 0
                       ? 'fa-xl text-green-500'
                       : 'fa-xl text-red-500'
                   "
                 />
               </div>
-              <div>{{ summaryData.lapus.iqtoq }}</div>
+              <div>{{ summaryData.lapus.iqtoq.transformed }}</div>
             </div>
             <div class="flex flex-col">
-              <div class="flex items-center justify-between mb-2">
+              <div class="flex items-center space-x-2 mb-2">
                 <h3 class="font-bold text-base">Laju Implisit YonY</h3>
                 <font-awesome-icon
                   :icon="
-                    summaryData.lapus.iyony > 0
+                    summaryData.lapus.iyony.value > 0
                       ? 'fa-solid fa-arrow-trend-up'
                       : 'fa-solid fa-arrow-trend-down'
                   "
                   :class="
-                    summaryData.lapus.iyony > 0
+                    summaryData.lapus.iyony.value > 0
                       ? 'fa-xl text-green-500'
                       : 'fa-xl text-red-500'
                   "
                 />
               </div>
-              <div>{{ summaryData.lapus.iyony }}</div>
+              <div>{{ summaryData.lapus.iyony.transformed }}</div>
             </div>
           </div>
         </div>
@@ -242,7 +242,7 @@
                 <div class="flex items-center justify-between mb-2">
                   <h3 class="font-bold text-base">ADHB</h3>
                 </div>
-                <div>{{ summaryData.peng.adhb }}</div>
+                <div>{{ summaryData.peng.adhb.transformed }}</div>
               </div>
               <div class="flex flex-col">
                 <div class="flex items-center justify-between mb-2">
@@ -252,7 +252,7 @@
                     class="fa-xl text-orange-500"
                   />
                 </div>
-                <div>{{ summaryData.peng.adhk }}</div>
+                <div>{{ summaryData.peng.adhk.transformed }}</div>
               </div>
             </div>
           </div>
@@ -267,58 +267,58 @@
           <!-- Row 2: Growth QtoQ, YonY, CtoC -->
           <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div class="flex flex-col">
-              <div class="flex items-center justify-between mb-2">
+              <div class="flex items-center space-x-2 mb-2">
                 <h3 class="font-bold text-base">Growth QtoQ</h3>
                 <font-awesome-icon
                   :icon="
-                    summaryData.peng.qtoq > 0
+                    summaryData.peng.qtoq.value > 0
                       ? 'fa-solid fa-arrow-trend-up'
                       : 'fa-solid fa-arrow-trend-down'
                   "
                   :class="
-                    summaryData.peng.qtoq > 0
+                    summaryData.peng.qtoq.value > 0
                       ? 'fa-xl text-green-500'
                       : 'fa-xl text-red-500'
                   "
                 />
               </div>
-              <div>{{ summaryData.peng.qtoq }}</div>
+              <div>{{ summaryData.peng.qtoq.transformed }}</div>
             </div>
             <div class="flex flex-col">
-              <div class="flex items-center justify-between mb-2">
+              <div class="flex items-center space-x-2 mb-2">
                 <h3 class="font-bold text-base">Growth YonY</h3>
                 <font-awesome-icon
                   :icon="
-                    summaryData.peng.yony > 0
+                    summaryData.peng.yony.value > 0
                       ? 'fa-solid fa-arrow-trend-up'
                       : 'fa-solid fa-arrow-trend-down'
                   "
                   :class="
-                    summaryData.peng.yony > 0
+                    summaryData.peng.yony.value > 0
                       ? 'fa-xl text-green-500'
                       : 'fa-xl text-red-500'
                   "
                 />
               </div>
-              <div>{{ summaryData.peng.yony }}</div>
+              <div>{{ summaryData.peng.yony.transformed }}</div>
             </div>
             <div class="flex flex-col">
-              <div class="flex items-center justify-between mb-2">
+              <div class="flex items-center space-x-2 mb-2">
                 <h3 class="font-bold text-base">Growth CtoC</h3>
                 <font-awesome-icon
                   :icon="
-                    summaryData.peng.ctoc > 0
+                    summaryData.peng.ctoc.value > 0
                       ? 'fa-solid fa-arrow-trend-up'
                       : 'fa-solid fa-arrow-trend-down'
                   "
                   :class="
-                    summaryData.peng.ctoc > 0
+                    summaryData.peng.ctoc.value > 0
                       ? 'fa-xl text-green-500'
                       : 'fa-xl text-red-500'
                   "
                 />
               </div>
-              <div>{{ summaryData.peng.ctoc }}</div>
+              <div>{{ summaryData.peng.ctoc.transformed }}</div>
             </div>
           </div>
         </div>
@@ -332,56 +332,56 @@
           <!-- Row 3: Indeks Implisit, IQtoQ, IYonY -->
           <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div class="flex flex-col">
-              <div class="flex items-center justify-between mb-2">
+              <div class="flex items-center space-x-2 mb-2">
                 <h3 class="font-bold text-base">Indeks Implisit</h3>
                 <font-awesome-icon
                   icon="fa-solid fa-percent"
                   class="fa-xl text-pink-500"
                 />
               </div>
-              <div>{{ summaryData.peng.idx }}</div>
+              <div>{{ summaryData.peng.idx.transformed }}</div>
             </div>
             <div class="flex flex-col">
-              <div class="flex items-center justify-between mb-2">
+              <div class="flex items-center space-x-2 mb-2">
                 <h3 class="font-bold text-base">Laju Implisit QtoQ</h3>
                 <font-awesome-icon
                   :icon="
-                    summaryData.peng.iqtoq > 0
+                    summaryData.peng.iqtoq.value > 0
                       ? 'fa-solid fa-arrow-trend-up'
                       : 'fa-solid fa-arrow-trend-down'
                   "
                   :class="
-                    summaryData.peng.iqtoq > 0
+                    summaryData.peng.iqtoq.value > 0
                       ? 'fa-xl text-green-500'
                       : 'fa-xl text-red-500'
                   "
                 />
               </div>
-              <div>{{ summaryData.peng.iqtoq }}</div>
+              <div>{{ summaryData.peng.iqtoq.transformed }}</div>
             </div>
             <div class="flex flex-col">
-              <div class="flex items-center justify-between mb-2">
+              <div class="flex items-center space-x-2 mb-2">
                 <h3 class="font-bold text-base">Laju Implisit YonY</h3>
                 <font-awesome-icon
                   :icon="
-                    summaryData.peng.iyony > 0
+                    summaryData.peng.iyony.value > 0
                       ? 'fa-solid fa-arrow-trend-up'
                       : 'fa-solid fa-arrow-trend-down'
                   "
                   :class="
-                    summaryData.peng.iyony > 0
+                    summaryData.peng.iyony.value > 0
                       ? 'fa-xl text-green-500'
                       : 'fa-xl text-red-500'
                   "
                 />
               </div>
-              <div>{{ summaryData.peng.iyony }}</div>
+              <div>{{ summaryData.peng.iyony.transformed }}</div>
             </div>
           </div>
         </div>
       </div>
     </div>
-    <div class="font-bold text-xl mt-3">GRAFIK</div>
+    <div class="font-bold text-xl mt-3">GRAFIK (Not Yet)</div>
     <ModalBs
       :hidden-close="thisHidden"
       :-modal-status="confirmationSummaries"
@@ -442,42 +442,37 @@ const props = defineProps({
     required: false,
   },
   default: {
-    type: String,
+    type: Object,
     required: false,
   },
 });
 const confirmationSummaries = ref(false);
 const summaryData = ref({
   lapus: {
-    adhb: null,
-    adhk: null,
-    qtoq: null,
-    yony: null,
-    ctoc: null,
-    idx: null,
-    iqtoq: null,
-    iyony: null,
+    adhb: { value: null, transformed: null },
+    adhk: { value: null, transformed: null },
+    qtoq: { value: null, transformed: null },
+    yony: { value: null, transformed: null },
+    ctoc: { value: null, transformed: null },
+    idx: { value: null, transformed: null },
+    iqtoq: { value: null, transformed: null },
+    iyony: { value: null, transformed: null },
   },
   peng: {
-    adhb: null,
-    adhk: null,
-    qtoq: null,
-    yony: null,
-    ctoc: null,
-    idx: null,
-    iqtoq: null,
-    iyony: null,
+    adhb: { value: null, transformed: null },
+    adhk: { value: null, transformed: null },
+    qtoq: { value: null, transformed: null },
+    yony: { value: null, transformed: null },
+    ctoc: { value: null, transformed: null },
+    idx: { value: null, transformed: null },
+    iqtoq: { value: null, transformed: null },
+    iyony: { value: null, transformed: null },
   },
 });
 const form = useForm({
   _token: null,
   lapus_id: null,
   peng_id: null,
-});
-const summaryForm = useForm({
-  _token: null,
-  region_id: null,
-  quarter: null,
 });
 const timestart = ref(null);
 const thisHidden = ref(false);
@@ -513,16 +508,41 @@ const getSummary = async (region_id, quarter, type) => {
         type: type,
       },
     });
-    if (response.data.type == "Lapangan Usaha")
-      summaryData.value.lapus = response.data.data;
-    else summaryData.value.peng = response.data.data;
+    if (response.data.type == "Lapangan Usaha") {
+      Object.keys(response.data.data).forEach((key) => {
+        if (summaryData.value.lapus[key]) {
+          summaryData.value.lapus[key].value = response.data.data[key];
+          summaryData.value.lapus[key].transformed = formatNumberGerman(
+            response.data.data[key]
+          );
+        }
+      });
+    } else {
+      Object.keys(response.data.data).forEach((key) => {
+        if (summaryData.value.peng[key]) {
+          summaryData.value.peng[key].value = response.data.data[key];
+          summaryData.value.peng[key].transformed = formatNumberGerman(
+            response.data.data[key]
+          );
+        }
+      });
+    }
+
+    // summaryData.value.peng = response.data.data;
+    // summaryData.value.lapus = response.data.data;
   } catch (error) {
     console.error(error);
   }
 };
+const formatNumberGerman = (num, min = 2, max = 2) => {
+  return new Intl.NumberFormat("de-DE", {
+    minimumFractionDigits: min,
+    maximumFractionDigits: max,
+  }).format(num);
+};
 const lapus = ref({ quarter: null, description: null, waktu: null, nama: null });
 const peng = ref({ quarter: null, description: null, waktu: null, nama: null });
-const regionsFor = ref(1);
+const regionsFor = ref(props.default.id);
 onMounted(() => {
   lapus.value = props.sumTime.find((x) => {
     return x.type == "Lapangan Usaha";
