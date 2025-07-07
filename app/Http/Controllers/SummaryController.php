@@ -48,11 +48,11 @@ class SummaryController extends Controller
 
         $setup = $request->setup;
         if ($setup == 'category') {
-            $this->setupCategory($dataset_before, $dataset);
+            $result_cat =  $this->setupCategory($dataset_before, $dataset, $request->quarter, $request->region_id);
         } else if ($setup == 'sector') {
-            $this->setupSector($dataset_before, $dataset);
+            $this->setupSector($dataset_before, $dataset, $request->quarter, $request->region_id);
         } else if ($setup == 'subsector') {
-            $this->setupSubsector($dataset_before, $dataset);
+            $this->setupSubsector($dataset_before, $dataset, $request->quarter, $request->region_id);
         } else {
             $dataset_lapus = Dataset::where('period_id', $lapus_period)
                 ->pluck('id');
@@ -62,30 +62,30 @@ class SummaryController extends Controller
                 ->pluck('id');
             $dataset_peng_before = Dataset::where('period_id', $peng_period_before)
                 ->pluck('id');
-            $this->setupTotal($dataset_lapus_before, $dataset_lapus, $dataset_peng_before, $dataset_peng);
+            $this->setupTotal($dataset_lapus_before, $dataset_lapus, $dataset_peng_before, $dataset_peng, $request->quarter, $request->region_id);
         }
 
-        $summary_per_regions = SummaryPdrb::orderBy('region_id', 'asc')
-            ->whereNot('subsector_id', null)
+        $data = SummaryPdrb::where('region_id', $request->region_id)
             ->whereNotIn('subsector_id', [98, 99])
-            ->groupBy('region_id', 'quarter')
-            ->selectRaw('quarter, SUM(adhb) as total_adhb, region_id')
+            ->where('quarter', $request->quarter)
             ->get();
 
-        foreach ($summary_per_regions as $keyReg => $region) {
+        $total = SummaryPdrb::where('region_id', $request->region_id)
+            ->whereIn('subsector_id', [98, 99])
+            ->where('quarter', $request->quarter)
+            ->get();
+        $lapus_total = $total->where('subsector_id', 98)->value('adhb');
+        $peng_total = $total->where('subsector_id', 99)->value('adhb');
+
+        foreach ($data as $key => $value) {
             # code...
-            $summaries = SummaryPdrb::pluck('id');
-            foreach ($summaries as $key => $value) {
-                # code...
-                $this_pdrb = SummaryPdrb::where('id', $value)->value('adhb');
-                $dist = SummaryPdrb::where('id', $value)
-                    ->where('quarter', $region->quarter)
-                    ->where('region_id', $region->region_id)
-                    ->update([
-                        'dist' => ($this_pdrb != 0 && $region->total_adhb != 0) ? ($this_pdrb / $region->total_adhb) * 100 : 0
-                    ]);
+            if ($value->category_id < 18) {
+                $value->dist =  ($value->adhb != 0 && $lapus_total != 0) ? ($value->adhb / $lapus_total) * 100 : 0;
+            } else if ($value->category_id > 17) {
+                $value->dist =  ($value->adhb != 0 && $peng_total != 0) ? ($value->adhb / $peng_total) * 100 : 0;
             }
         }
+
         return response()->json([
             'message' => $setup . ' done',
             'lapus_period' => $lapus_period,
@@ -93,9 +93,10 @@ class SummaryController extends Controller
         ]);
     }
 
-    private function setupCategory($dataset_before, $dataset)
+    private function setupCategory($dataset_before, $dataset, $quarter, $region)
     {
         $category = Category::pluck('id');
+        $super_result = [];
         foreach ($category as $keyCat => $cat) {
             # code...
             $sectorForSearch = Sector::where('category_id', $cat)->pluck('id');
@@ -104,7 +105,8 @@ class SummaryController extends Controller
                 ->join('datasets as d', 'd.id', '=', 'pdrbs.dataset_id')
                 ->whereIn('pdrbs.dataset_id', $dataset_before)
                 ->whereIn('pdrbs.subsector_id', $subsectorForSearch)
-                ->orderBy('d.region_id', 'asc')
+                ->where('pdrbs.quarter', $quarter)
+                ->where('d.region_id', $region)
                 ->groupBy('d.region_id', 'pdrbs.year', 'pdrbs.quarter')
                 ->selectRaw(
                     'pdrbs.year,
@@ -130,6 +132,8 @@ class SummaryController extends Controller
                 ->join('datasets as d', 'd.id', '=', 'pdrbs.dataset_id')
                 ->whereIn('pdrbs.dataset_id', $dataset)
                 ->whereIn('pdrbs.subsector_id', $subsectorForSearch)
+                ->where('pdrbs.quarter', $quarter)
+                ->where('d.region_id', $region)
                 ->orderBy('d.region_id', 'asc')
                 ->groupBy('d.region_id', 'pdrbs.year', 'pdrbs.quarter')
                 ->selectRaw(
@@ -152,33 +156,35 @@ class SummaryController extends Controller
                         'region_id' => $item->region_id
                     ];
                 });
-            foreach ($data as $key => $value) {
-                # code...
-                $result = $this->buildValue($data_before, $value, $data, 'category_id', 'category');
-                $updating_summary = SummaryPdrb::where('region_id', $value['region_id'])
-                    ->where('quarter', $value['quarter'])
-                    ->where('category_id', $value['category_id'])
+            if (sizeof($data) > 0) {
+                $result = $this->buildValue($data_before, $data[0], $data, 'category_id', 'category');
+                array_push($super_result, $data[0]);
+                $updating_summary = SummaryPdrb::where('region_id', $data[0]['region_id'])
+                    ->where('quarter', $data[0]['quarter'])
+                    ->where('category_id', $data[0]['category_id'])
                     ->where('sector_id', null)
-                    ->where('subsector_id', null)
-                    ->update(
-                        [
-                            'adhb' => $value['adhb'],
-                            'adhk' => $value['adhk'],
-                            'qtoq' => $result['qtoq'],
-                            'yony' => $result['yony'],
-                            'ctoc' => $result['ctoc'],
-                            'idx' => $result['idx'],
-                            'iqtoq' => $result['iqtoq'],
-                            'iyony' => $result['iyony']
-                        ]
-                    );
+                    ->where('subsector_id', null);
+                $updating_summary->update(
+                    [
+                        'adhb' => $data[0]['adhb'],
+                        'adhk' => $data[0]['adhk'],
+                        'qtoq' => $result['qtoq'],
+                        'yony' => $result['yony'],
+                        'ctoc' => $result['ctoc'],
+                        'idx' => $result['idx'],
+                        'iqtoq' => $result['iqtoq'],
+                        'iyony' => $result['iyony']
+                    ]
+                );
             }
         }
+        return $super_result;
     }
 
-    private function setupSector($dataset_before, $dataset)
+    private function setupSector($dataset_before, $dataset, $quarter, $region)
     {
         $sector = Sector::pluck('id');
+        $super_result = [];
         foreach ($sector as $keySet => $set) {
             # code...
             $subsectorForSearch = Subsector::where('sector_id', $set)->pluck('id');
@@ -189,6 +195,8 @@ class SummaryController extends Controller
                     ->whereIn('pdrbs.dataset_id', $dataset_before)
                     ->whereIn('pdrbs.subsector_id', $subsectorForSearch)
                     ->whereNotIn('pdrbs.subsector_id', $importId)
+                    ->where('pdrbs.quarter', $quarter)
+                    ->where('d.region_id', $region)
                     ->orderBy('d.region_id', 'asc')
                     ->groupBy('d.region_id', 'pdrbs.year', 'pdrbs.quarter')
                     ->selectRaw(
@@ -207,6 +215,8 @@ class SummaryController extends Controller
                     ->whereIn('pdrbs.dataset_id', $dataset)
                     ->whereIn('pdrbs.subsector_id', $subsectorForSearch)
                     ->whereNotIn('pdrbs.subsector_id', $importId)
+                    ->where('pdrbs.quarter', $quarter)
+                    ->where('d.region_id', $region)
                     ->orderBy('d.region_id', 'asc')
                     ->groupBy('d.region_id', 'pdrbs.year', 'pdrbs.quarter')
                     ->selectRaw(
@@ -225,6 +235,8 @@ class SummaryController extends Controller
                     ->join('datasets as d', 'd.id', '=', 'pdrbs.dataset_id')
                     ->whereIn('pdrbs.dataset_id', $dataset_before)
                     ->whereIn('subsector_id', $importId)
+                    ->where('pdrbs.quarter', $quarter)
+                    ->where('d.region_id', $region)
                     ->orderBy('d.region_id', 'asc')
                     ->groupBy('d.region_id', 'pdrbs.year', 'pdrbs.quarter')
                     ->selectRaw(
@@ -243,6 +255,8 @@ class SummaryController extends Controller
                     ->join('datasets as d', 'd.id', '=', 'pdrbs.dataset_id')
                     ->whereIn('pdrbs.dataset_id', $dataset)
                     ->whereIn('subsector_id', $importId)
+                    ->where('pdrbs.quarter', $quarter)
+                    ->where('d.region_id', $region)
                     ->orderBy('d.region_id', 'asc')
                     ->groupBy('d.region_id', 'pdrbs.year', 'pdrbs.quarter')
                     ->selectRaw(
@@ -289,6 +303,8 @@ class SummaryController extends Controller
                     ->join('datasets as d', 'd.id', '=', 'pdrbs.dataset_id')
                     ->whereIn('pdrbs.dataset_id', $dataset_before)
                     ->whereIn('pdrbs.subsector_id', $subsectorForSearch)
+                    ->where('pdrbs.quarter', $quarter)
+                    ->where('d.region_id', $region)
                     ->orderBy('d.region_id', 'asc')
                     ->groupBy('d.region_id', 'pdrbs.year', 'pdrbs.quarter')
                     ->selectRaw(
@@ -316,6 +332,8 @@ class SummaryController extends Controller
                     ->join('datasets as d', 'd.id', '=', 'pdrbs.dataset_id')
                     ->whereIn('pdrbs.dataset_id', $dataset)
                     ->whereIn('pdrbs.subsector_id', $subsectorForSearch)
+                    ->where('pdrbs.quarter', $quarter)
+                    ->where('d.region_id', $region)
                     ->orderBy('d.region_id', 'asc')
                     ->groupBy('d.region_id', 'pdrbs.year', 'pdrbs.quarter')
                     ->selectRaw(
@@ -339,17 +357,17 @@ class SummaryController extends Controller
                         ];
                     });
             }
-            foreach ($data as $key => $value) {
-                # code...
-                $result = $this->buildValue($data_before, $value, $data, 'sector_id', 'sector');
-                $updating_summary = SummaryPdrb::where('region_id', $value['region_id'])
-                    ->where('quarter', $value['quarter'])
-                    ->where('sector_id', $value['sector_id'])
+            if (sizeof($data) > 0) {
+                $result = $this->buildValue($data_before, $data[0], $data, 'sector_id', 'sector');
+                array_push($super_result, $result);
+                $updating_summary = SummaryPdrb::where('region_id', $data[0]['region_id'])
+                    ->where('quarter', $data[0]['quarter'])
+                    ->where('sector_id', $data[0]['sector_id'])
                     ->where('subsector_id', null)
                     ->update(
                         [
-                            'adhb' => $value['adhb'],
-                            'adhk' => $value['adhk'],
+                            'adhb' => $data[0]['adhb'],
+                            'adhk' => $data[0]['adhk'],
                             'qtoq' => $result['qtoq'],
                             'yony' => $result['yony'],
                             'ctoc' => $result['ctoc'],
@@ -360,18 +378,21 @@ class SummaryController extends Controller
                     );
             }
         }
+        return $super_result;
     }
 
-    private function setupSubsector($dataset_before, $dataset)
+    private function setupSubsector($dataset_before, $dataset, $quarter, $region)
     {
         $subsector = Subsector::pluck('id');
+        $super_result = [];
         foreach ($subsector as $keySub => $sub) {
             # code...
-
             $data_before = Pdrb::leftJoin('adjustments as adj', 'adj.pdrb_id', '=', 'pdrbs.id')
                 ->join('datasets as d', 'd.id', '=', 'pdrbs.dataset_id')
                 ->whereIn('pdrbs.dataset_id', $dataset_before)
                 ->where('pdrbs.subsector_id', $sub)
+                ->where('pdrbs.quarter', $quarter)
+                ->where('d.region_id', $region)
                 ->orderBy('d.region_id', 'asc')
                 ->select(
                     'pdrbs.id',
@@ -402,6 +423,8 @@ class SummaryController extends Controller
                 ->join('datasets as d', 'd.id', '=', 'pdrbs.dataset_id')
                 ->whereIn('pdrbs.dataset_id', $dataset)
                 ->where('pdrbs.subsector_id', $sub)
+                ->where('pdrbs.quarter', $quarter)
+                ->where('d.region_id', $region)
                 ->orderBy('d.region_id', 'asc')
                 ->select(
                     'pdrbs.id',
@@ -427,16 +450,17 @@ class SummaryController extends Controller
                         'region_id' => $item->region_id
                     ];
                 });
-            foreach ($data as $key => $value) {
+            if (sizeof($data) > 0) {
                 # code...
-                $result = $this->buildValue($data_before, $value, $data, 'subsector_id', 'subsector');
-                $updating_summary = SummaryPdrb::where('region_id', $value['region_id'])
-                    ->where('quarter', $value['quarter'])
-                    ->where('subsector_id', $value['subsector_id'])
+                $result = $this->buildValue($data_before, $data[0], $data, 'subsector_id', 'subsector');
+                array_push($super_result, $result);
+                $updating_summary = SummaryPdrb::where('region_id', $data[0]['region_id'])
+                    ->where('quarter', $data[0]['quarter'])
+                    ->where('subsector_id', $data[0]['subsector_id'])
                     ->update(
                         [
-                            'adhb' => $value['adhb'],
-                            'adhk' => $value['adhk'],
+                            'adhb' => $data[0]['adhb'],
+                            'adhk' => $data[0]['adhk'],
                             'qtoq' => $result['qtoq'],
                             'yony' => $result['yony'],
                             'ctoc' => $result['ctoc'],
@@ -447,14 +471,17 @@ class SummaryController extends Controller
                     );
             }
         }
+        return $super_result;
     }
 
-    private function setupTotal($lapus_before, $lapus, $peng_before, $peng)
+    private function setupTotal($lapus_before, $lapus, $peng_before, $peng, $quarter, $region)
     {
         // lapus
         $data_lapus_before = Pdrb::leftJoin('adjustments as adj', 'adj.pdrb_id', '=', 'pdrbs.id')
             ->join('datasets as d', 'd.id', '=', 'pdrbs.dataset_id')
             ->whereIn('pdrbs.dataset_id', $lapus_before)
+            ->where('pdrbs.quarter', $quarter)
+            ->where('d.region_id', $region)
             ->orderBy('d.region_id', 'asc')
             ->select(
                 'pdrbs.id',
@@ -497,6 +524,8 @@ class SummaryController extends Controller
         $data_lapus = Pdrb::leftJoin('adjustments as adj', 'adj.pdrb_id', '=', 'pdrbs.id')
             ->join('datasets as d', 'd.id', '=', 'pdrbs.dataset_id')
             ->whereIn('pdrbs.dataset_id', $lapus)
+            ->where('pdrbs.quarter', $quarter)
+            ->where('d.region_id', $region)
             ->orderBy('d.region_id', 'asc')
             ->select(
                 'pdrbs.id',
@@ -542,6 +571,8 @@ class SummaryController extends Controller
             ->join('datasets as d', 'd.id', '=', 'pdrbs.dataset_id')
             ->whereIn('pdrbs.dataset_id', $peng_before)
             ->whereNotIn('subsector_id', $importId)
+            ->where('pdrbs.quarter', $quarter)
+            ->where('d.region_id', $region)
             ->orderBy('d.region_id', 'asc')
             ->select(
                 'pdrbs.id',
@@ -572,6 +603,8 @@ class SummaryController extends Controller
             ->join('datasets as d', 'd.id', '=', 'pdrbs.dataset_id')
             ->whereIn('pdrbs.dataset_id', $peng_before)
             ->whereIn('subsector_id', $importId)
+            ->where('pdrbs.quarter', $quarter)
+            ->where('d.region_id', $region)
             ->orderBy('d.region_id', 'asc')
             ->select(
                 'pdrbs.id',
@@ -639,6 +672,8 @@ class SummaryController extends Controller
             ->join('datasets as d', 'd.id', '=', 'pdrbs.dataset_id')
             ->whereIn('pdrbs.dataset_id', $peng)
             ->whereNotIn('subsector_id', $importId)
+            ->where('pdrbs.quarter', $quarter)
+            ->where('d.region_id', $region)
             ->orderBy('d.region_id', 'asc')
             ->select(
                 'pdrbs.id',
@@ -669,6 +704,8 @@ class SummaryController extends Controller
             ->join('datasets as d', 'd.id', '=', 'pdrbs.dataset_id')
             ->whereIn('pdrbs.dataset_id', $peng)
             ->whereIn('subsector_id', $importId)
+            ->where('pdrbs.quarter', $quarter)
+            ->where('d.region_id', $region)
             ->orderBy('d.region_id', 'asc')
             ->select(
                 'pdrbs.id',
@@ -775,6 +812,7 @@ class SummaryController extends Controller
                     ]
                 );
         }
+        return $super_result;
     }
 
     public function getProgress()

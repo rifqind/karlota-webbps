@@ -418,7 +418,7 @@
 <script setup>
 import { Head, useForm, usePage } from "@inertiajs/vue3";
 import GeneralLayout from "@/Layouts/GeneralLayout.vue";
-import { onMounted, ref } from "vue";
+import { onMounted, ref, watch } from "vue";
 import Multiselect from "@vueform/multiselect";
 import ModalBs from "@/Components/ModalBs.vue";
 import SpinnerBorder from "@/Components/SpinnerBorder.vue";
@@ -446,6 +446,8 @@ const props = defineProps({
     required: false,
   },
 });
+const lapus = ref({ quarter: null, description: null, waktu: null, nama: null });
+const peng = ref({ quarter: null, description: null, waktu: null, nama: null });
 const confirmationSummaries = ref(false);
 const summaryData = ref({
   lapus: {
@@ -476,29 +478,48 @@ const form = useForm({
 });
 const timestart = ref(null);
 const thisHidden = ref(false);
+const quarter = [1, 2, 3, 4];
+const setupArray = ["category", "sector", "subsector", "total"];
+const dogArray = ref([]);
+props.regions.forEach((r) => {
+  quarter.forEach((q) => {
+    setupArray.forEach((s) => {
+      let keys = { region: r.value, quarter: q, cat: s };
+      dogArray.value.push(keys);
+    });
+  });
+});
+const summariesing = async (element, quarter, region_id) => {
+  const response = await axios.get(route("home.index"), {
+    params: {
+      setup: element,
+      quarter: quarter,
+      region_id: region_id,
+    },
+  });
+  return response.data;
+};
+const dogKey = ref(0);
 const buildSummaries = async () => {
   timestart.value = buildTime();
   thisHidden.value = true;
-  let setupArray = ["category", "sector", "subsector", "total"];
-  setupArray.forEach(async (element) => {
-    try {
-      const response = await axios.get(route("home.index"), {
-        params: {
-          setup: element,
-        },
-      });
-      form.lapus_id = response.data.lapus_period;
-      form.peng_id = response.data.peng_period;
-    } catch (error) {
-      console.error(error);
+  try {
+    for (const d of dogArray.value) {
+      const holder = await summariesing(d.cat, d.quarter, d.region);
+      form.lapus_id = holder.lapus_period;
+      form.peng_id = holder.peng_period;
     }
-  });
-  const _token = await axios.get(route("token"));
-  form._token = _token.data;
-  form.post(route("home.update-time"));
-  confirmationSummaries.value = false;
-  thisHidden.value = false;
+  } catch (error) {
+    console.error(error);
+  } finally {
+    const _token = await axios.get(route("token"));
+    form._token = _token.data;
+    form.post(route("home.update-time"));
+    confirmationSummaries.value = false;
+    thisHidden.value = false;
+  }
 };
+// watch(dogKey.value, () => {});
 const getSummary = async (region_id, quarter, type) => {
   try {
     const response = await axios.get(route("home.get-summary"), {
@@ -527,9 +548,6 @@ const getSummary = async (region_id, quarter, type) => {
         }
       });
     }
-
-    // summaryData.value.peng = response.data.data;
-    // summaryData.value.lapus = response.data.data;
   } catch (error) {
     console.error(error);
   }
@@ -540,8 +558,6 @@ const formatNumberGerman = (num, min = 2, max = 2) => {
     maximumFractionDigits: max,
   }).format(num);
 };
-const lapus = ref({ quarter: null, description: null, waktu: null, nama: null });
-const peng = ref({ quarter: null, description: null, waktu: null, nama: null });
 const regionsFor = ref(props.default.id);
 onMounted(() => {
   lapus.value = props.sumTime.find((x) => {
