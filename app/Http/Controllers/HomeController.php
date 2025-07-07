@@ -118,4 +118,38 @@ class HomeController extends Controller
             'type' => $type
         ]);
     }
+
+    public function getGraph(Request $request)
+    {
+        $type = $request->type;
+        $catAttribute = $request->catAttribute;
+        $quarter = $request->quarter;
+        $regions = Region::whereNot('id', 1)->pluck('name');
+        if ($catAttribute == 'distribusi') {
+            $adhb = SummaryPdrb::orderBy('region_id', 'asc')
+                ->whereNot('region_id', 1)
+                ->where('quarter', $quarter)
+                ->where('category_id', ($type == 'Lapangan Usaha') ? 98 : 99)
+                ->pluck('adhb');
+            $adhb_prov = SummaryPdrb::where('region_id', 1)
+                ->where('quarter', $quarter)
+                ->where('category_id', ($type == 'Lapangan Usaha') ? 98 : 99)
+                ->value('adhb');
+            $data = $adhb->map(function ($value) use ($adhb_prov) {
+                return ($value != 0 && $adhb_prov != 0)
+                    ? ($value / $adhb_prov) * 100
+                    : 0;
+            });
+        } else {
+            $data = SummaryPdrb::orderBy('region_id', 'asc')
+                ->whereNot('region_id', 1)
+                ->where('quarter', $quarter)
+                ->where('category_id', ($type == 'Lapangan Usaha') ? 98 : 99)
+                ->pluck($catAttribute);
+        }
+        return response()->json([
+            'data' => $data,
+            'regions' => $regions
+        ]);
+    }
 }

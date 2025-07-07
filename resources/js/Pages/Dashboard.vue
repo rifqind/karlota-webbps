@@ -66,11 +66,8 @@
       </button>
     </div>
     <div class="font-bold text-xl mt-2">
-      SUMMARY PDRB LAPANGAN USAHA,
-      <span class="text-sm"
-        >Triwulan {{ lapus.quarter }} - {{ lapus.description }} (update terakhir:
-        {{ lapus.waktu }})</span
-      >
+      SUMMARY PDRB,
+      <span class="text-sm">(update terakhir: {{ lapus.waktu }})</span>
     </div>
     <div class="flex flex-wrap mt-2 items-center">
       <div
@@ -223,165 +220,41 @@
         </div>
       </div>
     </div>
-    <div class="font-bold text-xl mt-3">
-      SUMMARY PDRB PENGELUARAN,
-      <span class="text-sm"
-        >Triwulan {{ peng.quarter }} - {{ peng.description }} (update terakhir:
-        {{ peng.waktu }})</span
-      >
-    </div>
-    <div class="flex flex-wrap mt-2 items-center">
-      <div
-        class="bg-white text-lg shadow-md mb-2 rounded-md border border-gray-200 w-full border-l-orange-500 border-l-4 border-r-orange-500 border-r-4"
-      >
-        <div class="p-4">
-          <div class="grid grid-cols-1 gap-6">
-            <!-- Row 1: ADHB & ADHK -->
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div class="flex flex-col">
-                <div class="flex items-center justify-between mb-2">
-                  <h3 class="font-bold text-base">ADHB</h3>
-                </div>
-                <div>{{ summaryData.peng.adhb.transformed }}</div>
-              </div>
-              <div class="flex flex-col">
-                <div class="flex items-center justify-between mb-2">
-                  <h3 class="font-bold text-base">ADHK</h3>
-                  <font-awesome-icon
-                    icon="fa-solid fa-coins"
-                    class="fa-xl text-orange-500"
-                  />
-                </div>
-                <div>{{ summaryData.peng.adhk.transformed }}</div>
-              </div>
-            </div>
+    <div class="font-bold text-xl mt-3">GRAFIK</div>
+    <div class="flex flex-wrap">
+      <div class="w-full lg:w-[50%] md:w-full xl:w-[50%]">
+        <div class="flex flex-wrap items-center my-3 space-x-1">
+          <div class="w-full md:w-[75%] lg:w-[50%] xl:w-[50%] pr-1">
+            <Multiselect
+              v-model="graphData.legend"
+              :options="attributeGraph"
+              :searchable="true"
+              placeholder="-- Pilih Atribut --"
+            />
           </div>
+          <button @click="buildGraph" class="btn btn-success-fordone">
+            Build Grafik
+          </button>
+          <button @click="sortGraphData" class="btn btn-info-fordone">
+            <font-awesome-icon
+              v-if="sorted == 'desc' || sorted == 'asc'"
+              :icon="sorted == 'desc' ? 'fa-solid fa-angle-down' : 'fa-solid fa-angle-up'"
+            />
+            Sort
+          </button>
+          <button @click="sortGraphData('reset')" class="btn btn-warning-fordone">
+            <font-awesome-icon icon="fa-solid fa-recycle" />
+          </button>
         </div>
+        <!-- v-if="showBar" -->
+        <BarChart
+          :key="barIndex"
+          :legend="graphData.legend"
+          :chart-label="graphData.label"
+          :chart-value="graphData.data"
+        />
       </div>
     </div>
-    <div class="flex flex-wrap items-center">
-      <div
-        class="bg-white text-lg shadow-md mb-2 rounded-md border border-gray-200 w-full border-l-orange-500 border-l-4 border-r-orange-500 border-r-4"
-      >
-        <div class="p-4">
-          <!-- Row 2: Growth QtoQ, YonY, CtoC -->
-          <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div class="flex flex-col">
-              <div class="flex items-center space-x-2 mb-2">
-                <h3 class="font-bold text-base">Growth QtoQ</h3>
-                <font-awesome-icon
-                  :icon="
-                    summaryData.peng.qtoq.value > 0
-                      ? 'fa-solid fa-arrow-trend-up'
-                      : 'fa-solid fa-arrow-trend-down'
-                  "
-                  :class="
-                    summaryData.peng.qtoq.value > 0
-                      ? 'fa-xl text-green-500'
-                      : 'fa-xl text-red-500'
-                  "
-                />
-              </div>
-              <div>{{ summaryData.peng.qtoq.transformed }}</div>
-            </div>
-            <div class="flex flex-col">
-              <div class="flex items-center space-x-2 mb-2">
-                <h3 class="font-bold text-base">Growth YonY</h3>
-                <font-awesome-icon
-                  :icon="
-                    summaryData.peng.yony.value > 0
-                      ? 'fa-solid fa-arrow-trend-up'
-                      : 'fa-solid fa-arrow-trend-down'
-                  "
-                  :class="
-                    summaryData.peng.yony.value > 0
-                      ? 'fa-xl text-green-500'
-                      : 'fa-xl text-red-500'
-                  "
-                />
-              </div>
-              <div>{{ summaryData.peng.yony.transformed }}</div>
-            </div>
-            <div class="flex flex-col">
-              <div class="flex items-center space-x-2 mb-2">
-                <h3 class="font-bold text-base">Growth CtoC</h3>
-                <font-awesome-icon
-                  :icon="
-                    summaryData.peng.ctoc.value > 0
-                      ? 'fa-solid fa-arrow-trend-up'
-                      : 'fa-solid fa-arrow-trend-down'
-                  "
-                  :class="
-                    summaryData.peng.ctoc.value > 0
-                      ? 'fa-xl text-green-500'
-                      : 'fa-xl text-red-500'
-                  "
-                />
-              </div>
-              <div>{{ summaryData.peng.ctoc.transformed }}</div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-    <div class="flex flex-wrap items-center">
-      <div
-        class="bg-white text-lg shadow-md mb-2 rounded-md border border-gray-200 w-full border-l-orange-500 border-l-4 border-r-orange-500 border-r-4"
-      >
-        <div class="p-4">
-          <!-- Row 3: Indeks Implisit, IQtoQ, IYonY -->
-          <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div class="flex flex-col">
-              <div class="flex items-center space-x-2 mb-2">
-                <h3 class="font-bold text-base">Indeks Implisit</h3>
-                <font-awesome-icon
-                  icon="fa-solid fa-percent"
-                  class="fa-xl text-pink-500"
-                />
-              </div>
-              <div>{{ summaryData.peng.idx.transformed }}</div>
-            </div>
-            <div class="flex flex-col">
-              <div class="flex items-center space-x-2 mb-2">
-                <h3 class="font-bold text-base">Laju Implisit QtoQ</h3>
-                <font-awesome-icon
-                  :icon="
-                    summaryData.peng.iqtoq.value > 0
-                      ? 'fa-solid fa-arrow-trend-up'
-                      : 'fa-solid fa-arrow-trend-down'
-                  "
-                  :class="
-                    summaryData.peng.iqtoq.value > 0
-                      ? 'fa-xl text-green-500'
-                      : 'fa-xl text-red-500'
-                  "
-                />
-              </div>
-              <div>{{ summaryData.peng.iqtoq.transformed }}</div>
-            </div>
-            <div class="flex flex-col">
-              <div class="flex items-center space-x-2 mb-2">
-                <h3 class="font-bold text-base">Laju Implisit YonY</h3>
-                <font-awesome-icon
-                  :icon="
-                    summaryData.peng.iyony.value > 0
-                      ? 'fa-solid fa-arrow-trend-up'
-                      : 'fa-solid fa-arrow-trend-down'
-                  "
-                  :class="
-                    summaryData.peng.iyony.value > 0
-                      ? 'fa-xl text-green-500'
-                      : 'fa-xl text-red-500'
-                  "
-                />
-              </div>
-              <div>{{ summaryData.peng.iyony.transformed }}</div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-    <div class="font-bold text-xl mt-3">GRAFIK (Not Yet)</div>
     <ModalBs
       :hidden-close="thisHidden"
       :-modal-status="confirmationSummaries"
@@ -423,6 +296,7 @@ import Multiselect from "@vueform/multiselect";
 import ModalBs from "@/Components/ModalBs.vue";
 import SpinnerBorder from "@/Components/SpinnerBorder.vue";
 import { triggerSpinner } from "@/axiosSetup";
+import BarChart from "@/Components/BarChart.vue";
 const page = usePage();
 const props = defineProps({
   lapus: {
@@ -446,6 +320,49 @@ const props = defineProps({
     required: false,
   },
 });
+const graphData = ref({
+  data: [],
+  label: [],
+  legend: "qtoq",
+});
+var defaultGraph = { data: null, label: null };
+const attributeGraph = [
+  { label: "qtoq", value: "qtoq" },
+  { label: "yony", value: "yony" },
+  { label: "ctoc", value: "ctoc" },
+  { label: "iqtoq", value: "iqtoq" },
+  { label: "iyony", value: "iyony" },
+  { label: "distribusi", value: "distribusi" },
+];
+const sorted = ref("desc");
+const barIndex = ref(0);
+const sortGraphData = (type = "default") => {
+  if (type == "reset") {
+    setTimeout(() => {
+      graphData.value.label = defaultGraph.label;
+      graphData.value.data = defaultGraph.data;
+      barIndex.value++;
+    }, 100);
+    return;
+  }
+  const dataset = graphData.value.data;
+  const combined = graphData.value.label.map((label, index) => ({
+    label,
+    value: dataset[index],
+  }));
+  if (sorted.value == "desc") {
+    sorted.value = "asc";
+    combined.sort((a, b) => b.value - a.value);
+  } else if (sorted.value == "asc") {
+    sorted.value = "desc";
+    combined.sort((a, b) => a.value - b.value);
+  }
+  setTimeout(() => {
+    graphData.value.label = combined.map((item) => item.label);
+    graphData.value.data = combined.map((item) => item.value);
+    barIndex.value++;
+  }, 100);
+};
 const lapus = ref({ quarter: null, description: null, waktu: null, nama: null });
 const peng = ref({ quarter: null, description: null, waktu: null, nama: null });
 const confirmationSummaries = ref(false);
@@ -519,7 +436,6 @@ const buildSummaries = async () => {
     thisHidden.value = false;
   }
 };
-// watch(dogKey.value, () => {});
 const getSummary = async (region_id, quarter, type) => {
   try {
     const response = await axios.get(route("home.get-summary"), {
@@ -558,8 +474,40 @@ const formatNumberGerman = (num, min = 2, max = 2) => {
     maximumFractionDigits: max,
   }).format(num);
 };
+const getGraph = async (type, quarter, attribute) => {
+  let result;
+  try {
+    const response = await axios.get(route("home.get-graph"), {
+      params: {
+        type: type,
+        quarter: quarter,
+        catAttribute: attribute,
+      },
+    });
+    result = response.data;
+    defaultGraph.data = response.data.data;
+    defaultGraph.label = response.data.regions;
+  } catch (error) {
+    console.error(error);
+  }
+  return result;
+};
+const buildGraph = async () => {
+  try {
+    let result = await getGraph(
+      "Lapangan Usaha",
+      lapus.value.quarter,
+      graphData.value.legend
+    );
+    graphData.value.data = result.data;
+    graphData.value.label = result.regions;
+    barIndex.value++;
+  } catch (error) {
+    console.error(error);
+  }
+};
 const regionsFor = ref(props.default.id);
-onMounted(() => {
+onMounted(async () => {
   lapus.value = props.sumTime.find((x) => {
     return x.type == "Lapangan Usaha";
   });
@@ -568,6 +516,14 @@ onMounted(() => {
   });
   getSummary(props.default, lapus.value.quarter, lapus.value.type);
   getSummary(props.default, peng.value.quarter, peng.value.type);
+  let result = await getGraph(
+    "Lapangan Usaha",
+    lapus.value.quarter,
+    graphData.value.legend
+  );
+  graphData.value.data = result.data;
+  graphData.value.label = result.regions;
+  barIndex.value++;
 });
 const searchSummary = () => {
   let region_id = regionsFor.value;
