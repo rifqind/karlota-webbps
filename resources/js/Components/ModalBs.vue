@@ -30,6 +30,10 @@ const props = defineProps({
     type: String,
     default: "items-center",
   },
+  hiddenClose: {
+    type: Boolean,
+    default: false,
+  },
   // toggleModalClose: {
   //     type: Function,
   //     require: true,
@@ -48,6 +52,7 @@ const props = defineProps({
         <div class="p-4 border-b border-gray-200 flex justify-between items-center">
           <h5 class="font-black text-lg" id="modalBsTitle">{{ title }}</h5>
           <button
+            v-if="!hiddenClose"
             type="button"
             class="text-gray-500 hover:text-gray-700"
             @click="$emit('close')"
@@ -61,6 +66,7 @@ const props = defineProps({
         </div>
         <div class="p-4 border-t border-gray-200 flex justify-end space-x-2">
           <button
+            v-if="!hiddenClose"
             type="button"
             class="bg-gray-500 text-white px-3 py-1 rounded text-sm"
             @click="$emit('close')"

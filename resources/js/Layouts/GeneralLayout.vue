@@ -75,4 +75,25 @@ const showSidebar = (value) => {
 main {
   min-height: calc(100vh - 56px - 56px);
 }
+.slide-enter-active,
+.slide-leave-active {
+  transition: transform 0.3s ease;
+  will-change: transform;
+}
+
+.slide-enter-from {
+  transform: translateX(-100%);
+}
+
+.slide-enter-to {
+  transform: translateX(0);
+}
+
+.slide-leave-from {
+  transform: translateX(0);
+}
+
+.slide-leave-to {
+  transform: translateX(-100%);
+}
 </style>

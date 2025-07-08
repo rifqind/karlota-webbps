@@ -5,6 +5,7 @@ use App\Http\Controllers\FenomenaController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\PdrbController;
 use App\Http\Controllers\PeriodController;
+use App\Http\Controllers\SummaryController;
 use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
 
@@ -16,6 +17,11 @@ Route::get('/token', function () {
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/dashboard', [HomeController::class, 'index'])
         ->name('dashboard');
+    Route::get('/index', [SummaryController::class, 'index'])->name('home.index');
+    Route::get('/get-progress', [SummaryController::class, 'getProgress'])->name('home.get-progress');
+    Route::post('/update-time', [HomeController::class, 'updateSummaryTime'])->name('home.update-time');
+    Route::get('/home/get-summary', [HomeController::class, 'getSummary'])->name('home.get-summary');
+    Route::get('/home/get-graph', [HomeController::class, 'getGraph'])->name('home.get-graph');
     Route::prefix('period')->name('period.')->group(function () {
         Route::middleware(['role:admin'])->group(function () {
             Route::get('/index', [PeriodController::class, 'index'])
