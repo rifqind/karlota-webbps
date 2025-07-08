@@ -49,6 +49,7 @@ class SummaryController extends Controller
         $setup = $request->setup;
         if ($setup == 'category') {
             $result_cat =  $this->setupCategory($dataset_before, $dataset, $request->quarter, $request->region_id);
+            dd($result_cat);
         } else if ($setup == 'sector') {
             $this->setupSector($dataset_before, $dataset, $request->quarter, $request->region_id);
         } else if ($setup == 'subsector') {
@@ -65,6 +66,7 @@ class SummaryController extends Controller
             $this->setupTotal($dataset_lapus_before, $dataset_lapus, $dataset_peng_before, $dataset_peng, $request->quarter, $request->region_id);
         }
 
+
         $data = SummaryPdrb::where('region_id', $request->region_id)
             ->whereNotIn('subsector_id', [98, 99])
             ->where('quarter', $request->quarter)
@@ -80,11 +82,14 @@ class SummaryController extends Controller
         foreach ($data as $key => $value) {
             # code...
             if ($value->category_id < 18) {
-                $value->dist =  ($value->adhb != 0 && $lapus_total != 0) ? ($value->adhb / $lapus_total) * 100 : 0;
+                $dist =  ($value->adhb != 0 && $lapus_total != 0) ? ($value->adhb / $lapus_total) * 100 : 0;
             } else if ($value->category_id > 17) {
-                $value->dist =  ($value->adhb != 0 && $peng_total != 0) ? ($value->adhb / $peng_total) * 100 : 0;
+                $dist =  ($value->adhb != 0 && $peng_total != 0) ? ($value->adhb / $peng_total) * 100 : 0;
             }
+            SummaryPdrb::where('id', $value->id)->update(['dist' => $dist]);
         }
+        SummaryPdrb::whereIn('subsector_id', [98, 99])
+            ->update(['dist' => 100]);
 
         return response()->json([
             'message' => $setup . ' done',
@@ -101,23 +106,38 @@ class SummaryController extends Controller
             # code...
             $sectorForSearch = Sector::where('category_id', $cat)->pluck('id');
             $subsectorForSearch = Subsector::whereIn('sector_id', $sectorForSearch)->pluck('id');
-            $data_before = Pdrb::leftJoin('adjustments as adj', 'adj.pdrb_id', '=', 'pdrbs.id')
+            $query_before = Pdrb::query();
+            $query_before->leftJoin('adjustments as adj', 'adj.pdrb_id', '=', 'pdrbs.id')
                 ->join('datasets as d', 'd.id', '=', 'pdrbs.dataset_id')
                 ->whereIn('pdrbs.dataset_id', $dataset_before)
-                ->whereIn('pdrbs.subsector_id', $subsectorForSearch)
-                // ->where('pdrbs.quarter', $quarter)
-                ->where('d.region_id', $region)
-                ->groupBy('d.region_id', 'pdrbs.year', 'pdrbs.quarter')
-                ->selectRaw(
-                    'pdrbs.year,
+                ->whereIn('pdrbs.subsector_id', $subsectorForSearch);
+            if ($region != 17) {
+                $data_before = $query_before
+                    ->where('d.region_id', $region)
+                    ->groupBy('d.region_id', 'pdrbs.year', 'pdrbs.quarter')
+                    ->selectRaw(
+                        'pdrbs.year,
                         pdrbs.quarter,
                         SUM(pdrbs.adhb) as adhb,
                         SUM(pdrbs.adhk) as adhk,
                         SUM(adj.adhb) as adj_adhb,
                         SUM(adj.adhk) as adj_adhk,
                         d.region_id as region_id'
-                )
-                ->get()
+                    )->get();
+            } else {
+                $data_before = $query_before
+                    ->whereNot('d.region_id', 1)
+                    ->groupBy('pdrbs.year', 'pdrbs.quarter')
+                    ->selectRaw(
+                        'pdrbs.year,
+                        pdrbs.quarter,
+                        SUM(pdrbs.adhb) as adhb,
+                        SUM(pdrbs.adhk) as adhk,
+                        SUM(adj.adhb) as adj_adhb,
+                        SUM(adj.adhk) as adj_adhk'
+                    )->get();
+            }
+            $data_before = $data_before
                 ->map(function ($item) use ($cat) {
                     return [
                         'year' => $item->year,
@@ -125,27 +145,41 @@ class SummaryController extends Controller
                         'category_id' => $cat,
                         'adhb' => $item->adhb + ($item->adj_adhb ?? 0),
                         'adhk' => $item->adhk + ($item->adj_adhk ?? 0),
-                        'region_id' => $item->region_id
+                        'region_id' => $item->region_id ?? 17
                     ];
                 });
-            $data = Pdrb::leftJoin('adjustments as adj', 'adj.pdrb_id', '=', 'pdrbs.id')
+            $query = Pdrb::query();
+            $query->leftJoin('adjustments as adj', 'adj.pdrb_id', '=', 'pdrbs.id')
                 ->join('datasets as d', 'd.id', '=', 'pdrbs.dataset_id')
                 ->whereIn('pdrbs.dataset_id', $dataset)
-                ->whereIn('pdrbs.subsector_id', $subsectorForSearch)
-                // ->where('pdrbs.quarter', $quarter)
-                ->where('d.region_id', $region)
-                ->orderBy('d.region_id', 'asc')
-                ->groupBy('d.region_id', 'pdrbs.year', 'pdrbs.quarter')
-                ->selectRaw(
-                    'pdrbs.year,
+                ->whereIn('pdrbs.subsector_id', $subsectorForSearch);
+            if ($region != 17) {
+                $data = $query
+                    ->where('d.region_id', $region)
+                    ->groupBy('d.region_id', 'pdrbs.year', 'pdrbs.quarter')
+                    ->selectRaw(
+                        'pdrbs.year,
                         pdrbs.quarter,
                         SUM(pdrbs.adhb) as adhb,
                         SUM(pdrbs.adhk) as adhk,
                         SUM(adj.adhb) as adj_adhb,
                         SUM(adj.adhk) as adj_adhk,
                         d.region_id as region_id'
-                )
-                ->get()
+                    )->get();
+            } else {
+                $data = $query
+                    ->whereNot('d.region_id', 1)
+                    ->groupBy('pdrbs.year', 'pdrbs.quarter')
+                    ->selectRaw(
+                        'pdrbs.year,
+                        pdrbs.quarter,
+                        SUM(pdrbs.adhb) as adhb,
+                        SUM(pdrbs.adhk) as adhk,
+                        SUM(adj.adhb) as adj_adhb,
+                        SUM(adj.adhk) as adj_adhk'
+                    )->get();
+            }
+            $data = $data
                 ->map(function ($item) use ($cat) {
                     return [
                         'year' => $item->year,
@@ -153,7 +187,7 @@ class SummaryController extends Controller
                         'category_id' => $cat,
                         'adhb' => $item->adhb + ($item->adj_adhb ?? 0),
                         'adhk' => $item->adhk + ($item->adj_adhk ?? 0),
-                        'region_id' => $item->region_id
+                        'region_id' => $item->region_id ?? 17
                     ];
                 });
             if (sizeof($data) > 0) {

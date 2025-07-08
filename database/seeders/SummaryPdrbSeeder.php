@@ -15,7 +15,8 @@ class SummaryPdrbSeeder extends Seeder
     public function run(): void
     {
         $quarter = [1, 2, 3, 4];
-        $region_id = Region::pluck('id');
+        $region_id = Region::pluck('id')->toArray();
+        array_push($region_id, 17);
         foreach ($region_id as $key => $value) {
             # code...
             foreach ($quarter as $key => $qt) {

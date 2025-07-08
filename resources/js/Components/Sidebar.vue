@@ -20,6 +20,30 @@
           Dashboard
         </NavLinkSidebar>
         <NavLinkParentSidebar
+          v-if="false"
+          :nav-icon="'fa-solid fa-chart-line'"
+          :menu-open="
+            menuOpenSummary || currentRoute == 'spv.lapus' || currentRoute == 'spv.peng'
+          "
+          :toggle-menu-open="toggleMenuOpen"
+          :params="'summary'"
+          ><template #label>Lihat PDRB</template>
+          <template #content>
+            <NavLinkSidebar
+              :nav-icon="'fa-solid fa-chart-pie'"
+              :href="route('spv.lapus')"
+              :current-route="currentRoute == 'spv.lapus'"
+              >Lapangan Usaha</NavLinkSidebar
+            >
+            <NavLinkSidebar
+              :nav-icon="'fa-solid fa-money-bill-trend-up'"
+              :href="route('spv.peng')"
+              :current-route="currentRoute == 'spv.peng'"
+              >Pengeluaran</NavLinkSidebar
+            >
+          </template>
+        </NavLinkParentSidebar>
+        <NavLinkParentSidebar
           :navIcon="'fa-solid fa-chart-pie'"
           :menuOpen="
             menuOpenLapus ||
@@ -216,8 +240,10 @@ const currentRoute = page.props.route;
 const menuOpenLapus = ref(false);
 const menuOpenPeng = ref(false);
 const menuOpenFenom = ref(false);
+const menuOpenSummary = ref(false);
 
 const toggleMenuOpen = (x) => {
+  if (x == "summary") menuOpenSummary.value = !menuOpenSummary.value;
   if (x == "lapus") menuOpenLapus.value = !menuOpenLapus.value;
   if (x == "peng") menuOpenPeng.value = !menuOpenPeng.value;
   if (x == "fenom") menuOpenFenom.value = !menuOpenFenom.value;
