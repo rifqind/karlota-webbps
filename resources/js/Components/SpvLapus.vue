@@ -165,6 +165,8 @@
   </tbody>
 </template>
 <script setup>
+import { ref } from "vue";
+
 const props = defineProps({
   subsectors: {
     type: Array,
@@ -183,6 +185,7 @@ const props = defineProps({
     required: false,
   },
 });
+const tableRef = ref(null);
 const getData = (category_id, sector_id, subsector_id, region, formatted = true) => {
   let type = props.tab;
   let result;
@@ -197,17 +200,15 @@ const getData = (category_id, sector_id, subsector_id, region, formatted = true)
     });
     result = formatted ? formatNumberGerman(theData[type], 2, 2) : theData[type];
   } else if (region.value == "total") {
-    let filteredData = props.data.filter(
-      (x) =>
-        x.region_id != 1 &&
+    const theData = props.data.find((x) => {
+      return (
+        x.region_id == 17 &&
         x.category_id == category_id &&
         x.sector_id == sector_id &&
         x.subsector_id == subsector_id
-    );
-    if (filteredData) {
-      let numbers = filteredData.reduce((sum, item) => sum + Number(item[type] || 0), 0);
-      result = formatted ? formatNumberGerman(numbers, 2, 2) : numbers;
-    }
+      );
+    });
+    result = formatted ? formatNumberGerman(theData[type], 2, 2) : theData[type];
   } else if (region.value == "calculate") {
     const provData = props.data.find((x) => {
       return (
@@ -217,25 +218,29 @@ const getData = (category_id, sector_id, subsector_id, region, formatted = true)
         x.region_id == 1
       );
     });
-    if (type == "adhb" || type == "adhk") {
-      let filteredData = props.data.filter(
-        (x) =>
-          x.region_id != 1 &&
-          x.category_id == category_id &&
-          x.sector_id == sector_id &&
-          x.subsector_id == subsector_id
+    const filteredData = props.data.find((x) => {
+      return (
+        x.category_id == category_id &&
+        x.sector_id == sector_id &&
+        x.subsector_id == subsector_id &&
+        x.region_id == 17
       );
+    });
+    if (type == "adhb" || type == "adhk") {
       if (filteredData) {
-        const totalKabkot = filteredData.reduce(
-          (sum, item) => sum + Number(item[type] || 0),
-          0
-        );
+        let totalKabkot = Number(filteredData[type]);
         let prov = Number(provData[type]);
         let selisih = prov - totalKabkot;
         let disk = selisih != 0 && prov != 0 ? (selisih / prov) * 100 : 0;
         return formatted ? formatNumberGerman(disk, 2, 4) : disk;
       }
     } else {
+      if (filteredData) {
+        let totalKabkot = Number(filteredData[type]);
+        let prov = Number(provData[type]);
+        let selisih = prov - totalKabkot;
+        return formatted ? formatNumberGerman(selisih, 2, 4) : selisih;
+      }
     }
   }
   return result;
@@ -253,6 +258,35 @@ const formatNumberGerman = (num, min = 2, max = 5) => {
     maximumFractionDigits: max,
   }).format(num);
 };
+const changeColor = () => {
+  const rows = tableRef.value.querySelectorAll("tr");
+  rows.forEach((row) => {
+    const parseNumber = (value) =>
+      value ? Number(value.replaceAll(".", "").replaceAll(",", ".")) : 0;
+    const targets = row.querySelector("td:nth-child(2)");
+    const prov = row.querySelector("td:nth-child(3)");
+    const total = row.querySelector("td:nth-child(4)");
+    if (targets) {
+      let cek = parseNumber(targets.textContent);
+      const selisihCell = row.querySelector("td:nth-child(2)");
+      selisihCell.classList.remove("text-red-500", "text-yellow-500", "text-black");
+      if (Math.abs(cek) > 5) selisihCell.classList.add("text-red-500");
+      else if (Math.abs(cek) > 2) selisihCell.classList.add("text-yellow-500");
+      else selisihCell.classList.add("text-black");
+
+      if (
+        (parseNumber(prov.textContent) > 0 && parseNumber(total.textContent) < 0) ||
+        (parseNumber(prov.textContent) < 0 && parseNumber(total.textContent) > 0)
+      ) {
+        selisihCell.textContent =
+          "(Beda Arah) " + formatNumberGerman(cek.toFixed(4), 2, 4);
+      } else selisihCell.textContent = formatNumberGerman(cek.toFixed(4), 2, 4);
+    }
+  });
+};
+defineExpose({
+  changeColor,
+});
 </script>
 <style lang="css" scoped>
 .fixed-column {

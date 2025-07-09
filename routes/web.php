@@ -24,7 +24,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/home/get-summary', [HomeController::class, 'getSummary'])->name('home.get-summary');
     Route::get('/home/get-graph', [HomeController::class, 'getGraph'])->name('home.get-graph');
 
-    Route::name('spv.')->middleware(['role:supervisor|admin'])->group(function () {
+    Route::name('spv.')->group(function () {
         Route::prefix('lapus')->get('/spv', [SpvController::class, 'index'])->name('lapus');
         Route::prefix('peng')->get('/spv', [SpvController::class, 'index'])->name('peng');
     });
@@ -50,7 +50,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/fetchYearBefore', [PeriodController::class, 'fetchYearBefore'])
             ->name('fetchYearBefore');
     });
-    Route::prefix('lapus')->name('lapus.')->group(function () {
+    Route::middleware(['role:admin|user'])->prefix('lapus')->name('lapus.')->group(function () {
         Route::get('/entri', [PdrbController::class, 'entri'])
             ->name('entri');
         Route::get('/adjustment', [PdrbController::class, 'adjustment'])
@@ -62,7 +62,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/entri-fenomena', [FenomenaController::class, 'entri'])
             ->name('entri-fenomena');
     });
-    Route::prefix('peng')->name('peng.')->group(function () {
+    Route::middleware(['role:admin|user'])->prefix('peng')->name('peng.')->group(function () {
         Route::get('/entri', [PdrbController::class, 'entri'])
             ->name('entri');
         Route::get('/adjustment', [PdrbController::class, 'adjustment'])
@@ -76,23 +76,25 @@ Route::middleware(['auth', 'verified'])->group(function () {
     });
 
     //Entri
-    Route::get('/show-pdrb', [PdrbController::class, 'show'])
-        ->name('pdrb.show');
-    Route::post('/save-entri', [PdrbController::class, 'saveEntri'])
-        ->name('pdrb.save-entri');
-    Route::post('/submit-entri', [PdrbController::class, 'submitEntri'])
-        ->name('pdrb.submit-entri');
-    Route::post('/unsubmit-entri', [PdrbController::class, 'unsubmitEntri'])
-        ->name('pdrb.unsubmit-entri');
-    Route::get('/copy-entri', [PdrbController::class, 'copyEntri'])
-        ->name('pdrb.copy-entri');
-    Route::get('/copy-hasil', [PdrbController::class, 'copyHasil'])
-        ->name('pdrb.copy-hasil');
-    Route::get('/watch-previous', [PdrbController::class, 'watchPrevious'])
-        ->name('pdrb.watch-previous');
+    Route::middleware(['role:admin|user'])->group(function () {
+        Route::get('/show-pdrb', [PdrbController::class, 'show'])
+            ->name('pdrb.show');
+        Route::post('/save-entri', [PdrbController::class, 'saveEntri'])
+            ->name('pdrb.save-entri');
+        Route::post('/submit-entri', [PdrbController::class, 'submitEntri'])
+            ->name('pdrb.submit-entri');
+        Route::post('/unsubmit-entri', [PdrbController::class, 'unsubmitEntri'])
+            ->name('pdrb.unsubmit-entri');
+        Route::get('/copy-entri', [PdrbController::class, 'copyEntri'])
+            ->name('pdrb.copy-entri');
+        Route::get('/copy-hasil', [PdrbController::class, 'copyHasil'])
+            ->name('pdrb.copy-hasil');
+        Route::get('/watch-previous', [PdrbController::class, 'watchPrevious'])
+            ->name('pdrb.watch-previous');
+    });
 
     //Adjustment
-    Route::get('/get-adjustment', [PdrbController::class, 'getAdjustment'])
+    Route::middleware(['role:admin|user'])->get('/get-adjustment', [PdrbController::class, 'getAdjustment'])
         ->name('pdrb.get-adjustment');
     Route::middleware(['role:admin'])->post('/save-adjustment', [PdrbController::class, 'saveAdjustment'])
         ->name('pdrb.save-adjustment');
@@ -105,28 +107,32 @@ Route::middleware(['auth', 'verified'])->group(function () {
             ->name('pdrb.monitoring');
     });
 
-    //Hasil
-    Route::get('/get-hasil', [PdrbController::class, 'getHasil'])
-        ->name('pdrb.get-hasil');
+    Route::middleware(['role:admin|user'])->group(function () {
+        //Hasil
+        Route::get('/get-hasil', [PdrbController::class, 'getHasil'])
+            ->name('pdrb.get-hasil');
 
-    //Diskrepansi
-    Route::get('/get-diskrepansi', [PdrbController::class, 'getDiskrepansi'])
-        ->name('pdrb.get-diskrepansi');
+        //Diskrepansi
+        Route::get('/get-diskrepansi', [PdrbController::class, 'getDiskrepansi'])
+            ->name('pdrb.get-diskrepansi');
+    });
 
     //Fenomena
     Route::prefix('fenomena')->name('fenomena.')->group(function () {
-        Route::get('/show', [FenomenaController::class, 'show'])
-            ->name('show');
-        Route::get('/index', [FenomenaController::class, 'index'])
-            ->name('index');
-        Route::get('/get-index', [FenomenaController::class, 'getIndex'])
-            ->name('get-index');
-        Route::post('/save-fenomena', [FenomenaController::class, 'saveFenomena'])
-            ->name('save-fenomena');
-        Route::post('/submit-fenomena', [FenomenaController::class, 'submitFenomena'])
-            ->name('submit-fenomena');
-        Route::post('/unsubmit-fenomena', [FenomenaController::class, 'unsubmitFenomena'])
-            ->name('unsubmit-fenomena');
+        Route::middleware(['role:admin|user'])->group(function () {
+            Route::get('/show', [FenomenaController::class, 'show'])
+                ->name('show');
+            Route::get('/index', [FenomenaController::class, 'index'])
+                ->name('index');
+            Route::get('/get-index', [FenomenaController::class, 'getIndex'])
+                ->name('get-index');
+            Route::post('/save-fenomena', [FenomenaController::class, 'saveFenomena'])
+                ->name('save-fenomena');
+            Route::post('/submit-fenomena', [FenomenaController::class, 'submitFenomena'])
+                ->name('submit-fenomena');
+            Route::post('/unsubmit-fenomena', [FenomenaController::class, 'unsubmitFenomena'])
+                ->name('unsubmit-fenomena');
+        });
         Route::middleware(['role:admin'])->group(function () {
             Route::get('/monitoring', [FenomenaController::class, 'monitoring'])
                 ->name('monitoring');
@@ -145,13 +151,15 @@ Route::middleware(['auth', 'verified'])->group(function () {
             Route::delete('/destroy/{id}', [UserController::class, 'destroy'])
                 ->name('destroy');
         });
-        Route::get('/edit/{id}', [UserController::class, 'edit'])
-            ->name('edit');
-        Route::post('/edit', [UserController::class, 'edit']);
-        Route::get('/question', [UserController::class, 'question'])->name('question');
-        Route::post('/question', [UserController::class, 'question']);
-        Route::delete('/delete-question/{id}', [UserController::class, 'question']);
-        Route::get('/fetch-question/{id}', [UserController::class, 'fetchQuestion'])->name('fetch-question');
+        Route::middleware(['role:admin|user'])->group(function () {
+            Route::get('/edit/{id}', [UserController::class, 'edit'])
+                ->name('edit');
+            Route::post('/edit', [UserController::class, 'edit']);
+            Route::get('/question', [UserController::class, 'question'])->name('question');
+            Route::post('/question', [UserController::class, 'question']);
+            Route::delete('/delete-question/{id}', [UserController::class, 'question']);
+            Route::get('/fetch-question/{id}', [UserController::class, 'fetchQuestion'])->name('fetch-question');
+        });
     });
 });
 

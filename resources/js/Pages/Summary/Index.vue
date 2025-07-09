@@ -50,6 +50,16 @@
         </thead>
         <template v-if="type == 'Lapangan Usaha'">
           <SpvLapus
+            ref="childRef"
+            :data="data"
+            :regions="tableColumn"
+            :subsectors="subsectors"
+            :tab="currentTab"
+          />
+        </template>
+        <template v-if="type == 'Pengeluaran'">
+          <SpvPeng
+            ref="childRef"
             :data="data"
             :regions="tableColumn"
             :subsectors="subsectors"
@@ -65,9 +75,10 @@
 import FlashFetch from "@/Components/FlashFetch.vue";
 import FloatScrollDown from "@/Components/FloatScrollDown.vue";
 import SpvLapus from "@/Components/SpvLapus.vue";
+import SpvPeng from "@/Components/SpvPeng.vue";
 import GeneralLayout from "@/Layouts/GeneralLayout.vue";
 import { Head } from "@inertiajs/vue3";
-import { onMounted, ref } from "vue";
+import { nextTick, onMounted, ref } from "vue";
 const props = defineProps({
   data: {
     type: Array,
@@ -91,6 +102,7 @@ const props = defineProps({
   },
 });
 const notifications = ref([]);
+const childRef = ref(null);
 const tableColumn = ref([]);
 var def = "btn-info-fordone";
 const activeTab = ref({
@@ -107,7 +119,7 @@ const activeTab = ref({
 const setActiveTab = (value) => {
   return activeTab.value[value];
 };
-const resetShowTable = () => {};
+const resetShowTable = async () => {};
 const currentTab = ref("adhb");
 const showTab = async (tab) => {
   Object.keys(activeTab.value).forEach((key) => {
@@ -117,10 +129,16 @@ const showTab = async (tab) => {
   currentTab.value = tab;
   resetShowTable();
   if (tab == "adhb" || tab == "adhk") {
-    if (tableColumn.value) tableColumn.value[0].name = "Diskrepansi";
+    if (tableColumn.value.length > 0) {
+      tableColumn.value[0].name = "Diskrepansi";
+    }
   } else {
-    if (tableColumn.value) tableColumn.value[0].name = "Selisih";
+    if (tableColumn.value.length > 0) {
+      tableColumn.value[0].name = "Selisih";
+    }
   }
+  await nextTick;
+  childRef.value?.changeColor();
 };
 onMounted(() => {
   showTab("adhb");

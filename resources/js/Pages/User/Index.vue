@@ -141,6 +141,7 @@
               :options="[
                 { label: 'User', value: 'user' },
                 { label: 'Admin', value: 'admin' },
+                { label: 'Supervisor', value: 'spv' },
               ]"
               :searchable="true"
               placeholder="-- Pilih Role --"

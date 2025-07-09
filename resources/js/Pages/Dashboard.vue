@@ -400,11 +400,12 @@ const thisHidden = ref(false);
 const quarter = [1, 2, 3, 4];
 const setupArray = ["category", "sector", "subsector", "total"];
 const dogArray = ref([]);
-[17].forEach((r) => {
+const supRegion = [...props.regions, { name: "Total", value: 17 }];
+supRegion.forEach((r) => {
   quarter.forEach((q) => {
     setupArray.forEach((s) => {
-      // let keys = { region: r.value, quarter: q, cat: s };
-      let keys = { region: r, quarter: q, cat: s };
+      let keys = { region: r.value, quarter: q, cat: s };
+      // let keys = { region: r, quarter: q, cat: s };
       dogArray.value.push(keys);
     });
   });
