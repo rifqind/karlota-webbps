@@ -10,12 +10,16 @@
           <div class="flex flex-items items-center gap-5">
             <div class="w-full flex gap-5">
               <div class="w-1/5 space-y-2">
-                <label for="type">Pilih PDRB<span class="text-danger">*</span></label>
+                <label class="whitespace-nowrap w-28 text-sm font-medium" for="type"
+                  >Pilih PDRB<span class="text-danger">*</span></label
+                >
                 <Multiselect v-model="form.type" :placeholder="form.type" disabled />
                 <div class="text-danger text-left" v-if="true" id="error-dinas"></div>
               </div>
               <div class="w-1/5 space-y-2">
-                <label for="year">Pilih Tahun<span class="text-danger">*</span></label>
+                <label class="whitespace-nowrap w-28 text-sm font-medium" for="year"
+                  >Pilih Tahun<span class="text-danger">*</span></label
+                >
                 <Multiselect
                   v-model="form.year"
                   :options="yearDrop"
@@ -28,7 +32,9 @@
                 </div>
               </div>
               <div class="w-1/5 space-y-2">
-                <label for="year">Pilih Triwulan<span class="text-danger">*</span></label>
+                <label class="whitespace-nowrap w-28 text-sm font-medium" for="year"
+                  >Pilih Triwulan<span class="text-danger">*</span></label
+                >
                 <Multiselect
                   v-model="form.quarter"
                   :options="quarterDrop"
@@ -41,7 +47,7 @@
                 </div>
               </div>
               <div class="w-1/5 space-y-2">
-                <label for="year"
+                <label class="whitespace-nowrap w-28 text-sm font-medium" for="year"
                   >Pilih Periode Putaran<span class="text-danger">*</span></label
                 >
                 <Multiselect
@@ -56,7 +62,9 @@
                 </div>
               </div>
               <div class="w-1/5 space-y-2">
-                <label for="year">Pilih Data Tahun Sebelumnya</label>
+                <label class="whitespace-nowrap w-28 text-sm font-medium" for="year"
+                  >Pilih Data Tahun Sebelumnya</label
+                >
                 <Multiselect
                   v-model="form.dataBefore"
                   :options="dataBeforeDrop"

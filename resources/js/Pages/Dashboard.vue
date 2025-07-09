@@ -71,15 +71,18 @@
     </div>
     <div class="flex flex-wrap mt-2 items-center">
       <div
-        class="bg-white text-lg shadow-md mb-2 rounded-md border border-gray-200 w-full border-l-indigo-500 border-l-4 border-r-indigo-500 border-r-4"
+        class="bg-white text-lg shadow-md mb-2 rounded-md border border-gray-200 w-full border-l-indigo-500 border-l-4 border-r-orange-500 border-r-4"
       >
         <div class="p-4">
           <div class="grid grid-cols-1 gap-6">
-            <!-- Row 1: ADHB & ADHK -->
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div class="flex flex-col">
                 <div class="flex items-center justify-between mb-2">
                   <h3 class="font-bold text-base">ADHB</h3>
+                  <font-awesome-icon
+                    icon="fa-solid fa-industry"
+                    class="fa-xl text-indigo-500"
+                  />
                 </div>
                 <div>{{ summaryData.lapus.adhb.transformed }}</div>
               </div>
@@ -87,8 +90,8 @@
                 <div class="flex items-center justify-between mb-2">
                   <h3 class="font-bold text-base">ADHK</h3>
                   <font-awesome-icon
-                    icon="fa-solid fa-industry"
-                    class="fa-xl text-indigo-500"
+                    icon="fa-solid fa-coins"
+                    class="fa-xl text-orange-500"
                   />
                 </div>
                 <div>{{ summaryData.lapus.adhk.transformed }}</div>
@@ -100,7 +103,7 @@
     </div>
     <div class="flex flex-wrap items-center">
       <div
-        class="bg-white text-lg shadow-md mb-2 rounded-md border border-gray-200 w-full border-l-indigo-500 border-l-4 border-r-indigo-500 border-r-4"
+        class="bg-white text-lg shadow-md mb-2 rounded-md border border-gray-200 w-full border-l-indigo-500 border-l-4 border-r-orange-500 border-r-4"
       >
         <div class="p-4">
           <!-- Row 2: Growth QtoQ, YonY, CtoC -->
@@ -165,10 +168,9 @@
     </div>
     <div class="flex flex-wrap items-center">
       <div
-        class="bg-white text-lg shadow-md mb-2 rounded-md border border-gray-200 w-full border-l-indigo-500 border-l-4 border-r-indigo-500 border-r-4"
+        class="bg-white text-lg shadow-md mb-2 rounded-md border border-gray-200 w-full border-l-indigo-500 border-l-4 border-r-orange-500 border-r-4"
       >
         <div class="p-4">
-          <!-- Row 3: Indeks Implisit, IQtoQ, IYonY -->
           <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div class="flex flex-col">
               <div class="flex items-center space-x-2 mb-2">
@@ -398,10 +400,12 @@ const thisHidden = ref(false);
 const quarter = [1, 2, 3, 4];
 const setupArray = ["category", "sector", "subsector", "total"];
 const dogArray = ref([]);
-props.regions.forEach((r) => {
+const supRegion = [...props.regions, { name: "Total", value: 17 }];
+supRegion.forEach((r) => {
   quarter.forEach((q) => {
     setupArray.forEach((s) => {
       let keys = { region: r.value, quarter: q, cat: s };
+      // let keys = { region: r, quarter: q, cat: s };
       dogArray.value.push(keys);
     });
   });

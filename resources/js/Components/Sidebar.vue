@@ -20,176 +20,205 @@
           Dashboard
         </NavLinkSidebar>
         <NavLinkParentSidebar
-          :navIcon="'fa-solid fa-chart-pie'"
-          :menuOpen="
-            menuOpenLapus ||
-            currentRoute == 'lapus.entri' ||
-            currentRoute == 'lapus.adjustment' ||
-            currentRoute == 'lapus.hasil' ||
-            currentRoute == 'lapus.diskrepansi'
+          :nav-icon="'fa-solid fa-chart-line'"
+          :menu-open="
+            menuOpenSummary || currentRoute == 'spv.lapus' || currentRoute == 'spv.peng'
           "
-          :toggleMenuOpen="toggleMenuOpen"
-          :params="'lapus'"
-        >
-          <template #label> Lapangan Usaha</template>
+          :toggle-menu-open="toggleMenuOpen"
+          :params="'summary'"
+          ><template #label>Lihat PDRB</template>
           <template #content>
             <NavLinkSidebar
-              :navIcon="'fa-solid fa-list-ol'"
-              :href="route('lapus.entri')"
-              :currentRoute="currentRoute == 'lapus.entri'"
+              :nav-icon="'fa-solid fa-chart-pie'"
+              :href="route('spv.lapus')"
+              :current-route="currentRoute == 'spv.lapus'"
+              >Lapangan Usaha</NavLinkSidebar
             >
-              Entri PDRB
-            </NavLinkSidebar>
             <NavLinkSidebar
-              :navIcon="'fa-solid fa-list-ol'"
-              :href="route('lapus.adjustment')"
-              :currentRoute="currentRoute == 'lapus.adjustment'"
+              :nav-icon="'fa-solid fa-money-bill-trend-up'"
+              :href="route('spv.peng')"
+              :current-route="currentRoute == 'spv.peng'"
+              >Pengeluaran</NavLinkSidebar
             >
-              Adjustment
-            </NavLinkSidebar>
-            <NavLinkSidebar
-              :navIcon="'fa-solid fa-list-ol'"
-              :href="route('lapus.hasil')"
-              :currentRoute="currentRoute == 'lapus.hasil'"
-            >
-              Hasil
-            </NavLinkSidebar>
-            <NavLinkSidebar
-              :navIcon="'fa-solid fa-list-ol'"
-              :href="route('lapus.diskrepansi')"
-              :currentRoute="currentRoute == 'lapus.diskrepansi'"
-            >
-              PDRB se-Provinsi
-            </NavLinkSidebar>
           </template>
         </NavLinkParentSidebar>
-        <NavLinkParentSidebar
-          :navIcon="'fa-solid fa-money-bill-trend-up'"
-          :menuOpen="
-            menuOpenPeng ||
-            currentRoute == 'peng.entri' ||
-            currentRoute == 'peng.adjustment' ||
-            currentRoute == 'peng.hasil' ||
-            currentRoute == 'peng.diskrepansi'
+        <template
+          v-if="
+            page.props.auth.user.role == 'admin' || page.props.auth.user.role == 'user'
           "
-          :toggleMenuOpen="toggleMenuOpen"
-          :params="'peng'"
         >
-          <template #label> Pengeluaran </template>
-          <template #content>
-            <NavLinkSidebar
-              :navIcon="'fa-solid fa-list-ol'"
-              :href="route('peng.entri')"
-              :currentRoute="currentRoute == 'peng.entri'"
-            >
-              Entri PDRB
-            </NavLinkSidebar>
-            <NavLinkSidebar
-              :navIcon="'fa-solid fa-list-ol'"
-              :href="route('peng.adjustment')"
-              :currentRoute="currentRoute == 'peng.adjustment'"
-            >
-              Adjustment
-            </NavLinkSidebar>
-            <NavLinkSidebar
-              :navIcon="'fa-solid fa-list-ol'"
-              :href="route('peng.hasil')"
-              :currentRoute="currentRoute == 'peng.hasil'"
-            >
-              Hasil
-            </NavLinkSidebar>
-            <NavLinkSidebar
-              :navIcon="'fa-solid fa-list-ol'"
-              :href="route('peng.diskrepansi')"
-              :currentRoute="currentRoute == 'peng.diskrepansi'"
-            >
-              PDRB se-Provinsi
-            </NavLinkSidebar>
-          </template>
-        </NavLinkParentSidebar>
-        <NavLinkSidebar
-          v-if="page.props.auth.user.role == 'admin'"
-          :navIcon="'fa-solid fa-list-ol'"
-          :href="route('pdrb.monitoring')"
-          :currentRoute="currentRoute == 'pdrb.monitoring'"
-        >
-          Monitoring PDRB
-        </NavLinkSidebar>
-        <NavLinkParentSidebar
-          :navIcon="'fa-solid fa-sun-plant-wilt'"
-          :menuOpen="
-            menuOpenFenom ||
-            currentRoute == 'lapus.entri-fenomena' ||
-            currentRoute == 'peng.entri-fenomena' ||
-            currentRoute == 'fenomena.index' ||
-            currentRoute == 'fenomena.monitoring'
-          "
-          :toggleMenuOpen="toggleMenuOpen"
-          :params="'fenom'"
-        >
-          <template #label> Fenomena </template>
-          <template #content>
-            <NavLinkSidebar
-              :navIcon="'fa-solid fa-list-ol'"
-              :href="route('lapus.entri-fenomena')"
-              :currentRoute="currentRoute == 'lapus.entri-fenomena'"
-            >
-              Lapangan Usaha
-            </NavLinkSidebar>
-            <NavLinkSidebar
-              :navIcon="'fa-solid fa-list-ol'"
-              :href="route('peng.entri-fenomena')"
-              :currentRoute="currentRoute == 'peng.entri-fenomena'"
-            >
-              Pengeluaran
-            </NavLinkSidebar>
-            <NavLinkSidebar
-              :navIcon="'fa-solid fa-list-ol'"
-              :href="route('fenomena.index')"
-              :currentRoute="currentRoute == 'fenomena.index'"
-            >
-              Lihat Fenomena
-            </NavLinkSidebar>
-            <NavLinkSidebar
-              v-if="page.props.auth.user.role == 'admin'"
-              :navIcon="'fa-solid fa-list-ol'"
-              :href="route('fenomena.monitoring')"
-              :currentRoute="currentRoute == 'fenomena.monitoring'"
-            >
-              Monitoring Fenomena
-            </NavLinkSidebar>
-          </template>
-        </NavLinkParentSidebar>
-        <template v-if="page.props.auth.user.role == 'admin'">
+          <NavLinkParentSidebar
+            :navIcon="'fa-solid fa-chart-pie'"
+            :menuOpen="
+              menuOpenLapus ||
+              currentRoute == 'lapus.entri' ||
+              currentRoute == 'lapus.adjustment' ||
+              currentRoute == 'lapus.hasil' ||
+              currentRoute == 'lapus.diskrepansi'
+            "
+            :toggleMenuOpen="toggleMenuOpen"
+            :params="'lapus'"
+          >
+            <template #label> Lapangan Usaha</template>
+            <template #content>
+              <NavLinkSidebar
+                :navIcon="'fa-solid fa-list-ol'"
+                :href="route('lapus.entri')"
+                :currentRoute="currentRoute == 'lapus.entri'"
+              >
+                Entri PDRB
+              </NavLinkSidebar>
+              <NavLinkSidebar
+                :navIcon="'fa-solid fa-list-ol'"
+                :href="route('lapus.adjustment')"
+                :currentRoute="currentRoute == 'lapus.adjustment'"
+              >
+                Adjustment
+              </NavLinkSidebar>
+              <NavLinkSidebar
+                :navIcon="'fa-solid fa-list-ol'"
+                :href="route('lapus.hasil')"
+                :currentRoute="currentRoute == 'lapus.hasil'"
+              >
+                Hasil
+              </NavLinkSidebar>
+              <NavLinkSidebar
+                :navIcon="'fa-solid fa-list-ol'"
+                :href="route('lapus.diskrepansi')"
+                :currentRoute="currentRoute == 'lapus.diskrepansi'"
+              >
+                PDRB se-Provinsi
+              </NavLinkSidebar>
+            </template>
+          </NavLinkParentSidebar>
+          <NavLinkParentSidebar
+            :navIcon="'fa-solid fa-money-bill-trend-up'"
+            :menuOpen="
+              menuOpenPeng ||
+              currentRoute == 'peng.entri' ||
+              currentRoute == 'peng.adjustment' ||
+              currentRoute == 'peng.hasil' ||
+              currentRoute == 'peng.diskrepansi'
+            "
+            :toggleMenuOpen="toggleMenuOpen"
+            :params="'peng'"
+          >
+            <template #label> Pengeluaran </template>
+            <template #content>
+              <NavLinkSidebar
+                :navIcon="'fa-solid fa-list-ol'"
+                :href="route('peng.entri')"
+                :currentRoute="currentRoute == 'peng.entri'"
+              >
+                Entri PDRB
+              </NavLinkSidebar>
+              <NavLinkSidebar
+                :navIcon="'fa-solid fa-list-ol'"
+                :href="route('peng.adjustment')"
+                :currentRoute="currentRoute == 'peng.adjustment'"
+              >
+                Adjustment
+              </NavLinkSidebar>
+              <NavLinkSidebar
+                :navIcon="'fa-solid fa-list-ol'"
+                :href="route('peng.hasil')"
+                :currentRoute="currentRoute == 'peng.hasil'"
+              >
+                Hasil
+              </NavLinkSidebar>
+              <NavLinkSidebar
+                :navIcon="'fa-solid fa-list-ol'"
+                :href="route('peng.diskrepansi')"
+                :currentRoute="currentRoute == 'peng.diskrepansi'"
+              >
+                PDRB se-Provinsi
+              </NavLinkSidebar>
+            </template>
+          </NavLinkParentSidebar>
           <NavLinkSidebar
-            :navIcon="'fas fa-table'"
-            :href="route('period.index')"
-            :currentRoute="currentRoute == 'period.index'"
+            v-if="page.props.auth.user.role == 'admin'"
+            :navIcon="'fa-solid fa-list-ol'"
+            :href="route('pdrb.monitoring')"
+            :currentRoute="currentRoute == 'pdrb.monitoring'"
           >
-            Kelola Jadwal</NavLinkSidebar
+            Monitoring PDRB
+          </NavLinkSidebar>
+          <NavLinkParentSidebar
+            :navIcon="'fa-solid fa-sun-plant-wilt'"
+            :menuOpen="
+              menuOpenFenom ||
+              currentRoute == 'lapus.entri-fenomena' ||
+              currentRoute == 'peng.entri-fenomena' ||
+              currentRoute == 'fenomena.index' ||
+              currentRoute == 'fenomena.monitoring'
+            "
+            :toggleMenuOpen="toggleMenuOpen"
+            :params="'fenom'"
           >
+            <template #label> Fenomena </template>
+            <template #content>
+              <NavLinkSidebar
+                :navIcon="'fa-solid fa-list-ol'"
+                :href="route('lapus.entri-fenomena')"
+                :currentRoute="currentRoute == 'lapus.entri-fenomena'"
+              >
+                Lapangan Usaha
+              </NavLinkSidebar>
+              <NavLinkSidebar
+                :navIcon="'fa-solid fa-list-ol'"
+                :href="route('peng.entri-fenomena')"
+                :currentRoute="currentRoute == 'peng.entri-fenomena'"
+              >
+                Pengeluaran
+              </NavLinkSidebar>
+              <NavLinkSidebar
+                :navIcon="'fa-solid fa-list-ol'"
+                :href="route('fenomena.index')"
+                :currentRoute="currentRoute == 'fenomena.index'"
+              >
+                Lihat Fenomena
+              </NavLinkSidebar>
+              <NavLinkSidebar
+                v-if="page.props.auth.user.role == 'admin'"
+                :navIcon="'fa-solid fa-list-ol'"
+                :href="route('fenomena.monitoring')"
+                :currentRoute="currentRoute == 'fenomena.monitoring'"
+              >
+                Monitoring Fenomena
+              </NavLinkSidebar>
+            </template>
+          </NavLinkParentSidebar>
+          <template v-if="page.props.auth.user.role == 'admin'">
+            <NavLinkSidebar
+              :navIcon="'fas fa-table'"
+              :href="route('period.index')"
+              :currentRoute="currentRoute == 'period.index'"
+            >
+              Kelola Jadwal</NavLinkSidebar
+            >
+            <NavLinkSidebar
+              :navIcon="'fa-solid fa-users'"
+              :href="route('user.index')"
+              :currentRoute="currentRoute == 'user.index'"
+            >
+              Kelola Pengguna</NavLinkSidebar
+            >
+          </template>
           <NavLinkSidebar
             :navIcon="'fa-solid fa-users'"
-            :href="route('user.index')"
-            :currentRoute="currentRoute == 'user.index'"
+            :href="route('user.edit', { id: page.props.auth.user.id })"
+            :currentRoute="currentRoute == 'user.edit'"
           >
-            Kelola Pengguna</NavLinkSidebar
+            Edit Profil Akun</NavLinkSidebar
+          >
+          <NavLinkSidebar
+            :navIcon="'fa-solid fa-file-circle-question'"
+            :href="route('user.question')"
+            :currentRoute="currentRoute == 'user.question'"
+          >
+            Permasalahan Aplikasi</NavLinkSidebar
           >
         </template>
-        <NavLinkSidebar
-          :navIcon="'fa-solid fa-users'"
-          :href="route('user.edit', { id: page.props.auth.user.id })"
-          :currentRoute="currentRoute == 'user.edit'"
-        >
-          Edit Profil Akun</NavLinkSidebar
-        >
-        <NavLinkSidebar
-          :navIcon="'fa-solid fa-file-circle-question'"
-          :href="route('user.question')"
-          :currentRoute="currentRoute == 'user.question'"
-        >
-          Permasalahan Aplikasi</NavLinkSidebar
-        >
       </ul>
       <br />
       <div class="text-center">
@@ -216,8 +245,10 @@ const currentRoute = page.props.route;
 const menuOpenLapus = ref(false);
 const menuOpenPeng = ref(false);
 const menuOpenFenom = ref(false);
+const menuOpenSummary = ref(false);
 
 const toggleMenuOpen = (x) => {
+  if (x == "summary") menuOpenSummary.value = !menuOpenSummary.value;
   if (x == "lapus") menuOpenLapus.value = !menuOpenLapus.value;
   if (x == "peng") menuOpenPeng.value = !menuOpenPeng.value;
   if (x == "fenom") menuOpenFenom.value = !menuOpenFenom.value;
