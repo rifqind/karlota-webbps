@@ -60,6 +60,12 @@
           </div>
           <div class="flex items-center space-x-2 justify-end">
             <div
+              @click="downloadHasil('tabel-entry')"
+              class="btn-warning-fordone text-center"
+            >
+              Download
+            </div>
+            <div
               class="btn-info-fordone ml-auto w-[130px] text-center"
               @click.prevent="submit"
             >
@@ -149,6 +155,7 @@ import FloatScrollDown from "@/Components/FloatScrollDown.vue";
 import LapusFenomena from "@/Components/LapusFenomena.vue";
 import PengFenomena from "@/Components/PengFenomena.vue";
 import SpinnerBorder from "@/Components/SpinnerBorder.vue";
+import { tableToJson, theDownload } from "@/download";
 import GeneralLayout from "@/Layouts/GeneralLayout.vue";
 import { Head, useForm, usePage } from "@inertiajs/vue3";
 import Multiselect from "@vueform/multiselect";
@@ -330,6 +337,18 @@ const unsubmitEntri = async () => {
         fenomenasets.value.status = "Entry";
     },
   });
+};
+const downloadHasil = (id) => {
+  try {
+    triggerSpinner.value = true;
+    let list = {};
+    list["fenomena"] = tableToJson(id, "text");
+    theDownload(list);
+  } catch (error) {
+    console.error(error);
+  } finally {
+    triggerSpinner.value = false;
+  }
 };
 </script>
 

@@ -31,7 +31,10 @@ const tableToJson = (idTabel, type = 'number') => {
                 // Map cell data to headers
                 cells.forEach((cell, index) => {
                     const header = headers[index] || `column_${index}`; // Fallback for missing headers
-                    let val = cell.textContent.trim(); // Trim whitespace
+                    // let input = cell.querySelector('input')
+                    let textarea = cell.querySelector('textarea')
+                    // let val = input | textarea ? input.value : cell.textContent.trim(); // Trim whitespace
+                    let val =  textarea ? textarea.value : cell.textContent.trim(); // Trim whitespace
 
                     if (index != 0) { // Skip the first column
                         if (type == 'number') {
