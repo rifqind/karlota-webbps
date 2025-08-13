@@ -198,25 +198,30 @@ class SummaryController extends Controller
                     ];
                 });
             if (sizeof($data) > 0) {
-                $result = $this->buildValue($data_before, $data[0], $data, 'category_id', 'category');
-                array_push($super_result, $data[0]);
-                $updating_summary = SummaryPdrb::where('region_id', $data[0]['region_id'])
-                    ->where('quarter', $data[0]['quarter'])
-                    ->where('category_id', $data[0]['category_id'])
-                    ->where('sector_id', null)
-                    ->where('subsector_id', null);
-                $updating_summary->update(
-                    [
-                        'adhb' => $data[0]['adhb'],
-                        'adhk' => $data[0]['adhk'],
-                        'qtoq' => $result['qtoq'],
-                        'yony' => $result['yony'],
-                        'ctoc' => $result['ctoc'],
-                        'idx' => $result['idx'],
-                        'iqtoq' => $result['iqtoq'],
-                        'iyony' => $result['iyony']
-                    ]
-                );
+                $quarter_list = $data->pluck('quarter');
+                foreach ($quarter_list as $key => $qt) {
+                    # code...
+                    $this_data = $data->where('quarter', $qt)->first();
+                    $result = $this->buildValue($data_before, $this_data, $data, 'category_id', 'category');
+                    array_push($super_result, $this_data);
+                    $updating_summary = SummaryPdrb::where('region_id', $this_data['region_id'])
+                        ->where('quarter', $this_data['quarter'])
+                        ->where('category_id', $this_data['category_id'])
+                        ->where('sector_id', null)
+                        ->where('subsector_id', null);
+                    $updating_summary->update(
+                        [
+                            'adhb' => $this_data['adhb'],
+                            'adhk' => $this_data['adhk'],
+                            'qtoq' => $result['qtoq'],
+                            'yony' => $result['yony'],
+                            'ctoc' => $result['ctoc'],
+                            'idx' => $result['idx'],
+                            'iqtoq' => $result['iqtoq'],
+                            'iyony' => $result['iyony']
+                        ]
+                    );
+                }
             }
         }
         return $super_result;
@@ -496,24 +501,28 @@ class SummaryController extends Controller
                     });
             }
             if (sizeof($data) > 0) {
-                $result = $this->buildValue($data_before, $data[0], $data, 'sector_id', 'sector');
-                array_push($super_result, $result);
-                $updating_summary = SummaryPdrb::where('region_id', $data[0]['region_id'])
-                    ->where('quarter', $data[0]['quarter'])
-                    ->where('sector_id', $data[0]['sector_id'])
-                    ->where('subsector_id', null)
-                    ->update(
-                        [
-                            'adhb' => $data[0]['adhb'],
-                            'adhk' => $data[0]['adhk'],
-                            'qtoq' => $result['qtoq'],
-                            'yony' => $result['yony'],
-                            'ctoc' => $result['ctoc'],
-                            'idx' => $result['idx'],
-                            'iqtoq' => $result['iqtoq'],
-                            'iyony' => $result['iyony']
-                        ]
-                    );
+                $quarter_list = $data->pluck('quarter');
+                foreach ($quarter_list as $key => $qt) {
+                    $this_data = $data->where('quarter', $qt)->first();
+                    $result = $this->buildValue($data_before, $this_data, $data, 'sector_id', 'sector');
+                    array_push($super_result, $this_data);
+                    $updating_summary = SummaryPdrb::where('region_id', $this_data['region_id'])
+                        ->where('quarter', $this_data['quarter'])
+                        ->where('sector_id', $this_data['sector_id'])
+                        ->where('subsector_id', null)
+                        ->update(
+                            [
+                                'adhb' => $this_data['adhb'],
+                                'adhk' => $this_data['adhk'],
+                                'qtoq' => $result['qtoq'],
+                                'yony' => $result['yony'],
+                                'ctoc' => $result['ctoc'],
+                                'idx' => $result['idx'],
+                                'iqtoq' => $result['iqtoq'],
+                                'iyony' => $result['iyony']
+                            ]
+                        );
+                }
             }
         }
         return $super_result;
@@ -613,23 +622,28 @@ class SummaryController extends Controller
                 });
             if (sizeof($data) > 0) {
                 # code...
-                $result = $this->buildValue($data_before, $data[0], $data, 'subsector_id', 'subsector');
-                array_push($super_result, $result);
-                $updating_summary = SummaryPdrb::where('region_id', $data[0]['region_id'])
-                    ->where('quarter', $data[0]['quarter'])
-                    ->where('subsector_id', $data[0]['subsector_id'])
-                    ->update(
-                        [
-                            'adhb' => $data[0]['adhb'],
-                            'adhk' => $data[0]['adhk'],
-                            'qtoq' => $result['qtoq'],
-                            'yony' => $result['yony'],
-                            'ctoc' => $result['ctoc'],
-                            'idx' => $result['idx'],
-                            'iqtoq' => $result['iqtoq'],
-                            'iyony' => $result['iyony']
-                        ]
-                    );
+                $quarter_list = $data->pluck('quarter');
+                foreach ($quarter_list as $key => $qt) {
+                    # code...
+                    $this_data = $data->where('quarter', $qt)->first();
+                    $result = $this->buildValue($data_before, $this_data, $data, 'subsector_id', 'subsector');
+                    array_push($super_result, $result);
+                    $updating_summary = SummaryPdrb::where('region_id', $this_data['region_id'])
+                        ->where('quarter', $this_data['quarter'])
+                        ->where('subsector_id', $this_data['subsector_id'])
+                        ->update(
+                            [
+                                'adhb' => $this_data['adhb'],
+                                'adhk' => $this_data['adhk'],
+                                'qtoq' => $result['qtoq'],
+                                'yony' => $result['yony'],
+                                'ctoc' => $result['ctoc'],
+                                'idx' => $result['idx'],
+                                'iqtoq' => $result['iqtoq'],
+                                'iyony' => $result['iyony']
+                            ]
+                        );
+                }
             }
         }
         return $super_result;
@@ -1122,7 +1136,7 @@ class SummaryController extends Controller
         foreach ($group_lapus_now as $key => $value) {
             # code...
             $result = $this->buildTotal($group_lapus_before, $value, $group_lapus_now);
-            array_push($super_result, $result);
+            array_push($super_result, $value);
             $updating_summary = SummaryPdrb::where('region_id', $value['region_id'])
                 ->where('quarter', $value['quarter'])
                 ->where('category_id', 98)
@@ -1144,7 +1158,7 @@ class SummaryController extends Controller
         foreach ($group_peng_now as $key => $value) {
             # code...
             $result = $this->buildTotal($group_peng_before, $value, $group_peng_now);
-            array_push($super_result, $result);
+            array_push($super_result, $value);
             $updating_summary = SummaryPdrb::where('region_id', $value['region_id'])
                 ->where('quarter', $value['quarter'])
                 ->where('category_id', 99)
@@ -1206,11 +1220,11 @@ class SummaryController extends Controller
                 ->where('region_id', $present['region_id'])
                 ->value('adhk');
         } else {
-            $adhb_before_qtoq = $presentObject->where('quarter', $present['quarter'])
+            $adhb_before_qtoq = $presentObject->where('quarter', $present['quarter'] - 1)
                 ->where('region_id', $present['region_id'])
                 ->where($type, ($typeAttribute == 'category') ? $present['category_id'] : (($typeAttribute == 'sector') ? $present['sector_id'] : $present['subsector_id']))
                 ->value('adhb');
-            $adhk_before_qtoq = $presentObject->where('quarter', $present['quarter'])
+            $adhk_before_qtoq = $presentObject->where('quarter', $present['quarter'] - 1)
                 ->where('region_id', $present['region_id'])
                 ->where($type, ($typeAttribute == 'category') ? $present['category_id'] : (($typeAttribute == 'sector') ? $present['sector_id'] : $present['subsector_id']))
                 ->value('adhk');
@@ -1271,10 +1285,10 @@ class SummaryController extends Controller
                 ->where('region_id', $present['region_id'])
                 ->value('adhk');
         } else {
-            $adhb_before_qtoq = $presentObject->where('quarter', $present['quarter'])
+            $adhb_before_qtoq = $presentObject->where('quarter', $present['quarter']-1)
                 ->where('region_id', $present['region_id'])
                 ->value('adhb');
-            $adhk_before_qtoq = $presentObject->where('quarter', $present['quarter'])
+            $adhk_before_qtoq = $presentObject->where('quarter', $present['quarter']-1)
                 ->where('region_id', $present['region_id'])
                 ->value('adhk');
         }

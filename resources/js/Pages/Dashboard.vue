@@ -397,24 +397,19 @@ const form = useForm({
 });
 const timestart = ref(null);
 const thisHidden = ref(false);
-const quarter = [1, 2, 3, 4];
 const setupArray = ["category", "sector", "subsector", "total"];
 const dogArray = ref([]);
 const supRegion = [...props.regions, { name: "Total", value: 17 }];
 supRegion.forEach((r) => {
-  quarter.forEach((q) => {
-    setupArray.forEach((s) => {
-      let keys = { region: r.value, quarter: q, cat: s };
-      // let keys = { region: r, quarter: q, cat: s };
-      dogArray.value.push(keys);
-    });
+  setupArray.forEach((s) => {
+    let keys = { region: r.value, cat: s };
+    dogArray.value.push(keys);
   });
 });
-const summariesing = async (element, quarter, region_id) => {
+const summariesing = async (element, region_id) => {
   const response = await axios.get(route("home.index"), {
     params: {
       setup: element,
-      quarter: quarter,
       region_id: region_id,
     },
   });
@@ -426,7 +421,7 @@ const buildSummaries = async () => {
   thisHidden.value = true;
   try {
     for (const d of dogArray.value) {
-      const holder = await summariesing(d.cat, d.quarter, d.region);
+      const holder = await summariesing(d.cat, d.region);
       form.lapus_id = holder.lapus_period;
       form.peng_id = holder.peng_period;
     }
@@ -438,6 +433,7 @@ const buildSummaries = async () => {
     form.post(route("home.update-time"));
     confirmationSummaries.value = false;
     thisHidden.value = false;
+    window.location.reload();
   }
 };
 const getSummary = async (region_id, quarter, type) => {
