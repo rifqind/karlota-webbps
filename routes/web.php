@@ -10,7 +10,7 @@ use App\Http\Controllers\SummaryController;
 use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
 
-Route::get('/', [AuthenticatedSessionController::class, 'create']);
+Route::middleware('guest')->get('/', [AuthenticatedSessionController::class, 'create']);
 Route::get('/token', function () {
     return csrf_token();
 })->name('token');

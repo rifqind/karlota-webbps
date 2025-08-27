@@ -1,5 +1,5 @@
 import * as XLSX from "xlsx";
-const tableToJson = (idTabel, type = 'number') => {
+const tableToJson = (idTabel, type = 'number', diskrepansi = false, title_name = 'Hasil Download') => {
     const table = document.getElementById(idTabel);
     if (!table) {
         console.error(`Table with id "${idTabel}" not found.`);
@@ -39,8 +39,12 @@ const tableToJson = (idTabel, type = 'number') => {
                     if (index != 0) { // Skip the first column
                         if (type == 'number') {
                             val = val.replace(/\./g, "").replace(/,/g, "."); // Convert German numeric format
-                            val = parseFloat(val); // Convert to a number
-                            if (isNaN(val)) val = '-'
+                            if (diskrepansi) {
+                                if (!isNaN(parseFloat(val))) val = parseFloat(val)
+                            } else {
+                                val = parseFloat(val); // Convert to a number
+                                if (isNaN(val)) val = '-'
+                            }
                         }
                     }
                     rowData[header] = val
@@ -51,14 +55,19 @@ const tableToJson = (idTabel, type = 'number') => {
             });
         }
     });
+    const title = [title_name, , , , , , ]
+    const space = [ , , , , , , ]
     const aoa = [
-        headers, ...rows.map(row => headers.map(header => row[header] ?? ''))
+        title, space, headers, ...rows.map(row => headers.map(header => row[header] ?? ''))
     ]
 
     // Return the JSON object
+    // let result = []
+    // result.push(title, space, aoa)
+    // return result;
     return aoa;
 };
-const theDownload = (setdata) => {
+const theDownload = (setdata, title = 'Hasil Download') => {
     var workbook = XLSX.utils.book_new();
     Object.keys(setdata).forEach((sheetName)=>{
         const data = setdata[sheetName]
@@ -77,7 +86,7 @@ const theDownload = (setdata) => {
     var a = document.createElement("a");
     var url = URL.createObjectURL(blob);
     a.href = url;
-    a.download = "result.xlsx";
+    a.download = title + ".xlsx";
 
     // Append the link to the document and trigger the download
     document.body.appendChild(a);

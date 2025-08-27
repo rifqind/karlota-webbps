@@ -134,7 +134,7 @@
               Tabel Summary
             </button>
             <button
-              @click="downloadHasil('tabel-entry')"
+              @click="downloadModalStatus = true"
               class="btn btn-warning-fordone ml-auto"
             >
               Download
@@ -351,6 +351,39 @@
         </table>
       </div>
     </div>
+    <ModalBs
+      :-modal-status="downloadModalStatus"
+      @close="downloadModalStatus = false"
+      :title="'Download Data'"
+    >
+      <template #modalBody>
+        <div class="mb-3 space-y-2">
+          <label>Masukkan Judul File</label>
+          <input type="text" v-model="downloadTitle" class="input-fordone w-full" />
+        </div>
+        <div class="mb-3 space-y-2">
+          <label>Tipe File</label>
+          <Multiselect
+            v-model="downloadType"
+            :options="[
+              { label: 'One Sheet Compound', value: 'one-sheet' },
+              { label: 'Many Sheet (default)', value: 'multi-sheet' },
+            ]"
+            :searchable="true"
+            placeholder="-- Pilih Tipe File Download --"
+          />
+        </div>
+      </template>
+      <template #modalFunction>
+        <button
+          type="button"
+          class="btn-success-fordone btn-sm"
+          @click.prevent="downloadHasil('tabel-entry', downloadTitle, downloadType)"
+        >
+          Download
+        </button>
+      </template>
+    </ModalBs>
   </GeneralLayout>
 </template>
 
@@ -362,6 +395,7 @@ import LapusHasil from "@/Components/LapusHasil.vue";
 import LapusHasilResult from "@/Components/LapusHasilResult.vue";
 import LapusHasilSummary from "@/Components/LapusHasilSummary.vue";
 import LapusHasilSummaryResult from "@/Components/LapusHasilSummaryResult.vue";
+import ModalBs from "@/Components/ModalBs.vue";
 import PengHasil from "@/Components/PengHasil.vue";
 import PengHasilResult from "@/Components/PengHasilResult.vue";
 import PengHasilSummary from "@/Components/PengHasilSummary.vue";
@@ -700,8 +734,7 @@ const showGQtoQ = (now, prev) => {
               )
             : 0;
         }
-        let growth =
-          divisor != 0 && dividend != 0 ? (dividend / divisor) * 100 - 100 : 0;
+        let growth = divisor != 0 && dividend != 0 ? (dividend / divisor) * 100 - 100 : 0;
         return formatNumberGerman(enabletoFixed.value ? growth.toFixed(4) : growth, 2);
       });
   });
@@ -730,8 +763,7 @@ const showGYtoY = (now, prev) => {
           ? Number(previous_dataset[key][index].replaceAll(".", "").replaceAll(",", "."))
           : 0;
 
-        let growth =
-          divisor != 0 && dividend != 0 ? (dividend / divisor) * 100 - 100 : 0;
+        let growth = divisor != 0 && dividend != 0 ? (dividend / divisor) * 100 - 100 : 0;
         return formatNumberGerman(enabletoFixed.value ? growth.toFixed(4) : growth, 2);
       });
   });
@@ -920,28 +952,51 @@ const formatNumberGerman = (num, min = 2, max = 6) => {
     maximumFractionDigits: max,
   }).format(num);
 };
-const downloadHasil = async (id) => {
+const downloadModalStatus = ref(false);
+const downloadTitle = ref("Download");
+const downloadType = ref(null);
+const downloadHasil = async (id, title, type) => {
   let list = {};
   triggerSpinner.value = true;
   enabletoFixed.value = false;
   try {
     showSummary("full");
     await nextTick();
+    let printed = [];
     for (const key of Object.keys(activeTab.value)) {
       if (key == "full" || key == "summary") continue;
       showTab(key);
       await new Promise((resolve) => setTimeout(resolve, 800));
-      list[key] = tableToJson(id);
+      if (type == "one-sheet") {
+        let tablejson = tableToJson(id, "number", false, key);
+        const spaceone = [""];
+        const spacetwo = [""];
+        printed.push(...spaceone, ...spacetwo, ...tablejson);
+      } else if (type == "multi-sheet") {
+        list[key] = tableToJson(id);
+      }
     }
     showSummary("summary");
     await nextTick();
+    let printedTwo = [];
     for (const key of Object.keys(activeTab.value)) {
       if (key == "full" || key == "summary") continue;
       showTab(key);
       await new Promise((resolve) => setTimeout(resolve, 800));
-      list[key + "-summary"] = tableToJson(id);
+      if (type == "one-sheet") {
+        let tablejson = tableToJson(id, "number", false, key);
+        const spaceone = [""];
+        const spacetwo = [""];
+        printedTwo.push(...spaceone, ...spacetwo, ...tablejson);
+      } else if (type == "multi-sheet") {
+        list[key + "-summary"] = tableToJson(id);
+      }
     }
-    theDownload(list);
+    if (type == "one-sheet") {
+      list["core"] = printed;
+      list["summary"] = printedTwo;
+    }
+    theDownload(list, title);
   } catch (error) {
     console.error(error);
   } finally {

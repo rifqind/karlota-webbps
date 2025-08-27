@@ -156,7 +156,7 @@
               Tahunan
             </button>
             <button
-              @click="downloadHasil('tabel-entry')"
+              @click="downloadModalStatus = true"
               class="btn btn-warning-fordone ml-auto"
             >
               Download
@@ -292,6 +292,39 @@
         </div>
       </div>
     </div>
+    <ModalBs
+      :-modal-status="downloadModalStatus"
+      @close="downloadModalStatus = false"
+      :title="'Download Data'"
+    >
+      <template #modalBody>
+        <div class="mb-3 space-y-2">
+          <label>Masukkan Judul File</label>
+          <input type="text" v-model="downloadTitle" class="input-fordone w-full" />
+        </div>
+        <div class="mb-3 space-y-2">
+          <label>Tipe File</label>
+          <Multiselect
+            v-model="downloadType"
+            :options="[
+              { label: 'One Sheet Compound', value: 'one-sheet' },
+              { label: 'Many Sheet (default)', value: 'multi-sheet' },
+            ]"
+            :searchable="true"
+            placeholder="-- Pilih Tipe File Download --"
+          />
+        </div>
+      </template>
+      <template #modalFunction>
+        <button
+          type="button"
+          class="btn-success-fordone btn-sm"
+          @click.prevent="downloadHasil('tabel-entry', downloadTitle, downloadType)"
+        >
+          Download
+        </button>
+      </template>
+    </ModalBs>
   </GeneralLayout>
 </template>
 <script setup>
@@ -302,6 +335,7 @@ import DiskrepansiPeng from "@/Components/DiskrepansiPeng.vue";
 import DiskrepansiPengResult from "@/Components/DiskrepansiPengResult.vue";
 import FlashFetch from "@/Components/FlashFetch.vue";
 import FloatScrollDown from "@/Components/FloatScrollDown.vue";
+import ModalBs from "@/Components/ModalBs.vue";
 import SpinnerBorder from "@/Components/SpinnerBorder.vue";
 import { tableToJson, theDownload } from "@/download";
 import GeneralLayout from "@/Layouts/GeneralLayout.vue";
@@ -463,7 +497,7 @@ const submit = async () => {
         dataBefore: form.dataBefore,
       },
     });
-    for (let index = 1; index <= Number(quarterCap.value); index++) {
+    for (let index = 1; index <= Number(form.quarter); index++) {
       if (index == 4) {
         listTab.value.t = true;
       }
@@ -547,14 +581,16 @@ const submit = async () => {
       }
     });
   } catch (error) {
-    if (error.response.data.notification) {
-      showNotification(error.response.data.notification, 500);
-    }
-    if (error.response.data.errors) {
-      formError.value = Object.keys(error.response.data.errors).reduce((acc, key) => {
-        acc[key] = error.response.data.errors[key][0];
-        return acc;
-      }, {});
+    if (error.response) {
+      if (error.response.data.notification) {
+        showNotification(error.response.data.notification, 500);
+      }
+      if (error.response.data.errors) {
+        formError.value = Object.keys(error.response.data.errors).reduce((acc, key) => {
+          acc[key] = error.response.data.errors[key][0];
+          return acc;
+        }, {});
+      }
     }
   }
 };
@@ -983,21 +1019,41 @@ const formatNumberGerman = (num, min = 2, max = 5) => {
     maximumFractionDigits: max,
   }).format(num);
 };
-const downloadHasil = async (id) => {
+const downloadModalStatus = ref(false);
+const downloadTitle = ref("Download");
+const downloadType = ref(null);
+const downloadHasil = async (id, title, type) => {
   let list = {};
   triggerSpinner.value = true;
+  let quarter = Number(quarterCap.value);
+  let quarterList = [];
+  for (let index = 1; index <= quarter; index++) {
+    quarterList.push(String(index));
+    if (index == 4) quarterList.push("t");
+  }
   try {
-    for (let key of Object.keys(activeQuarters.value)) {
+    // for (let key of Object.keys(activeQuarters.value)) {
+    for (let key of quarterList) {
       quartersTab(key);
       await nextTick();
+      let printed = [];
       for (let keytab of Object.keys(activeTab.value)) {
         showTab(keytab);
         await new Promise((resolve) => setTimeout(resolve, 1000));
-        list["Triwulan-" + key + "-" + keytab] = tableToJson(id);
+        if (type == "one-sheet") {
+          let tablejson = tableToJson(id, "number", true, keytab);
+          const spaceone = [""];
+          const spacetwo = [""];
+          printed.push(...spaceone, ...spacetwo, ...tablejson);
+        } else if (type == "multi-sheet") {
+          list["Triwulan-" + key + "-" + keytab] = tableToJson(id, "number", true);
+        }
       }
+      list["Triwulan-" + key] = printed;
     }
+    // }
     // console.log(list);
-    theDownload(list);
+    theDownload(list, title);
   } catch (error) {
     console.error(error);
   } finally {
