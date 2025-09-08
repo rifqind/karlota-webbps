@@ -33,6 +33,18 @@
             {{ form.errors.email }}
           </div>
           <div class="mb-3 space-y-2">
+            <label for="pdrb">NIP Lama (9 digit)</label>
+            <input
+              v-model="form.nip_lama"
+              placeholder="Isi NIP lama dengan benar untuk bisa login dengan SSO"
+              class="input-fordone w-full"
+              type="text"
+            />
+          </div>
+          <div v-if="form.errors.email" class="mb-3 text-red-500">
+            {{ form.errors.email }}
+          </div>
+          <div class="mb-3 space-y-2">
             <label for="pdrb">Password<span class="text-danger">*</span></label>
             <input
               type="password"
@@ -79,6 +91,7 @@ const form = useForm({
   id: page.props.user.id,
   name: page.props.user.name,
   email: page.props.user.email,
+  nip_lama: page.props.user.nip_lama,
   password: null,
   password_confirmation: null,
 });

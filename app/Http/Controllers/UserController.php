@@ -160,7 +160,7 @@ class UserController extends Controller
         }
     }
 
-    public function edit(Request $request, String $id = null)
+    public function edit(Request $request,  $id = null)
     {
         if ($request->isMethod('get')) {
             $user = User::find($id);
@@ -178,17 +178,20 @@ class UserController extends Controller
                 $validated = $request->validate([
                     'name' => ['required', 'string', Rule::unique('users')->ignore($request->id), 'regex:/^\S*$/u'],
                     'email' => ['required', 'string', 'lowercase', 'email', 'max:255', Rule::unique('users')->ignore($request->id)],
+                    'nip_lama' => ['sometimes', 'nullable', 'string', 'max:9', Rule::unique('users')->ignore($request->id)],
                     'password' => ['sometimes', 'nullable', 'confirmed', Rules\Password::defaults()]
                 ]);
                 $updated_data = User::findOrFail($request->id);
-                if ($request->password) {
+                if (!$request->password) {
                     $updated_data->update([
                         'name' => $validated['name'],
                         'email' => $validated['email'],
-                        'password' => Hash::make($request->password),
+                        'nip_lama' => $validated['nip_lama'],
                     ]);
-                } else $updated_data->update($validated);
-
+                    // 'password' => Hash::make($request->password),
+                } else {
+                    $updated_data->update($validated);
+                } 
                 $message = [
                     'type' => 'message',
                     'message' => 'Berhasil mengedit akun'
@@ -210,7 +213,7 @@ class UserController extends Controller
         }
     }
 
-    public function question(Request $request, String $id = null)
+    public function question(Request $request, $id = null)
     {
         if ($request->isMethod('get')) {
             if ($request->paginated) $paginated = $request->paginated;

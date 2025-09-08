@@ -6,6 +6,7 @@ use App\Http\Controllers\HomeController;
 use App\Http\Controllers\PdrbController;
 use App\Http\Controllers\PeriodController;
 use App\Http\Controllers\SpvController;
+use App\Http\Controllers\SsoController;
 use App\Http\Controllers\SummaryController;
 use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
@@ -14,6 +15,10 @@ Route::middleware('guest')->get('/', [AuthenticatedSessionController::class, 'cr
 Route::get('/token', function () {
     return csrf_token();
 })->name('token');
+
+//SSO
+Route::get('/sso-login', [SsoController::class, 'ssoRedirect'])->name('sso-login');
+Route::get('/sso-callback', [SsoController::class, 'ssoCallback'])->name('sso-callback');
 
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/dashboard', [HomeController::class, 'index'])
