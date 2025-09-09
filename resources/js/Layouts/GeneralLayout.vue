@@ -22,11 +22,16 @@
       </main>
       <Footer />
     </div>
+    <MaintenanceNotification
+      :ModalStatus="maintenanceStat"
+      @close="maintenanceStat = false"
+    />
   </div>
 </template>
 
 <script setup lang="ts">
 import Footer from "@/Components/Footer.vue";
+import MaintenanceNotification from "@/Components/MaintenanceNotification.vue";
 import Navbar from "@/Components/Navbar.vue";
 import Sidebar from "@/Components/Sidebar.vue";
 import { computed, onMounted, onUnmounted, ref } from "vue";
@@ -50,10 +55,15 @@ const updateDeviceType = () => {
     "(min-width: 768px) and (max-width: 1024px)"
   ).matches;
 };
-onMounted(() => {
+const maintenanceStat = ref(false);
+onMounted(async () => {
   updateDeviceType();
   if (isMobile.value) isSidebarVisible.value = false;
   window.addEventListener("resize", updateDeviceType);
+  const { data } = await axios.get("/maintenance-status");
+  if (data.maintenance) {
+    maintenanceStat.value = true;
+  } else maintenanceStat.value = false;
 });
 
 onUnmounted(() => {

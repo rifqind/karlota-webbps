@@ -9,6 +9,7 @@ use App\Http\Controllers\SpvController;
 use App\Http\Controllers\SsoController;
 use App\Http\Controllers\SummaryController;
 use App\Http\Controllers\UserController;
+use App\Models\Maintenance;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware('guest')->get('/', [AuthenticatedSessionController::class, 'create']);
@@ -19,6 +20,7 @@ Route::get('/token', function () {
 //SSO
 Route::get('/sso-login', [SsoController::class, 'ssoRedirect'])->name('sso-login');
 Route::get('/sso-callback', [SsoController::class, 'ssoCallback'])->name('sso-callback');
+Route::get('/sso-search', [SsoController::class, 'ssoAPI'])->name('sso-api');
 
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/dashboard', [HomeController::class, 'index'])
@@ -165,6 +167,19 @@ Route::middleware(['auth', 'verified'])->group(function () {
             Route::delete('/delete-question/{id}', [UserController::class, 'question']);
             Route::get('/fetch-question/{id}', [UserController::class, 'fetchQuestion'])->name('fetch-question');
         });
+    });
+    //maintenance
+    Route::post('/set-maintenance', function () {
+        $maintenance = Maintenance::findOrFail(1);
+        $maintenance->maintenance = !$maintenance->maintenance;
+        $maintenance->save();
+        return $maintenance->maintenance;
+    });
+    Route::get('/maintenance-status', function () {
+        $maintenance = Maintenance::find(1);
+        return response()->json([
+            'maintenance' => $maintenance?->maintenance ?? false
+        ]);
     });
 });
 

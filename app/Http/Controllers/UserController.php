@@ -72,6 +72,7 @@ class UserController extends Controller
         $validated = $request->validate([
             'name' => ['required', 'string', 'regex:/^\S*$/u'],
             'satker_id' => ['required', 'integer'],
+            'nip_lama' => ['sometimes', 'nullable', 'max:9'],
             'email' => ['required', 'string', 'lowercase', 'email', 'max:255'],
             'role' => ['required', 'string'],
         ]);
@@ -80,12 +81,17 @@ class UserController extends Controller
             //code...
             DB::beginTransaction();
             if ($request->id) {
-                $request->validate(['email' => ['required', 'string', 'lowercase', 'email', 'max:255', Rule::unique('users')->ignore($request->id)]]);
+                $request->validate([
+                    'name' => [Rule::unique('users', 'name')->ignore($request->id)],
+                    'nip_lama' => [Rule::unique('users', 'nip_lama')->ignore($request->id)],
+                    'email' => ['required', 'string', 'lowercase', 'email', 'max:255', Rule::unique('users', 'email')->ignore($request->id)]
+                ]);
                 $updated_data = User::findOrFail($request->id);
                 if ($request->password) {
                     $updated_data->update([
                         'name' => $validated['name'],
                         'email' => $validated['email'],
+                        'nip_lama' => $validated['nip_lama'],
                         'satker_id' => $validated['satker_id'],
                         'role' => $validated['role'],
                         'password' => Hash::make($request->password),
@@ -98,22 +104,29 @@ class UserController extends Controller
                 array_push($notification, $message);
                 DB::commit();
                 return redirect()->route('user.index')->with('notification', $notification);
-            } else
-                $request->validate(['password' => ['required', 'confirmed', Rules\Password::defaults()]]);
-            $new_data = User::create([
-                'name' => $validated['name'],
-                'email' => $validated['email'],
-                'password' => Hash::make($request->password),
-                'role' => $validated['role'],
-                'satker_id' => $validated['satker_id'],
-            ]);
-            $message = [
-                'type' => 'success',
-                'message' => 'Berhasil menambah pengguna baru'
-            ];
-            array_push($notification, $message);
-            DB::commit();
-            return redirect()->route('user.index')->with('notification', $notification);
+            } else {
+                $request->validate([
+                    'name' => [Rule::unique('users', 'name')],
+                    'email' => [Rule::unique('users', 'email')],
+                    'nip_lama' => [Rule::unique('users', 'nip_lama')],
+                    'password' => ['required', 'confirmed', Rules\Password::defaults()]
+                ]);
+                $new_data = User::create([
+                    'name' => $validated['name'],
+                    'email' => $validated['email'],
+                    'nip_lama' => $validated['nip_lama'],
+                    'password' => Hash::make($request->password),
+                    'role' => $validated['role'],
+                    'satker_id' => $validated['satker_id'],
+                ]);
+                $message = [
+                    'type' => 'success',
+                    'message' => 'Berhasil menambah pengguna baru'
+                ];
+                array_push($notification, $message);
+                DB::commit();
+                return redirect()->route('user.index')->with('notification', $notification);
+            }
         } catch (\Throwable $th) {
             //throw $th;
             DB::rollBack();
@@ -179,19 +192,21 @@ class UserController extends Controller
                     'name' => ['required', 'string', Rule::unique('users')->ignore($request->id), 'regex:/^\S*$/u'],
                     'email' => ['required', 'string', 'lowercase', 'email', 'max:255', Rule::unique('users')->ignore($request->id)],
                     'nip_lama' => ['sometimes', 'nullable', 'string', 'max:9', Rule::unique('users')->ignore($request->id)],
-                    'password' => ['sometimes', 'nullable', 'confirmed', Rules\Password::defaults()]
                 ]);
                 $updated_data = User::findOrFail($request->id);
-                if (!$request->password) {
+                if ($request->password) {
+                    $request->validate([
+                        'password' => ['sometimes', 'nullable', 'confirmed', Rules\Password::defaults()]
+                    ]);
                     $updated_data->update([
                         'name' => $validated['name'],
                         'email' => $validated['email'],
                         'nip_lama' => $validated['nip_lama'],
+                        'password' => Hash::make($request->password),
                     ]);
-                    // 'password' => Hash::make($request->password),
                 } else {
                     $updated_data->update($validated);
-                } 
+                }
                 $message = [
                     'type' => 'message',
                     'message' => 'Berhasil mengedit akun'

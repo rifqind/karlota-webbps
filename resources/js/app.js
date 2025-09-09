@@ -54,6 +54,7 @@ import {
     faListOl,
     faLock,
     faMagnifyingGlass,
+    faMicrochip,
     faPaperPlane,
     faPercent,
     faPen,
@@ -80,6 +81,7 @@ import {
     faUser,
     faUserTie,
     faUsers,
+    faXmark
 } from "@fortawesome/free-solid-svg-icons";
 library.add(
     faAngleLeft,
@@ -122,6 +124,7 @@ library.add(
     faListOl,
     faLock,
     faMagnifyingGlass,
+    faMicrochip,
     faPaperPlane,
     faPercent,
     faPen,
@@ -148,7 +151,8 @@ library.add(
     faTrashCan,
     faUser,
     faUserTie,
-    faUsers
+    faUsers, 
+    faXmark
 );
 config.autoAddCss = false;
 const appName = import.meta.env.VITE_APP_NAME || 'Laravel';
