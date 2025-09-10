@@ -90,6 +90,8 @@
         () => {
           createModalStatus = false;
           form.reset();
+          resultSSO = null;
+          sso_name = null;
         }
       "
       :title="'Tambah Pengguna Baru'"
@@ -99,10 +101,48 @@
       <template #modalBody>
         <div class="form-group">
           <div class="mb-3 space-y-2">
-            <label for="pdrb">Username</label>
+            <label>Cari dari username SSO</label>
+            <div class="flex items-center gap-2">
+              <input
+                v-model="sso_name"
+                placeholder="Isikan Username SSO dengan lengkap dan benar"
+                class="input-fordone w-full"
+                type="text"
+              />
+              <button
+                type="button"
+                class="btn-success-fordone btn-sm"
+                @click.prevent="searchSSO"
+              >
+                Cari
+              </button>
+              <span v-if="resultSSO">
+                <font-awesome-icon
+                  v-if="resultSSO.length > 0"
+                  class="text-green-500 text-2xl"
+                  icon="fa-solid fa-check" />
+                <font-awesome-icon
+                  v-if="resultSSO.length == 0"
+                  class="text-red-500 text-2xl"
+                  icon="fa-solid fa-xmark"
+              /></span>
+            </div>
+            <div v-if="errorSSO" class="text-danger">Isian username SSO kosong</div>
+          </div>
+          <div class="mb-3 space-y-2">
+            <label for="pdrb">Username<span class="text-danger">*</span></label>
             <input
               v-model="form.name"
               placeholder="Isikan Username Akun"
+              class="input-fordone w-full"
+              type="text"
+            />
+          </div>
+          <div class="mb-3 space-y-2">
+            <label for="pdrb">NIP Lama (9 digit)</label>
+            <input
+              v-model="form.nip_lama"
+              placeholder="Isikan NIP lama jika ingin login dengan SSO"
               class="input-fordone w-full"
               type="text"
             />
@@ -173,6 +213,9 @@
           <div class="text-danger" v-if="formError.length > 0" v-for="node in formError">
             {{ node }}
           </div>
+          <div class="text-danger" v-if="errorFormGeneral">
+            {{ errorFormGeneral }}
+          </div>
         </div>
       </template>
       <template #modalFunction>
@@ -238,6 +281,7 @@ const form = useForm({
   email: null,
   satker_id: null,
   role: null,
+  nip_lama: null,
   password: null,
   password_confirmation: null,
 });
@@ -266,6 +310,31 @@ watch(
 const delayedFetchData = debounce(() => {
   fetchData();
 });
+const resultSSO = ref(null);
+const sso_name = ref(null);
+const errorSSO = ref(null);
+const searchSSO = async () => {
+  if (sso_name.value) {
+    errorSSO.value = null;
+    try {
+      const response = await axios.get(route("sso-api"), {
+        params: {
+          username: sso_name.value,
+        },
+      });
+      resultSSO.value = response.data;
+      if (resultSSO.value.length > 0) {
+        form.name = resultSSO.value[0].username;
+        form.email = resultSSO.value[0].email;
+        form.nip_lama = resultSSO.value[0].attributes["attribute-nip-lama"][0];
+      }
+    } catch (error) {
+      console.error(error);
+    }
+  } else {
+    errorSSO.value = "Username SSO kosong";
+  }
+};
 //paginated
 const showItems = ref(10);
 const currentPage = ref(1);
@@ -328,24 +397,32 @@ const clickToOrder = (value) => {
   orderAttribute.value.before = value;
   fetchData();
 };
+const errorFormGeneral = ref(null);
 const submit = async () => {
-  const response = await axios.get(route("token"));
-  form._token = response.data;
   if (form.processing) return;
-  form.post(route("user.store"), {
-    onSuccess: (response) => {
-      showNotification(response.props.notification);
-      if (response.props.notification[0].type == "success") {
-        fetchData();
-        form.reset();
-        createModalStatus.value = false;
-      } else {
-        response.props.notification.forEach((element) => {
-          formError.value.push(element.error);
-        });
-      }
-    },
-  });
+  if (form.name || form.email || form.satker_id || form.role) {
+    errorFormGeneral.value = null;
+    const response = await axios.get(route("token"));
+    form._token = response.data;
+    form.post(route("user.store"), {
+      onSuccess: (response) => {
+        showNotification(response.props.notification);
+        if (response.props.notification[0].type == "success") {
+          fetchData();
+          form.reset();
+          resultSSO.value = null;
+          sso_name.value = null;
+          createModalStatus.value = false;
+        } else {
+          response.props.notification.forEach((element) => {
+            formError.value.push(element.error);
+          });
+        }
+      },
+    });
+  } else {
+    errorFormGeneral.value = "Username/email/role/satker masih kosong";
+  }
 };
 const deleteSubmit = async () => {
   const response = await axios.get(route("token"));
@@ -365,6 +442,7 @@ const toggleUpdateModal = async (id) => {
     form.id = response.data.data.id;
     form.name = response.data.data.name;
     form.email = response.data.data.email;
+    form.nip_lama = response.data.data.nip_lama;
     form.satker_id = response.data.data.satker_id;
     form.role = response.data.data.role;
     createModalStatus.value = true;

@@ -218,6 +218,20 @@
           >
             Permasalahan Aplikasi</NavLinkSidebar
           >
+          <li
+            v-if="page.props.auth.user.name == 'niu'"
+            class="nav-item mb-1"
+            @click="setMaintenance"
+          >
+            <a
+              href="#"
+              class="nav-link w-full relative flex items-center rounded"
+              :class="{ maintenance: maintenanceStat }"
+            >
+              <font-awesome-icon class="nav-icon w-1/12" icon="fa-solid fa-microchip" />
+              <p class="ml-2">Maintenance Mode</p>
+            </a>
+          </li>
         </template>
       </ul>
       <br />
@@ -237,8 +251,7 @@
 import { usePage } from "@inertiajs/vue3";
 import NavLinkSidebar from "./NavLinkSidebar.vue";
 import NavLinkParentSidebar from "./NavLinkParentSidebar.vue";
-import { ref } from "vue";
-import { current } from "tailwindcss/colors";
+import { onMounted, ref } from "vue";
 
 const page = usePage();
 const currentRoute = page.props.route;
@@ -265,6 +278,37 @@ const props = defineProps({
 const pushSidebar = () => {
   emit("update:updateSidebarValue", !props.isSidebarVisible);
 };
+const maintenanceStat = ref(false);
+const setMaintenance = async () => {
+  try {
+    const token = await axios.get(route("token"));
+    const response = await axios.post("/set-maintenance", {
+      params: {
+        _token: token.data,
+      },
+    });
+    const { data } = await axios.get("/maintenance-status");
+    if (data.maintenance) {
+      maintenanceStat.value = true;
+    } else maintenanceStat.value = false;
+  } catch (error) {
+    console.error(error);
+  }
+};
+onMounted(async () => {
+  const { data } = await axios.get("/maintenance-status");
+  if (data.maintenance) {
+    maintenanceStat.value = true;
+  } else maintenanceStat.value = false;
+});
 </script>
 
-<style scoped></style>
+<style scoped>
+.nav-link {
+  padding: 0.5rem 1rem;
+}
+.maintenance {
+  background-color: #a80606;
+  color: whitesmoke;
+}
+</style>
