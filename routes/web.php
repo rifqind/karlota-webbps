@@ -177,8 +177,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
     });
     Route::get('/maintenance-status', function () {
         $maintenance = Maintenance::find(1);
+
+        $result = $maintenance ? $maintenance->maintenance : false;
+
         return response()->json([
-            'maintenance' => $maintenance?->maintenance ?? false
+            'maintenance' => $result
         ]);
     });
 });
