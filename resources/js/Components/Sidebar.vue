@@ -188,6 +188,23 @@
               </NavLinkSidebar>
             </template>
           </NavLinkParentSidebar>
+          <NavLinkParentSidebar
+            :nav-icon="'fa-solid fa-server'"
+            :toggle-menu-open="toggleMenuOpen"
+            :params="'sekunder'"
+            :menu-open="menuOpenSekunder || currentRoute == 'produsen.index'"
+          >
+            <template #label>Data Sekunder</template>
+            <template #content>
+              <NavLinkSidebar
+                :nav-icon="'fa-solid fa-building-circle-check'"
+                :href="route('produsen.index')"
+                :current-route="currentRoute == 'produsen.index'"
+              >
+                Daftar Dinas
+              </NavLinkSidebar>
+            </template>
+          </NavLinkParentSidebar>
           <template v-if="page.props.auth.user.role == 'admin'">
             <NavLinkSidebar
               :navIcon="'fas fa-table'"
@@ -259,12 +276,14 @@ const menuOpenLapus = ref(false);
 const menuOpenPeng = ref(false);
 const menuOpenFenom = ref(false);
 const menuOpenSummary = ref(false);
+const menuOpenSekunder = ref(false);
 
 const toggleMenuOpen = (x) => {
   if (x == "summary") menuOpenSummary.value = !menuOpenSummary.value;
   if (x == "lapus") menuOpenLapus.value = !menuOpenLapus.value;
   if (x == "peng") menuOpenPeng.value = !menuOpenPeng.value;
   if (x == "fenom") menuOpenFenom.value = !menuOpenFenom.value;
+  if (x == "sekunder") menuOpenSekunder.value = !menuOpenSekunder.value;
 };
 
 const emit = defineEmits(["update:updateSidebarValue"]);

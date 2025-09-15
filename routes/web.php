@@ -5,6 +5,7 @@ use App\Http\Controllers\FenomenaController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\PdrbController;
 use App\Http\Controllers\PeriodController;
+use App\Http\Controllers\ProdusenController;
 use App\Http\Controllers\SpvController;
 use App\Http\Controllers\SsoController;
 use App\Http\Controllers\SummaryController;
@@ -183,6 +184,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
         return response()->json([
             'maintenance' => $result
         ]);
+    });
+    //sekunder
+    Route::name('produsen.')->group(function () {
+        Route::get('/produsen/index', [ProdusenController::class, 'index'])->name('index');
     });
 });
 
