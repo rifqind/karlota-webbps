@@ -1,18 +1,22 @@
 <template>
-  <Head title="Daftar Dinas" />
+  <Head title="Daftar Rows" />
   <SpinnerBorder v-if="triggerSpinner" />
   <GeneralLayout>
     <FlashFetch :notifications="notifications" />
     <div class="mb-2 flex flex-wrap items-center justify-between">
       <div class="text-xl font-bold w-full md:w-full lg:w-auto mb-2 md:mb-2 lg:mb-0">
-        Daftar Dinas
+        Daftar Rows
       </div>
       <div class="flex items-center w-full md:w-full lg:w-auto">
-        <button class="btn-success-fordone mr-2 mb-2 lg:mb-0" title="Download">
+        <button
+          @click="form.reset()"
+          class="btn-success-fordone mr-2 mb-2 lg:mb-0"
+          title="Download"
+        >
           <font-awesome-icon icon="fa-solid fa-circle-down" />
         </button>
         <button @click="createModalStatus = true" class="btn-info-fordone mb-2 lg:mb-0">
-          <font-awesome-icon icon="fa-solid fa-plus" /> Tambah Dinas
+          <font-awesome-icon icon="fa-solid fa-plus" /> Tambah Rows
         </button>
       </div>
     </div>
@@ -21,20 +25,14 @@
         <thead>
           <tr class="bg-info-fordone">
             <th class="first-column tabel-width-5">No.</th>
-            <th class="text-center th-order" @click="clickToOrder('nama')">Nama Dinas</th>
-            <th class="text-center th-order" @click="clickToOrder('region_name')">
-              Wilayah Kerja
-            </th>
+            <th class="text-center th-order" @click="clickToOrder('label')">Rows</th>
             <th class="text-center th-order tabel-width-8 deleted">Edit/Hapus</th>
           </tr>
           <tr>
             <td class="search-header"></td>
             <td class="search-header">
-              <input v-model.trim="searchNama" type="text" class="input-fordone w-full" />
-            </td>
-            <td class="search-header">
               <input
-                v-model.trim="searchWilayah"
+                v-model.trim="searchLabel"
                 type="text"
                 class="input-fordone w-full"
               />
@@ -43,10 +41,9 @@
           </tr>
         </thead>
         <tbody>
-          <tr v-if="produsens.length > 0" v-for="data in paginatedData" :key="data.id">
+          <tr v-if="rows.length > 0" v-for="data in paginatedData" :key="data.id">
             <td>{{ data.number }}</td>
-            <td>{{ data.nama }}</td>
-            <td>{{ data.region_name }}</td>
+            <td>{{ data.label }}</td>
             <td class="text-center">
               <a @click="toggleUpdateModal(data.id)">
                 <font-awesome-icon
@@ -65,7 +62,7 @@
             </td>
           </tr>
           <tr v-else>
-            <td colspan="4" class="text-center">Data Tidak Ada</td>
+            <td colspan="3" class="text-center">Data Tidak Ada</td>
           </tr>
         </tbody>
       </table>
@@ -93,27 +90,15 @@
       <template #modalBody>
         <div class="form-group">
           <div class="mb-3 space-y-2">
-            <label>Nama Dinas</label>
+            <label>Rows</label>
             <input
-              v-model="form.nama"
+              v-model="form.label"
               type="text"
               class="input-fordone w-full"
-              placeholder="Isi Nama Dinas"
+              placeholder="Isi Nama Rows"
             />
           </div>
-          <div class="text-danger" v-if="form.errors.nama">{{ form.errors.nama }}</div>
-          <div class="mb-3 space-y-2">
-            <label>Wilayah Kerja</label>
-            <Multiselect
-              v-model="form.region_id"
-              :options="page.props.wilayah"
-              :searchable="true"
-              placeholder="-- Pilih Wilayah Kerja --"
-            />
-          </div>
-          <div class="text-danger" v-if="form.errors.region_id">
-            {{ form.errors.region_id }}
-          </div>
+          <div class="text-danger" v-if="form.errors.label">{{ form.errors.label }}</div>
           <div class="text-danger" v-if="formError.length > 0" v-for="node in formError">
             {{ node }}
           </div>
@@ -134,12 +119,12 @@
           formError = [];
         }
       "
-      :title="'Hapus Dinas'"
+      :title="'Hapus Rows'"
     >
       <template #modalBody>
         <div class="form-group">
           <div>
-            <label>Apakah Anda yakin ingin menghapus dinas ini?</label>
+            <label>Apakah Anda yakin ingin menghapus rows ini?</label>
           </div>
         </div>
       </template>
@@ -165,12 +150,11 @@ import SpinnerBorder from "@/Components/SpinnerBorder.vue";
 import { debounce } from "@/debounce";
 import GeneralLayout from "@/Layouts/GeneralLayout.vue";
 import { Head, useForm, usePage } from "@inertiajs/vue3";
-import Multiselect from "@vueform/multiselect";
 import { computed, ref, watch } from "vue";
 
 const page = usePage();
-var dataObject = page.props.produsen.data;
-const produsens = ref(dataObject);
+var dataObject = page.props.row.data;
+const rows = ref(dataObject);
 const createModalStatus = ref(false);
 const deleteModalStatus = ref(false);
 
@@ -186,12 +170,8 @@ const showNotification = (notification) => {
 };
 
 //fetch series
-const searchNama = ref(null);
-const searchWilayah = ref(null);
-const ArrayBigObjects = [
-  { key: "nama", valueFilter: searchNama },
-  { key: "region_name", valueFilter: searchWilayah },
-];
+const searchLabel = ref(null);
+const ArrayBigObjects = [{ key: "nama", valueFilter: searchLabel }];
 watch(
   ArrayBigObjects.map((obj) => obj.valueFilter),
   function () {
@@ -220,28 +200,27 @@ watch(
   }
 );
 const paginatedData = computed(() => {
-  return produsens.value;
+  return rows.value;
 });
 watch(
-  () => page.props.produsen.data,
+  () => page.props.row.data,
   (value) => {
-    produsens.value = value;
+    rows.value = value;
   }
 );
 const fetchData = async () => {
   try {
-    const response = await axios.get(route("produsen.index"), {
+    const response = await axios.get(route("master.rows.index"), {
       params: {
         currentPage: currentPage.value,
         paginated: showItems.value,
         ArrayFilter: {
-          nama: searchNama.value,
-          region_name: searchWilayah.value,
+          nama: searchLabel.value,
         },
         orderAttribute: orderAttribute.value,
       },
     });
-    produsens.value = response.data.produsen.data;
+    rows.value = response.data.row.data;
     totalItems.value = response.data.countData;
   } catch (error) {
     console.error("Error fetching data: ", error);
@@ -267,13 +246,12 @@ const clickToOrder = (value) => {
 const form = useForm({
   id: null,
   _token: null,
-  nama: null,
-  region_id: null,
+  label: null,
 });
 const submit = async () => {
   const response = await axios.get(route("token"));
   form._token = response.data;
-  form.post(route("produsen.store"), {
+  form.post(route("master.rows.store"), {
     onSuccess: (response) => {
       showNotification(response.props.notification);
       if (response.props.notification[0].type == "success") {
@@ -282,8 +260,7 @@ const submit = async () => {
           .defaults({
             id: null,
             _token: null,
-            nama: null,
-            region_id: null,
+            label: null,
           })
           .reset();
         formError.value = [];
@@ -295,17 +272,17 @@ const submit = async () => {
       }
     },
     onFinish: () => {
-      modalTitle.value = "Tambah Dinas Baru";
+      modalTitle.value = "Tambah Rows Baru";
     },
   });
 };
 const deleteSubmit = async () => {
   const response = await axios.get(route("token"));
   form._token = response.data;
-  form.delete(route("produsen.destroy", { id: form.id }), {
+  form.delete(route("master.rows.destroy", { id: form.id }), {
     onSuccess: (response) => {
-      fetchData();
       form.reset();
+      fetchData();
       deleteModalStatus.value = false;
       formError.value = [];
       showNotification(response.props.notification);
@@ -314,14 +291,13 @@ const deleteSubmit = async () => {
 };
 
 //modal
-const modalTitle = ref("Tambah Dinas Baru");
+const modalTitle = ref("Tambah Rows Baru");
 const toggleUpdateModal = async (id) => {
   try {
-    modalTitle.value = "Update Dinas";
-    const response = await axios.get(route("produsen.fetch", { id }));
+    modalTitle.value = "Update Rows";
+    const response = await axios.get(route("master.rows.fetch", { id }));
     form.id = response.data.data.id;
-    form.nama = response.data.data.nama;
-    form.region_id = response.data.data.region_id;
+    form.label = response.data.data.label;
     createModalStatus.value = true;
   } catch (error) {
     console.error(error);
@@ -329,7 +305,7 @@ const toggleUpdateModal = async (id) => {
 };
 const deleteUpdateModal = async (id) => {
   try {
-    const response = await axios.get(route("produsen.fetch", { id }));
+    const response = await axios.get(route("master.rows.fetch", { id }));
     form.id = response.data.data.id;
     deleteModalStatus.value = true;
   } catch (error) {

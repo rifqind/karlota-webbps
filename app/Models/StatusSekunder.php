@@ -19,4 +19,5 @@ class StatusSekunder extends Model
         'updated_at'
     ];
     public $timestamps = true;
+    public $table = 'status_sekunder';
 }

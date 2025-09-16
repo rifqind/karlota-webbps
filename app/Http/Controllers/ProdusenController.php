@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use App\Models\Produsen;
 use App\Models\Region;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 
 class ProdusenController extends Controller
@@ -60,5 +62,78 @@ class ProdusenController extends Controller
             'wilayah' => $wilayah_kerja,
             'countData' => $countData,
         ]);
+    }
+
+    public function store(Request $request)
+    {
+        // Rule::unique('produsen', 'nama')
+        $validated = $request->validate([
+            'nama' => ['required', 'string', 'max:150'],
+            'region_id' => ['required', 'integer']
+        ]);
+        $notification = [];
+        try {
+            //code...
+            DB::beginTransaction();
+            if ($request->id) {
+                $request->validate(['nama' => [Rule::unique('produsen', 'nama')->ignore($request->id)]]);
+                $updated_produsen = Produsen::findOrFail($request->id);
+                $updated_produsen->update($validated);
+                $message = ['type' => 'success', 'message' => 'Berhasil mengedit Dinas ini'];
+            } else {
+                $request->validate(['nama' => [Rule::unique('produsen', 'nama')]]);
+                $new_produsen = Produsen::create([
+                    'nama' => $validated['nama'],
+                    'region_id' => $validated['region_id']
+                ]);
+                $message = ['type' => 'success', 'message' => 'Berhasil menambahkan Dinas baru'];
+            }
+            array_push($notification, $message);
+            DB::commit();
+            return redirect()->route('produsen.index')->with('notification', $notification);
+        } catch (\Throwable $th) {
+            //throw $th;
+            DB::rollBack();
+            $message = [
+                'type' => 'error',
+                'message' => 'Ada kesalahan ketika melakukan perubahan di dinas',
+                'error' => $th->getMessage()
+            ];
+            array_push($notification, $message);
+            return redirect()->route('produsen.index')->with('notification', $notification);
+        }
+    }
+
+    public function fetch(String $id)
+    {
+        $data = Produsen::find($id);
+        return response()->json(['data' => $data]);
+    }
+
+    public function destroy(String $id)
+    {
+        $notification = [];
+        try {
+            //code...
+            DB::beginTransaction();
+            $data = Produsen::findOrFail($id);
+            $data->delete();
+            $message = [
+                'type' => 'message',
+                'message' => 'Berhasil menghapus dinas tersebut'
+            ];
+            array_push($notification, $message);
+            DB::commit();
+            return redirect()->route('produsen.index')->with('notification', $notification);
+        } catch (\Throwable $th) {
+            //throw $th;
+            DB::rollBack();
+            $message = [
+                'type' => 'error',
+                'message' => 'Ada kesalahan ketika menghapus dinas tersebut',
+                'error' => $th->getMessage()
+            ];
+            return redirect()->route('produsen.index')->with('notification', $notification);
+        }
     }
 }

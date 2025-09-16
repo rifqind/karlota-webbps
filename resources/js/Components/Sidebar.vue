@@ -192,7 +192,12 @@
             :nav-icon="'fa-solid fa-server'"
             :toggle-menu-open="toggleMenuOpen"
             :params="'sekunder'"
-            :menu-open="menuOpenSekunder || currentRoute == 'produsen.index'"
+            :menu-open="
+              menuOpenSekunder ||
+              currentRoute == 'produsen.index' ||
+              currentRoute == 'sekunder.index' ||
+              currentRoute == 'master.rows.index'
+            "
           >
             <template #label>Data Sekunder</template>
             <template #content>
@@ -202,6 +207,20 @@
                 :current-route="currentRoute == 'produsen.index'"
               >
                 Daftar Dinas
+              </NavLinkSidebar>
+              <NavLinkSidebar
+                :nav-icon="'fa-solid fa-magnifying-glass-chart'"
+                :href="route('sekunder.index')"
+                :current-route="currentRoute == 'sekunder.index'"
+              >
+                Daftar Data
+              </NavLinkSidebar>
+              <NavLinkSidebar
+                :nav-icon="'fa-solid fa-diagram-successor'"
+                :href="route('master.rows.index')"
+                :current-route="currentRoute == 'master.rows.index'"
+              >
+                Master Rows
               </NavLinkSidebar>
             </template>
           </NavLinkParentSidebar>

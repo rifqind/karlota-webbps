@@ -26,14 +26,14 @@ return new class extends Migration
             $table->string('sekunder_id', 36)->index('status_idx_sekunder');
             $table->year('tahun');
             $table->tinyInteger('status')->default(1);
-            $table->string('created_by', 36)->index('status_idx_users');
+            $table->string('updated_by', 36)->index('status_idx_users');
             $table->timestamps();
             $table->foreign(['sekunder_id'], 'status_to_sekunder')
                 ->references(['id'])
                 ->on('sekunder')
                 ->onUpdate('restrict')
                 ->onDelete('restrict');
-            $table->foreign(['created_by'], 'status_to_user')
+            $table->foreign(['updated_by'], 'status_to_user')
                 ->references(['id'])
                 ->on('users')
                 ->onUpdate('restrict')
