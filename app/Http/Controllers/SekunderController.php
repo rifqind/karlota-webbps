@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Produsen;
+use App\Models\Row;
 use App\Models\StatusSekunder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -72,6 +74,20 @@ class SekunderController extends Controller
         return Inertia::render('Sekunder/Index', [
             'sekunder' => $sekunder,
             'countData' => $countData
+        ]);
+    }
+
+    public function create()
+    {
+        $produsen = Produsen::orderBy('nama', 'asc')
+            ->select(['id as value', 'nama as label'])
+            ->get();
+        $rows = Row::orderBy('label', 'asc')
+            ->select(['id as value', 'label'])
+            ->get();
+        return Inertia::render('Sekunder/Create', [
+            'produsen' => $produsen,
+            'rows' => $rows,
         ]);
     }
 }

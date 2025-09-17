@@ -209,6 +209,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     //sekunder
     Route::name('sekunder.')->group(function () {
         Route::get('/sekunder/index', [SekunderController::class, 'index'])->name('index');
+        Route::get('/sekunder/create', [SekunderController::class, 'create'])->name('create');
         // Route::post('/sekunder/store', [MasterController::class, 'RowStore'])->name('rows.store');
         // Route::get('/sekunder/fetch/{id}', [MasterController::class, 'RowFetch'])->name('rows.fetch');
         // Route::delete('/sekunder/delete/{id}', [MasterController::class, 'RowDestroy'])->name('rows.destroy');

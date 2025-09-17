@@ -25,26 +25,29 @@
         <thead>
           <tr class="bg-info-fordone">
             <th class="first-column tabel-width-5">No.</th>
-            <th class="text-center th-order" @click="clickToOrder('p.nama')">
+            <th
+              class="text-center th-order tabel-width-25"
+              @click="clickToOrder('p.nama')"
+            >
               Nama Dinas
             </th>
             <th class="text-center th-order" @click="clickToOrder('s.label')">
               Judul Data Sekunder
             </th>
             <th
-              class="text-center th-order"
+              class="text-center th-order tabel-width-8"
               @click="clickToOrder('status_sekunder.tahun')"
             >
               Tahun
             </th>
             <th
-              class="text-center th-order"
+              class="text-center th-order tabel-width-8"
               @click="clickToOrder('status_sekunder.status')"
             >
               Status
             </th>
             <th
-              class="text-center th-order"
+              class="text-center th-order tabel-width-8"
               @click="clickToOrder('status_sekunder.updated_at')"
             >
               Terakhir di-update
@@ -129,7 +132,6 @@
 <script setup>
 import { triggerSpinner } from "@/axiosSetup";
 import FlashFetch from "@/Components/FlashFetch.vue";
-import ModalBs from "@/Components/ModalBs.vue";
 import Pagination from "@/Components/Pagination.vue";
 import SpinnerBorder from "@/Components/SpinnerBorder.vue";
 import { debounce } from "@/debounce";
