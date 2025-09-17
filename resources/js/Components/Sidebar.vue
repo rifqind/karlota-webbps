@@ -254,6 +254,13 @@
           >
             Permasalahan Aplikasi</NavLinkSidebar
           >
+          <NavLinkSidebar
+            @click="downloadGuide"
+            :navIcon="'fa-solid fa-book'"
+            :currentRoute="currentRoute == 'download-guide'"
+          >
+            Panduan Aplikasi</NavLinkSidebar
+          >
           <li
             v-if="page.props.auth.user.name == 'niu'"
             class="nav-item mb-1"
@@ -339,6 +346,9 @@ onMounted(async () => {
     maintenanceStat.value = true;
   } else maintenanceStat.value = false;
 });
+const downloadGuide = () => {
+  window.location.href = "/download-guide";
+};
 </script>
 
 <style scoped>

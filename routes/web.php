@@ -13,6 +13,7 @@ use App\Http\Controllers\SsoController;
 use App\Http\Controllers\SummaryController;
 use App\Http\Controllers\UserController;
 use App\Models\Maintenance;
+use Illuminate\Support\Facades\Response;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware('guest')->get('/', [AuthenticatedSessionController::class, 'create']);
@@ -171,6 +172,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
             Route::get('/fetch-question/{id}', [UserController::class, 'fetchQuestion'])->name('fetch-question');
         });
     });
+    Route::get('/download-guide', function () {
+        $filePath = public_path('document/Panduan Aplikasi Karlota.pdf');
+        return Response::download($filePath);
+    })->name('download-guide');
     //maintenance
     Route::post('/set-maintenance', function () {
         $maintenance = Maintenance::findOrFail(1);
