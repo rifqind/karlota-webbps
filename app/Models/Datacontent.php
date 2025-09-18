@@ -17,4 +17,5 @@ class Datacontent extends Model
         'triwulan'
     ];
     public $timestamps = false;
+    public $table = 'datacontent';
 }

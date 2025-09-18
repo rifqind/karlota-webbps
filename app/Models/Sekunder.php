@@ -19,4 +19,5 @@ class Sekunder extends Model
     ];
     
     public $timestamps = true;
+    public $table = 'sekunder';
 }

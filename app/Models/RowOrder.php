@@ -11,4 +11,5 @@ class RowOrder extends Model
     use HasFactory;
     protected $fillable = ['orders', 'sekunder_id'];
     public $timestamps = false;
+    public $table = 'row_orders';
 }

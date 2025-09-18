@@ -1,4 +1,13 @@
 <template>
+  <div class="flex items-center my-2">
+    <div>
+      <span class="font-bold">Judul :</span> {{ label }}<br />
+      <span class="font-bold">Dinas :</span>
+      {{ produsen.label }}
+    </div>
+    <button @click="emits('close')" class="ml-auto btn-red-fordone">Tutup Preview</button>
+  </div>
+  <div class="flex items-center my-2"></div>
   <table class="table border-2 mb-2 w-full">
     <thead>
       <tr class="bg-info-fordone">
@@ -20,6 +29,9 @@
       </template>
     </draggable>
   </table>
+  <div class="flex items-center font-bold justify-center">
+    Ubah urutan baris dengan menggeser cell ke baris yang diinginkan
+  </div>
 </template>
 
 <script setup>
@@ -30,6 +42,16 @@ const props = defineProps({
     type: Array,
     required: true,
   },
+  label: {
+    type: String,
+    required: true,
+    default: "Belum ada judul",
+  },
+  produsen: {
+    type: String,
+    required: true,
+    default: "Belum ada dinas",
+  },
 });
 const datas = ref(props.rows);
 watch(
@@ -38,6 +60,10 @@ watch(
     datas.value = value;
   }
 );
+defineExpose({
+  datas,
+});
+const emits = defineEmits(["close"]);
 </script>
 
 <style scoped></style>

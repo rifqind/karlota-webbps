@@ -210,8 +210,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::name('sekunder.')->group(function () {
         Route::get('/sekunder/index', [SekunderController::class, 'index'])->name('index');
         Route::get('/sekunder/create', [SekunderController::class, 'create'])->name('create');
-        // Route::post('/sekunder/store', [MasterController::class, 'RowStore'])->name('rows.store');
-        // Route::get('/sekunder/fetch/{id}', [MasterController::class, 'RowFetch'])->name('rows.fetch');
+        Route::post('/sekunder/store', [SekunderController::class, 'store'])->name('store');
+        Route::get('/sekunder/entri/{id}', [SekunderController::class, 'entri'])->name('entri');
+        Route::post('/sekunder/update', [SekunderController::class, 'update'])->name('update');
         // Route::delete('/sekunder/delete/{id}', [MasterController::class, 'RowDestroy'])->name('rows.destroy');
     });
 });

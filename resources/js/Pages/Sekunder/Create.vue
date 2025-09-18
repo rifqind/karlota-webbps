@@ -1,5 +1,6 @@
 <template>
   <Head title="Membuat Data Baru" />
+  <SpinnerBorder v-if="triggerSpinner" />
   <GeneralLayout>
     <FlashFetch :notifications="notifications" />
     <div class="container px-[7.5px] mr-auto ml-auto lg:max-w-[1140px]">
@@ -19,6 +20,7 @@
                 >Pilih Nama Dinas<span class="text-danger">*</span></label
               >
               <Multiselect
+                v-model="form.datas.produsen_id"
                 :options="page.props.produsen"
                 placeholder="-- Pilih Dinas --"
                 :searchable="true"
@@ -28,9 +30,21 @@
             <div class="mb-3 space-y-2">
               <label for="label">Judul Data<span class="text-danger">*</span></label>
               <input
+                v-model="form.datas.label"
                 type="text"
                 class="input-fordone w-full"
                 placeholder="Isikan judul data"
+              />
+              <div class="text-danger text-left" v-if="true" id="error-label"></div>
+            </div>
+            <div class="mb-3 space-y-2">
+              <label for="year">Tahun<span class="text-danger">*</span></label>
+              <Multiselect
+                v-model="form.datas.tahun"
+                :options="yearDrop"
+                placeholder="-- Pilih Tahun --"
+                mode="tags"
+                :searchable="true"
               />
               <div class="text-danger text-left" v-if="true" id="error-label"></div>
             </div>
@@ -68,18 +82,36 @@
               />
               <div class="text-danger text-left" v-if="true" id="error-rows"></div>
             </div>
+            <div
+              class="text-danger"
+              v-if="formError.length > 0"
+              v-for="node in formError"
+            >
+              {{ node }}
+            </div>
             <div class="flex items-center space-x-2 justify-end">
               <div @click="buildValue" class="btn-info-fordone w-[130px]">
                 <font-awesome-icon icon="fa fa-save" /> Buat Data
               </div>
-              <div class="btn-success-fordone w-[110px]">
+              <div
+                v-if="previewStatus"
+                @click="submit"
+                class="btn-success-fordone w-[110px]"
+              >
                 <font-awesome-icon icon="fa fa-check" /> Simpan
               </div>
             </div>
           </div>
         </div>
       </div>
-      <TablePreview v-if="previewStatus" :rows="rowBuildValue" />
+      <TablePreview
+        ref="tableRef"
+        @close="previewStatus = false"
+        v-if="previewStatus"
+        :rows="rowBuildValue"
+        :label="form.datas.label"
+        :produsen="produsenBuildValue"
+      />
     </div>
   </GeneralLayout>
 </template>
@@ -87,13 +119,11 @@
 import { triggerSpinner } from "@/axiosSetup";
 import FlashFetch from "@/Components/FlashFetch.vue";
 import Multiselect from "@vueform/multiselect";
-import Pagination from "@/Components/Pagination.vue";
-import SpinnerBorder from "@/Components/SpinnerBorder.vue";
-import { debounce } from "@/debounce";
 import GeneralLayout from "@/Layouts/GeneralLayout.vue";
 import { Head, useForm, usePage } from "@inertiajs/vue3";
 import { computed, ref, watch } from "vue";
 import TablePreview from "@/Components/TablePreview.vue";
+import SpinnerBorder from "@/Components/SpinnerBorder.vue";
 
 const page = usePage();
 const createModalStatus = ref(false);
@@ -111,21 +141,70 @@ const showNotification = (notification) => {
 };
 
 //forms
+const currentYear = new Date().getFullYear();
+const years = Array.from({ length: 6 }, (_, index) => currentYear + 1 - index);
+const yearDrop = ref(null);
+yearDrop.value = years.map((year) => ({
+  label: year.toString(),
+  value: year.toString(),
+}));
 const form = useForm({
+  _token: null,
   datas: {
+    tahun: [],
     produsen_id: null,
     label: null,
   },
   rows: {
     selected: [],
   },
+  order: [],
 });
 const rowBuildValue = ref([]);
+const produsenBuildValue = ref(null);
 const previewStatus = ref(false);
 const buildValue = () => {
-  previewStatus.value = true;
   let rows = page.props.rows;
+  let produsen = page.props.produsen;
+  produsenBuildValue.value = produsen.find((x) => x.value == form.datas.produsen_id);
   rowBuildValue.value = rows.filter((x) => form.rows.selected.includes(x.value));
+  previewStatus.value = true;
+};
+const tableRef = ref(null);
+const submit = async () => {
+  const token = await axios.get(route("token"));
+  form._token = token.data;
+  form.order = tableRef.value.datas.map((item) => item.value);
+  try {
+    form.post(route("sekunder.store"), {
+      onSuccess: (response) => {
+        showNotification(response.props.notification);
+        if (response.props.notification[0].type == "success") {
+          form
+            .defaults({
+              _token: null,
+              datas: {
+                tahun: [],
+                produsen_id: null,
+                label: null,
+              },
+              rows: {
+                selected: [],
+              },
+              order: [],
+            })
+            .reset();
+          formError.value = [];
+        } else {
+          response.props.notification.forEach((element) => {
+            formError.value.push(element.error);
+          });
+        }
+      },
+    });
+  } catch (error) {
+    console.error(error);
+  }
 };
 </script>
 

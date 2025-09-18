@@ -104,12 +104,22 @@
               <span class="badge badge-info">{{ data.tahun }}</span>
             </td>
             <td class="align-middle">
-              <span class="badge badge-info">{{ data.status }}</span>
+              <span class="badge" :class="getClass(data.status_id)">{{
+                data.label_status
+              }}</span>
             </td>
             <td class="align-middle text-center">
               <span class="badge badge-info">{{ data.username }}</span>
               <br />
               <span>{{ data.updated_time }}</span>
+            </td>
+            <td class="text-center align-middle deleted">
+              <Link
+                :href="route('sekunder.entri', { id: data.id })"
+                class="edit-pen mx-1"
+              >
+                <font-awesome-icon icon="fa-solid fa-pencil" title="Cek/Edit" />
+              </Link>
             </td>
           </tr>
           <tr v-else>
@@ -136,7 +146,7 @@ import Pagination from "@/Components/Pagination.vue";
 import SpinnerBorder from "@/Components/SpinnerBorder.vue";
 import { debounce } from "@/debounce";
 import GeneralLayout from "@/Layouts/GeneralLayout.vue";
-import { Head, useForm, usePage } from "@inertiajs/vue3";
+import { Head, Link, useForm, usePage } from "@inertiajs/vue3";
 import { computed, ref, watch } from "vue";
 
 const page = usePage();
@@ -154,6 +164,11 @@ const showNotification = (notification) => {
       notifications.value.shift(); // Remove the first notification
     }, (index + 1) * 1200); // Delay based on index
   });
+};
+
+const getClass = (id) => {
+  if (id == 1) return "badge-status-empat";
+  if (id == 2) return "badge-status-dua";
 };
 
 //fetch series
