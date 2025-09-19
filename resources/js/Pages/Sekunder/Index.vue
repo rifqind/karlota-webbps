@@ -171,7 +171,7 @@
             </td>
           </tr>
           <tr v-else>
-            <td colspan="7" class="text-center">Data Tidak Ada</td>
+            <td colspan="8" class="text-center">Data Tidak Ada</td>
           </tr>
         </tbody>
       </table>
@@ -358,7 +358,9 @@ const deleteSubmit = async () => {
         showNotification(response.props.notification);
       },
     });
-  } catch (error) {}
+  } catch (error) {
+    console.error(error);
+  }
 };
 
 //row modified

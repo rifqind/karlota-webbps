@@ -2,8 +2,12 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Datacontent;
+use App\Models\Produsen;
 use App\Models\Row;
+use App\Models\RowOrder;
 use App\Models\Sekunder;
+use App\Models\StatusSekunder;
 use App\Models\Variabel;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -122,7 +126,7 @@ class MasterController extends Controller
         }
     }
 
-    public function DataIndex(Request $request)
+    public function SekunderIndex(Request $request)
     {
         if ($request->paginated) $paginated = $request->paginated;
         else $paginated = 10;
@@ -132,7 +136,7 @@ class MasterController extends Controller
         $query = Sekunder::query();
         $dataToCounted = $query
             ->join('produsen as p', 'p.id', '=', 'sekunder.produsen_id')
-            ->join('status_sekunder as ss', 'ss.status_id', '=', 'sekunder.id')
+            // ->join('status_sekunder as ss', 'ss.status_id', '=', 'sekunder.id')
             ->join('users as u', 'u.id', '=', 'sekunder.created_by')
             ->select([
                 'sekunder.id as id',
@@ -155,11 +159,19 @@ class MasterController extends Controller
             if (!empty($filter['nama_dinas'])) {
                 $query->where('p.nama', 'like', '%' . $filter['nama_dinas'] . '%');
             }
-            // if (!empty($filter['tahun'])) {
-            //     $query->where('status_sekunder.tahun', 'like', '%' . $filter['tahun'] . '%');
-            // }
             if (!empty($filter['created_at'])) {
                 $query->where(DB::raw("CONCAT(users.name, ' - ', sekunder.created_at)"), 'like', '%' . $filter['updated_at'] . '%');
+            }
+            if (!empty($filter['tahun'])) {
+                $target = StatusSekunder::where('tahun', 'like', '%' . $filter['tahun'] . '%')->pluck('sekunder_id')->unique();
+                $query->whereIn('sekunder.id', $target);
+            }
+            //row_label
+            if (!empty($filter['row_label'])) {
+                $status_target = Datacontent::join('rows as r', 'r.id', '=', 'datacontent.row_id')
+                    ->where('r.label', 'like', '%' . $filter['row_label'] . '%')->pluck('datacontent.status_id')->unique();
+                $target = StatusSekunder::whereIn('sekunder_id', $status_target)->pluck('sekunder.id')->unique();
+                $query->whereIn('sekunder.id', $target);
             }
         }
         $countData = $dataToCounted->count();
@@ -169,16 +181,108 @@ class MasterController extends Controller
             $value->number = $number;
             $number++;
         }
+        $sekunder_object = [];
+        foreach ($sekunder as $key => $s) {
+            # code...
+            $status_set = StatusSekunder::where('sekunder_id', $s->id)->get();
+            $status_id = $status_set->first();
+            $status_tahun = $status_set->pluck('tahun');
+            if ($status_id) {
+                $check_data = Datacontent::where('status_id', $status_id->id)->get();
+                if (sizeof($check_data) > 0) {
+                    $row_id = $check_data->pluck('row_id')->unique();
+                    $rows = Row::whereIn('id', $row_id)->get();
+                } else {
+                    $rows = [
+                        [
+                            'id' => 'Tidak ada data',
+                            'label' => 'Tidak ada data'
+                        ]
+                    ];
+                }
+            } else {
+                $rows = [
+                    [
+                        'id' => 'Tidak ada data',
+                        'label' => 'Tidak ada data'
+                    ]
+                ];
+            }
+            array_push($sekunder_object, [
+                'number' => $s->number,
+                'id' => $s->id,
+                'label_data' => $s->label_data,
+                'nama_dinas' => $s->nama_dinas,
+                'username' => $s->username,
+                'created_time' => $s->created_time,
+                'rows' => $rows,
+                'tahun' => $status_tahun
+            ]);
+        }
         if ($request->paginated) {
             return response()->json([
-                'sekunder' => $sekunder,
+                'sekunder' => $sekunder_object,
                 'countData' => $countData
             ]);
         }
         return Inertia::render('Master/Sekunder', [
-            'sekunder' => $sekunder,
+            'sekunder' => $sekunder_object,
             'countData' => $countData
         ]);
+    }
+
+    public function SekunderUpdate(String $id)
+    {
+        $produsen = Produsen::orderBy('nama', 'asc')
+            ->select(['id as value', 'nama as label'])
+            ->get();
+        $rows = Row::orderBy('label', 'asc')
+            ->select(['id as value', 'label'])
+            ->get();
+        $sekunder = Sekunder::find($id);
+        $status = StatusSekunder::where('sekunder_id', $id)->get();
+        $status_tahun = $status->pluck('tahun');
+        $status_id = $status->pluck('id');
+        $sekunder_row = Datacontent::whereIn('status_id', $status_id)->pluck('row_id')->unique();
+        return Inertia::render('Sekunder/Update', [
+            'produsen' => $produsen,
+            'rows' => $rows,
+            'sekunder' => $sekunder,
+            'tahun' => $status_tahun,
+            'sekunder_row' => $sekunder_row,
+        ]);
+    }
+
+    public function SekunderDestroy(String $id)
+    {
+        $notification = [];
+        try {
+            //code...
+            DB::beginTransaction();
+            $status_sekunder = StatusSekunder::where('sekunder_id', $id)->get();
+            if (sizeof($status_sekunder) > 0) {
+                $message = ['type' => 'error', 'message' => 'Masih ada data tahunan yang belum dihapus'];
+                array_push($notification, $message);
+                // return redirect()->route('master.sekunder.index')->with('notification', $notification);
+            } else {
+                $deleted_order = RowOrder::where('sekunder_id', $id)->delete();
+                $deleted = Sekunder::where('id', $id)->delete();
+                $message = ['type' => 'success', 'message' => 'Berhasil hapus data'];
+                array_push($notification, $message);
+            }
+            DB::commit();
+            return redirect()->route('master.sekunder.index')->with('notification', $notification);
+        } catch (\Throwable $th) {
+            //throw $th;
+            DB::rollBack();
+            $message = [
+                'type' => 'error',
+                'message' => 'Ada kesalahan ketika hapus data',
+                'error' => $th->getMessage()
+            ];
+            array_push($notification, $message);
+            return redirect()->route('master.sekunder.index')->with('notification', $notification);
+        }
     }
 
     // public function VariabelIndex(Request $request)

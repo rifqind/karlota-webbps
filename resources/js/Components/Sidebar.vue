@@ -197,6 +197,7 @@
               currentRoute == 'produsen.index' ||
               currentRoute == 'sekunder.index' ||
               currentRoute == 'master.rows.index' ||
+              currentRoute == 'master.sekunder.index' ||
               currentRoute == 'sekunder.create' ||
               currentRoute == 'sekunder.entri'
             "
@@ -227,6 +228,13 @@
                 :current-route="currentRoute == 'master.rows.index'"
               >
                 Master Rows
+              </NavLinkSidebar>
+              <NavLinkSidebar
+                :nav-icon="'fa-solid fa-meteor'"
+                :href="route('master.sekunder.index')"
+                :current-route="currentRoute == 'master.sekunder.index'"
+              >
+                Master Data
               </NavLinkSidebar>
             </template>
           </NavLinkParentSidebar>
@@ -301,6 +309,7 @@ import { usePage } from "@inertiajs/vue3";
 import NavLinkSidebar from "./NavLinkSidebar.vue";
 import NavLinkParentSidebar from "./NavLinkParentSidebar.vue";
 import { onMounted, ref } from "vue";
+import { current } from "tailwindcss/colors";
 
 const page = usePage();
 const currentRoute = page.props.route;

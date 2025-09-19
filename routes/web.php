@@ -200,11 +200,15 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::delete('/produsen/delete/{id}', [ProdusenController::class, 'destroy'])->name('destroy');
     });
     //master
-    Route::name('master.')->group(function () {
+    Route::prefix('master')->name('master.')->group(function () {
         Route::get('/rows/index', [MasterController::class, 'RowIndex'])->name('rows.index');
         Route::post('/rows/store', [MasterController::class, 'RowStore'])->name('rows.store');
         Route::get('/rows/fetch/{id}', [MasterController::class, 'RowFetch'])->name('rows.fetch');
         Route::delete('/rows/delete/{id}', [MasterController::class, 'RowDestroy'])->name('rows.destroy');
+
+        Route::get('/sekunder/index', [MasterController::class, 'SekunderIndex'])->name('sekunder.index');
+        Route::get('/sekunder/update/{id}', [MasterController::class, 'SekunderUpdate'])->name('sekunder.update');
+        Route::delete('/sekunder/delete/{id}', [MasterController::class, 'SekunderDestroy'])->name('sekunder.destroy');
     });
     //sekunder
     Route::name('sekunder.')->group(function () {
