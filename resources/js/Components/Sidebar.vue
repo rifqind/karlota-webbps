@@ -196,7 +196,9 @@
               menuOpenSekunder ||
               currentRoute == 'produsen.index' ||
               currentRoute == 'sekunder.index' ||
-              currentRoute == 'master.rows.index'
+              currentRoute == 'master.rows.index' ||
+              currentRoute == 'sekunder.create' ||
+              currentRoute == 'sekunder.entri'
             "
           >
             <template #label>Data Sekunder</template>
@@ -211,7 +213,11 @@
               <NavLinkSidebar
                 :nav-icon="'fa-solid fa-magnifying-glass-chart'"
                 :href="route('sekunder.index')"
-                :current-route="currentRoute == 'sekunder.index'"
+                :current-route="
+                  currentRoute == 'sekunder.index' ||
+                  currentRoute == 'sekunder.create' ||
+                  currentRoute == 'sekunder.entri'
+                "
               >
                 Daftar Data
               </NavLinkSidebar>

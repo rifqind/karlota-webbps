@@ -112,6 +112,10 @@
         :label="form.datas.label"
         :produsen="produsenBuildValue"
       />
+      <Link :href="route('sekunder.index')" class="btn btn-light-fordone border"
+        ><font-awesome-icon icon="fas fa-chevron-left" />
+        Kembali
+      </Link>
     </div>
   </GeneralLayout>
 </template>
@@ -120,7 +124,7 @@ import { triggerSpinner } from "@/axiosSetup";
 import FlashFetch from "@/Components/FlashFetch.vue";
 import Multiselect from "@vueform/multiselect";
 import GeneralLayout from "@/Layouts/GeneralLayout.vue";
-import { Head, useForm, usePage } from "@inertiajs/vue3";
+import { Head, Link, useForm, usePage } from "@inertiajs/vue3";
 import { computed, ref, watch } from "vue";
 import TablePreview from "@/Components/TablePreview.vue";
 import SpinnerBorder from "@/Components/SpinnerBorder.vue";

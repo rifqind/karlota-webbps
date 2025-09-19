@@ -15,9 +15,9 @@
         >
           <font-awesome-icon icon="fa-solid fa-circle-down" />
         </button>
-        <button @click="createModalStatus = true" class="btn-info-fordone mb-2 lg:mb-0">
+        <Link :href="route('sekunder.create')" class="btn-info-fordone mb-2 lg:mb-0">
           <font-awesome-icon icon="fa-solid fa-plus" /> Tambah Data Sekunder
-        </button>
+        </Link>
       </div>
     </div>
     <div class="table-responsive-mobile overflow-x-auto">
@@ -26,7 +26,7 @@
           <tr class="bg-info-fordone">
             <th class="first-column tabel-width-5">No.</th>
             <th
-              class="text-center th-order tabel-width-25"
+              class="text-center th-order tabel-width-20"
               @click="clickToOrder('p.nama')"
             >
               Nama Dinas
@@ -34,6 +34,7 @@
             <th class="text-center th-order" @click="clickToOrder('s.label')">
               Judul Data Sekunder
             </th>
+            <th class="text-center th-order tabel-width-20">Data</th>
             <th
               class="text-center th-order tabel-width-8"
               @click="clickToOrder('status_sekunder.tahun')"
@@ -72,6 +73,13 @@
             </td>
             <td class="search-header">
               <input
+                v-model.trim="searchRowLabel"
+                type="text"
+                class="input-fordone w-full"
+              />
+            </td>
+            <td class="search-header">
+              <input
                 v-model.trim="searchTahun"
                 type="text"
                 class="input-fordone w-full"
@@ -96,10 +104,44 @@
           </tr>
         </thead>
         <tbody>
-          <tr v-if="sekunder.length > 0" v-for="data in paginatedData" :key="data.id">
+          <tr
+            v-if="sekunder.length > 0"
+            v-for="(data, dataIndex) in paginatedData"
+            :key="data.id"
+          >
             <td class="align-middle">{{ data.number }}</td>
             <td class="align-middle">{{ data.nama_dinas }}</td>
             <td class="align-middle">{{ data.label_data }}</td>
+            <td class="align-middle">
+              <template v-for="(item, index) in data.rows" :key="index">
+                <span v-if="!data.rows.length > 5" class="badge badge-info">{{
+                  hiddenText(item.label)
+                }}</span>
+                <span
+                  v-if="
+                    data.rows.length > 5 ||
+                    indexExpandedRow[dataIndex] ||
+                    openRowList(index)
+                  "
+                  class="badge badge-info"
+                  >{{ hiddenText(item.label) }}
+                </span>
+              </template>
+              <span
+                v-if="data.rows.length > 5"
+                class="badge badge-info cursor-pointer"
+                @clcik="openOtherRow(index)"
+              >
+                <font-awesome-icon
+                  v-if="!indexExpandedRow[dataIndex]"
+                  icon="fa-solid fa-angle-down"
+                />
+                <font-awesome-icon
+                  v-if="indexExpandedRow[dataIndex]"
+                  icon="fa-solid fa-angle-up"
+                />
+              </span>
+            </td>
             <td class="align-middle">
               <span class="badge badge-info">{{ data.tahun }}</span>
             </td>
@@ -120,6 +162,12 @@
               >
                 <font-awesome-icon icon="fa-solid fa-pencil" title="Cek/Edit" />
               </Link>
+              <a @click="deleteUpdateModal(data.id)"
+                ><font-awesome-icon
+                  icon="fa-solid fa-trash-can"
+                  class="icon-trash-color mx-2"
+                  title="Hapus"
+              /></a>
             </td>
           </tr>
           <tr v-else>
@@ -137,11 +185,38 @@
       :current-show-items="paginatedData.length"
     />
   </GeneralLayout>
+  <ModalBs
+    :-modal-status="deleteModalStatus"
+    @close="
+      () => {
+        deleteModalStatus = false;
+        form.reset();
+      }
+    "
+    :title="'Hapus Data'"
+  >
+    <template #modalBody>
+      <div class="form-group">
+        <div>
+          <label
+            >Apakah Anda yakin ingin menghapus data ini? Data akan terhapus
+            selamanya</label
+          >
+        </div>
+      </div>
+    </template>
+    <template #modalFunction>
+      <button type="button" class="btn-red-fordone btn-sm" @click.prevent="deleteSubmit">
+        Hapus
+      </button>
+    </template>
+  </ModalBs>
 </template>
 
 <script setup>
 import { triggerSpinner } from "@/axiosSetup";
 import FlashFetch from "@/Components/FlashFetch.vue";
+import ModalBs from "@/Components/ModalBs.vue";
 import Pagination from "@/Components/Pagination.vue";
 import SpinnerBorder from "@/Components/SpinnerBorder.vue";
 import { debounce } from "@/debounce";
@@ -150,7 +225,7 @@ import { Head, Link, useForm, usePage } from "@inertiajs/vue3";
 import { computed, ref, watch } from "vue";
 
 const page = usePage();
-var dataObject = page.props.sekunder.data;
+var dataObject = page.props.sekunder;
 const sekunder = ref(dataObject);
 const createModalStatus = ref(false);
 const deleteModalStatus = ref(false);
@@ -177,12 +252,14 @@ const searchNamaDinas = ref(null);
 const searchTahun = ref(null);
 const searchStatus = ref(null);
 const searchUpdated = ref(null);
+const searchRowLabel = ref(null);
 const ArrayBigObjects = [
   { key: "label_data", valueFilter: searchLabel },
   { key: "nama_dinas", valueFilter: searchNamaDinas },
   { key: "tahun", valueFilter: searchTahun },
   { key: "status", valueFilter: searchStatus },
   { key: "updated_at", valueFilter: searchUpdated },
+  { key: "row_label", valueFilter: searchRowLabel },
 ];
 watch(
   ArrayBigObjects.map((obj) => obj.valueFilter),
@@ -215,7 +292,7 @@ const paginatedData = computed(() => {
   return sekunder.value;
 });
 watch(
-  () => page.props.sekunder.data,
+  () => page.props.sekunder,
   (value) => {
     sekunder.value = value;
   }
@@ -232,12 +309,14 @@ const fetchData = async () => {
           tahun: searchTahun.value,
           status: searchStatus.value,
           updated_at: searchUpdated.value,
+          row_label: searchRowLabel.value,
         },
         orderAttribute: orderAttribute.value,
       },
     });
-    sekunder.value = response.data.sekunder.data;
+    sekunder.value = response.data.sekunder;
     totalItems.value = response.data.countData;
+    indexExpandedRow.value = Array(sekunder.value.length).fill(false);
   } catch (error) {
     console.error("Error fetching data: ", error);
   }
@@ -256,6 +335,45 @@ const clickToOrder = (value) => {
   } else orderAttribute.value.value = "asc";
   orderAttribute.value.before = value;
   fetchData();
+};
+
+const form = useForm({
+  _token: null,
+  id: null,
+});
+//modal sense
+const deleteUpdateModal = (id) => {
+  deleteModalStatus.value = true;
+  form.id = id;
+};
+const deleteSubmit = async () => {
+  try {
+    const token = await axios.get(route("token"));
+    form._token = token.data;
+    form.delete(route("sekunder.destroy", { id: form.id }), {
+      onSuccess: (response) => {
+        fetchData();
+        form.reset();
+        deleteModalStatus.value = false;
+        showNotification(response.props.notification);
+      },
+    });
+  } catch (error) {}
+};
+
+//row modified
+const indexExpandedRow = ref(Array(paginatedData.value.length).fill(false));
+const openOtherRow = (index) => {
+  indexExpandedRow.value[index] = !indexExpandedRow.value[index];
+};
+const openRowList = (index) => {
+  if (index < 5) return true;
+  else return false;
+};
+const hiddenText = (value) => {
+  if (value.length > 50) {
+    return value.substring(0, 50) + "...";
+  } else return value;
 };
 </script>
 

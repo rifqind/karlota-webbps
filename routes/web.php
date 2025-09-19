@@ -213,7 +213,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('/sekunder/store', [SekunderController::class, 'store'])->name('store');
         Route::get('/sekunder/entri/{id}', [SekunderController::class, 'entri'])->name('entri');
         Route::post('/sekunder/update', [SekunderController::class, 'update'])->name('update');
-        // Route::delete('/sekunder/delete/{id}', [MasterController::class, 'RowDestroy'])->name('rows.destroy');
+        Route::delete('/sekunder/delete/{id}', [SekunderController::class, 'destroy'])->name('destroy');
     });
 });
 

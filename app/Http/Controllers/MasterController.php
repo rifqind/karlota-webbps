@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Row;
+use App\Models\Sekunder;
 use App\Models\Variabel;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -51,7 +52,8 @@ class MasterController extends Controller
         ]);
     }
 
-    public function RowStore(Request $request) {
+    public function RowStore(Request $request)
+    {
         $validated = $request->validate([
             'label' => ['required', 'string', 'max:100'],
         ]);
@@ -93,7 +95,8 @@ class MasterController extends Controller
         return response()->json(['data' => $data]);
     }
 
-    public function RowDestroy(String $id) {
+    public function RowDestroy(String $id)
+    {
         $notification = [];
         try {
             //code...
@@ -117,6 +120,65 @@ class MasterController extends Controller
             ];
             return redirect()->route('master.rows.index')->with('notification', $notification);
         }
+    }
+
+    public function DataIndex(Request $request)
+    {
+        if ($request->paginated) $paginated = $request->paginated;
+        else $paginated = 10;
+        if ($request->currentPage) $currentPage = $request->currentPage;
+        else $currentPage = 1;
+        $number = 1;
+        $query = Sekunder::query();
+        $dataToCounted = $query
+            ->join('produsen as p', 'p.id', '=', 'sekunder.produsen_id')
+            ->join('status_sekunder as ss', 'ss.status_id', '=', 'sekunder.id')
+            ->join('users as u', 'u.id', '=', 'sekunder.created_by')
+            ->select([
+                'sekunder.id as id',
+                'sekunder.label as label_data',
+                'p.nama as nama_dinas',
+                'u.name as username',
+                'sekunder.created_at as created_time'
+            ]);
+
+        if ($request->orderAttribute) {
+            $order = $request->orderAttribute;
+            if (sizeof($order) > 2) $query->orderBy($order['label'], $order['value']);
+            else $query->orderBy('sekunder.created_at', 'desc')->orderBy('p.nama', 'asc');
+        } else $query->orderBy('sekunder.created_at', 'desc')->orderBy('p.nama', 'asc');
+        if ($request->ArrayFilter) {
+            $filter = $request->ArrayFilter;
+            if (!empty($filter['label_data'])) {
+                $query->where('sekunder.label', 'like', '%' .  $filter['label_data'] . '%');
+            }
+            if (!empty($filter['nama_dinas'])) {
+                $query->where('p.nama', 'like', '%' . $filter['nama_dinas'] . '%');
+            }
+            // if (!empty($filter['tahun'])) {
+            //     $query->where('status_sekunder.tahun', 'like', '%' . $filter['tahun'] . '%');
+            // }
+            if (!empty($filter['created_at'])) {
+                $query->where(DB::raw("CONCAT(users.name, ' - ', sekunder.created_at)"), 'like', '%' . $filter['updated_at'] . '%');
+            }
+        }
+        $countData = $dataToCounted->count();
+        $sekunder = $query->paginate($paginated, ['*'], 'page', $currentPage);
+        foreach ($sekunder as $key => $value) {
+            # code...
+            $value->number = $number;
+            $number++;
+        }
+        if ($request->paginated) {
+            return response()->json([
+                'sekunder' => $sekunder,
+                'countData' => $countData
+            ]);
+        }
+        return Inertia::render('Master/Sekunder', [
+            'sekunder' => $sekunder,
+            'countData' => $countData
+        ]);
     }
 
     // public function VariabelIndex(Request $request)

@@ -63,6 +63,12 @@ class SekunderController extends Controller
                 // $query->join('users', 'statustables.edited_by', '=', 'users.id');
                 $query->where(DB::raw("CONCAT(users.name, ' - ', status_sekunder.updated_at)"), 'like', '%' . $filter['updated_at'] . '%');
             }
+            //row_label
+            if (!empty($filter['row_label'])) {
+                $target = Datacontent::join('rows as r', 'r.id', '=', 'datacontent.row_id')
+                    ->where('r.label', 'like', '%' . $filter['row_label'] . '%')->pluck('datacontent.status_id')->unique();
+                $query->whereIn('status_sekunder.id', $target);
+            }
         }
         $countData = $dataToCounted->count();
         $sekunder = $query->paginate($paginated, ['*'], 'page', $currentPage);
@@ -71,14 +77,43 @@ class SekunderController extends Controller
             $value->number = $number;
             $number++;
         }
+        $sekunder_object = [];
+        foreach ($sekunder as $key => $s) {
+            # code...
+            $check_data = Datacontent::where('status_id', $s->id)->get();
+            if (sizeof($check_data) > 0) {
+                $row_id = $check_data->pluck('row_id')->unique();
+                $rows = Row::whereIn('id', $row_id)->get();
+            } else {
+                $rows = [
+                    [
+                        'id' => 'Tidak ada data',
+                        'label' => 'Tidak ada data'
+                    ]
+                ];
+            }
+            array_push($sekunder_object, [
+                'number' => $s->number,
+                'id' => $s->id,
+                'label_data' => $s->label_data,
+                'nama_dinas' => $s->nama_dinas,
+                'tahun' => $s->tahun,
+                'label_status' => $s->label_status,
+                'status_id' => $s->status_id,
+                'username' => $s->username,
+                'updated_time' => $s->updated_time,
+                'rows' => $rows
+            ]);
+        }
+
         if ($request->paginated) {
             return response()->json([
-                'sekunder' => $sekunder,
+                'sekunder' => $sekunder_object,
                 'countData' => $countData
             ]);
         }
         return Inertia::render('Sekunder/Index', [
-            'sekunder' => $sekunder,
+            'sekunder' => $sekunder_object,
             'countData' => $countData
         ]);
     }
@@ -184,13 +219,64 @@ class SekunderController extends Controller
         ]);
     }
 
-    public function update(Request $request) {
+    public function update(Request $request)
+    {
         $validated = $request->validate([
-            'datacontent.*.data' => ['sometimes', 'nullable', 'integer'],
-            'datacontent.*.status_id' => ['string', 'required', 'min:36', 'max:36'],
-            'datacontent.*.row_id' => ['required', 'integer'],
-            'datacontent.*.triwulan' => ['required', 'integer'],
+            'datacontent.*' => ['required'],
         ]);
-        dd($validated);
+        $notification = [];
+        try {
+            //code...
+            DB::beginTransaction();
+            $status = StatusSekunder::where('id', $request->status_id)
+                ->update([
+                    'status' => 2,
+                    'updated_by' => Auth::user()->id
+                ]);
+            foreach ($validated['datacontent'] as $key => $value) {
+                # code..
+                $updated_datacontent = Datacontent::where('id', $value['id'])
+                    ->update(['data' => $value['data']]);
+            }
+            $message = ['type' => 'success', 'message' => 'Berhasil tersimpan!'];
+            array_push($notification, $message);
+            DB::commit();
+            return redirect()->route('sekunder.entri', ['id' => $request->status_id])->with('notification', $notification);
+        } catch (\Throwable $th) {
+            //throw $th;
+            DB::rollBack();
+            $message = [
+                'type' => 'error',
+                'message' => 'Ada kesalahan ketika simpan data',
+                'error' => $th->getMessage()
+            ];
+            array_push($notification, $message);
+            return redirect()->route('sekunder.entri', ['id' => $request->status_id])->with('notification', $notification);
+        }
+    }
+
+    public function destroy(String $id)
+    {
+        $notification = [];
+        try {
+            //code...
+            DB::beginTransaction();
+            $deleted_datacontent = Datacontent::where('status_id', $id)->delete();
+            $deleted_status = StatusSekunder::where('id', $id)->delete();
+            $message = ['type' => 'success', 'message' => 'Berhasil hapus data'];
+            array_push($notification, $message);
+            DB::commit();
+            return redirect()->route('sekunder.index')->with('notification', $notification);
+        } catch (\Throwable $th) {
+            //throw $th;
+            DB::rollBack();
+            $message = [
+                'type' => 'error',
+                'message' => 'Ada kesalahan ketika hapus data',
+                'error' => $th->getMessage()
+            ];
+            array_push($notification, $message);
+            return redirect()->route('sekunder.index')->with('notification', $notification);
+        }
     }
 }

@@ -2,6 +2,7 @@
   <Head title="Entri Data Sekunder" />
   <SpinnerBorder v-if="triggerSpinner" />
   <GeneralLayout>
+    <FlashFetch :notifications="notifications" />
     <FloatScrollDown />
     <div id="container-of-entry" class="pb-3">
       <div class="bg-white shadow-md mb-2 rounded-md border border-gray-200">
@@ -11,7 +12,11 @@
             {{ page.props.status_sekunder.tahun }}
           </h3>
           <h4 class="mt-2 flex text-2xl items-center">
-            <span class="badge badge-info" id="badges-status">
+            <span
+              class="badge"
+              :class="getClass(page.props.status_sekunder.status)"
+              id="badges-status"
+            >
               {{ page.props.status_sekunder.status_label }}</span
             >
             <span class="ml-auto text-xl text-right" id="">
@@ -60,8 +65,13 @@
           </tbody>
         </table>
       </div>
-      <div class="flex items-center justify-end">
-        <button class="btn-success-fordone" @click.prevent="submit">
+      <div v-if="errorNaN" class="text-danger">Masih ada NaN di data ini</div>
+      <div class="flex items-center justify-center">
+        <Link :href="route('sekunder.index')" class="btn btn-light-fordone border"
+          ><font-awesome-icon icon="fas fa-chevron-left" />
+          Kembali
+        </Link>
+        <button class="ml-auto btn-success-fordone" @click.prevent="submit">
           <font-awesome-icon icon="fa-solid fa-check" /> Simpan
         </button>
       </div>
@@ -71,15 +81,31 @@
 
 <script setup>
 import { triggerSpinner } from "@/axiosSetup";
+import FlashFetch from "@/Components/FlashFetch.vue";
 import FloatScrollDown from "@/Components/FloatScrollDown.vue";
 import SpinnerBorder from "@/Components/SpinnerBorder.vue";
 import { debounce } from "@/debounce";
 import GeneralLayout from "@/Layouts/GeneralLayout.vue";
-import { Head, useForm, usePage } from "@inertiajs/vue3";
+import { Head, Link, useForm, usePage } from "@inertiajs/vue3";
+import { ref } from "vue";
 
 const page = usePage();
+const notifications = ref([]);
+const showNotification = (notification) => {
+  notifications.value = notification;
+  notifications.value.forEach((_, index) => {
+    setTimeout(() => {
+      notifications.value.shift(); // Remove the first notification
+    }, (index + 1) * 1200); // Delay based on index
+  });
+};
+const getClass = (id) => {
+  if (id == 1) return "badge-status-empat";
+  if (id == 2) return "badge-status-dua";
+};
 const form = useForm({
   _token: null,
+  status_id: page.props.status_sekunder.id,
   datacontent: page.props.datacontent,
 });
 
@@ -156,16 +182,22 @@ const handlePaste = (e) => {
 const validateContent = () => {
   return form.datacontent.some((e) => isNaN(e.data));
 };
+const errorNaN = ref(false);
 const submit = async () => {
   try {
     let result = validateContent();
     if (result) {
-      console.log("hehe");
+      errorNaN.value = true;
       return;
     }
+    errorNaN.value = false;
     const token = await axios.get(route("token"));
     form._token = token.data;
-    form.post(route("sekunder.update"));
+    form.post(route("sekunder.update"), {
+      onSuccess: (response) => {
+        showNotification(response.props.notification);
+      },
+    });
   } catch (error) {
     console.error(error);
   }
