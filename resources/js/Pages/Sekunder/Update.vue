@@ -1,5 +1,5 @@
 <template>
-  <Head title="Membuat Data Baru" />
+  <Head title="Update Data Info" />
   <SpinnerBorder v-if="triggerSpinner" />
   <GeneralLayout>
     <FlashFetch :notifications="notifications" />
@@ -64,23 +64,13 @@
                 placeholder="-- Pilih Baris --"
                 :searchable="true"
               />
-              <div class="text-danger text-left" v-if="true" id="error-rows"></div>
-            </div>
-            <div v-if="false" class="mb-3 space-y-2">
-              <div>
-                <label for="rows">Urutan Baris</label>
-                <small> (Abaikan Jika tidak ada perubahan urutan baris)</small>
+              <div
+                class="text-danger text-left"
+                v-if="page.props.errors['rows.selected']"
+                id="error-rows"
+              >
+                {{ page.props.errors["rows.selected"] }}
               </div>
-              <Multiselect
-                :options="[
-                  { label: 'Ada perubahan', value: '1' },
-                  { label: 'Sudah sesuai', value: '2' },
-                ]"
-                :value="2"
-                placeholder="-- Apakah ada perubahan urutan? --"
-                :searchable="true"
-              />
-              <div class="text-danger text-left" v-if="true" id="error-rows"></div>
             </div>
             <div
               class="text-danger"
@@ -90,12 +80,29 @@
               {{ node }}
             </div>
             <div class="flex items-center space-x-2 justify-end">
-              <div @click="buildValue" class="btn-info-fordone w-[130px]">
-                <font-awesome-icon icon="fa fa-save" /> Buat Data
+              <div @click="buildValue" class="btn-info-fordone w-[150px]">
+                <font-awesome-icon icon="fa fa-save" /> Update Data
               </div>
               <div
                 v-if="previewStatus"
-                @click="submit"
+                @click="
+                  () => {
+                    createModalStatus = true;
+                    form.force = true;
+                  }
+                "
+                class="btn-warning-fordone w-[160px]"
+              >
+                <font-awesome-icon icon="fa fa-check" /> Force Simpan
+              </div>
+              <div
+                v-if="previewStatus"
+                @click="
+                  () => {
+                    createModalStatus = true;
+                    form.force = false;
+                  }
+                "
                 class="btn-success-fordone w-[110px]"
               >
                 <font-awesome-icon icon="fa fa-check" /> Simpan
@@ -117,6 +124,24 @@
         Kembali
       </Link>
     </div>
+    <ModalBs
+      :-modal-status="createModalStatus"
+      @close="createModalStatus = false"
+      :title="'Konfirmasi'"
+    >
+      <template #modalBody>
+        <div class="form-group">
+          <div>
+            <label>Apakah Anda yakin dengan perubahan yang dibuat?</label>
+          </div>
+        </div>
+      </template>
+      <template #modalFunction>
+        <button type="button" class="btn-success-fordone btn-sm" @click.prevent="submit">
+          Yakin
+        </button>
+      </template>
+    </ModalBs>
   </GeneralLayout>
 </template>
 <script setup>
@@ -128,6 +153,7 @@ import { Head, Link, useForm, usePage } from "@inertiajs/vue3";
 import { computed, ref, watch } from "vue";
 import TablePreview from "@/Components/TablePreview.vue";
 import SpinnerBorder from "@/Components/SpinnerBorder.vue";
+import ModalBs from "@/Components/ModalBs.vue";
 
 const page = usePage();
 const createModalStatus = ref(false);
@@ -163,7 +189,8 @@ const form = useForm({
   rows: {
     selected: page.props.sekunder_row,
   },
-  order: [],
+  order: page.props.order,
+  force: false,
 });
 const rowBuildValue = ref([]);
 const produsenBuildValue = ref(null);
@@ -181,7 +208,7 @@ const submit = async () => {
   form._token = token.data;
   form.order = tableRef.value.datas.map((item) => item.value);
   try {
-    form.post(route("sekunder.store"), {
+    form.post("/master/sekunder/update", {
       onSuccess: (response) => {
         showNotification(response.props.notification);
         if (response.props.notification[0].type == "success") {
@@ -189,22 +216,27 @@ const submit = async () => {
             .defaults({
               _token: null,
               datas: {
-                tahun: [],
-                produsen_id: null,
-                label: null,
+                id: page.props.sekunder.id,
+                tahun: page.props.tahun,
+                produsen_id: page.props.sekunder.produsen_id,
+                label: page.props.sekunder.label,
               },
               rows: {
-                selected: [],
+                selected: page.props.sekunder_row,
               },
-              order: [],
+              order: page.props.order,
             })
             .reset();
           formError.value = [];
+          previewStatus.value = false;
         } else {
           response.props.notification.forEach((element) => {
             formError.value.push(element.error);
           });
         }
+      },
+      onFinish: () => {
+        createModalStatus.value = false;
       },
     });
   } catch (error) {

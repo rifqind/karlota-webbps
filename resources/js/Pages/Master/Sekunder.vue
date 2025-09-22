@@ -90,7 +90,7 @@
             <td class="align-middle">{{ data.label_data }}</td>
             <td class="align-middle">
               <template v-for="(item, index) in data.rows" :key="index">
-                <span v-if="!data.rows.length > 5" class="badge badge-info">{{
+                <span v-if="!data.rows.length > 5" class="badge badge-info mr-1">{{
                   hiddenText(item.label)
                 }}</span>
                 <span
@@ -99,13 +99,13 @@
                     indexExpandedRow[dataIndex] ||
                     openRowList(index)
                   "
-                  class="badge badge-info"
+                  class="badge badge-info mr-1"
                   >{{ hiddenText(item.label) }}
                 </span>
               </template>
               <span
                 v-if="data.rows.length > 5"
-                class="badge badge-info cursor-pointer"
+                class="badge badge-info mr-1 cursor-pointer"
                 @clcik="openOtherRow(index)"
               >
                 <font-awesome-icon

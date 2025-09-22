@@ -208,6 +208,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
         Route::get('/sekunder/index', [MasterController::class, 'SekunderIndex'])->name('sekunder.index');
         Route::get('/sekunder/update/{id}', [MasterController::class, 'SekunderUpdate'])->name('sekunder.update');
+        Route::post('/sekunder/update', [MasterController::class, 'SekunderUpdate']);
+        Route::post('/sekunder/addYear', [MasterController::class, 'SekunderAddYear'])->name('sekunder.addyear');
         Route::delete('/sekunder/delete/{id}', [MasterController::class, 'SekunderDestroy'])->name('sekunder.destroy');
     });
     //sekunder

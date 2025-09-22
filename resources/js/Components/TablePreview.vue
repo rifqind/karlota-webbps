@@ -48,7 +48,7 @@ const props = defineProps({
     default: "Belum ada judul",
   },
   produsen: {
-    type: String,
+    type: Object,
     required: true,
     default: "Belum ada dinas",
   },

@@ -31,6 +31,7 @@ class SekunderController extends Controller
             ->join('status as st', 'st.id', '=', 'status_sekunder.status')
             ->select([
                 'status_sekunder.id as id',
+                'sekunder_id',
                 's.label as label_data',
                 'p.nama as nama_dinas',
                 'status_sekunder.tahun',
@@ -94,6 +95,7 @@ class SekunderController extends Controller
             }
             array_push($sekunder_object, [
                 'number' => $s->number,
+                'sekunder_id' => $s->sekunder_id,
                 'id' => $s->id,
                 'label_data' => $s->label_data,
                 'nama_dinas' => $s->nama_dinas,
@@ -230,7 +232,7 @@ class SekunderController extends Controller
             DB::beginTransaction();
             $status = StatusSekunder::where('id', $request->status_id)
                 ->update([
-                    'status' => 2,
+                    'status' => ($request->submitted) ? 2 : 1,
                     'updated_by' => Auth::user()->id
                 ]);
             foreach ($validated['datacontent'] as $key => $value) {

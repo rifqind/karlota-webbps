@@ -199,6 +199,7 @@ const submit = async () => {
             })
             .reset();
           formError.value = [];
+          previewStatus.value = false;
         } else {
           response.props.notification.forEach((element) => {
             formError.value.push(element.error);

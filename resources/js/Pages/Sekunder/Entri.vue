@@ -49,6 +49,7 @@
                   class="w-full input-fordone"
                   :value="getData(node.id, item)"
                   :id="'cell-' + node.id + '-' + item"
+                  :disabled="inputDisabled"
                   @input="
                     (e) => {
                       debounceHandleInput(e, node.id, item);
@@ -71,8 +72,19 @@
           ><font-awesome-icon icon="fas fa-chevron-left" />
           Kembali
         </Link>
-        <button class="ml-auto btn-success-fordone" @click.prevent="submit">
-          <font-awesome-icon icon="fa-solid fa-check" /> Simpan
+        <button
+          v-if="inputDisabled"
+          class="ml-auto btn-red-fordone"
+          @click.prevent="submit(false)"
+        >
+          <font-awesome-icon icon="fa-solid fa-xmark" /> Unsubmit
+        </button>
+        <button
+          v-if="!inputDisabled"
+          class="ml-auto btn-success-fordone"
+          @click.prevent="submit(true)"
+        >
+          <font-awesome-icon icon="fa-solid fa-check" /> Submit
         </button>
       </div>
     </div>
@@ -87,7 +99,7 @@ import SpinnerBorder from "@/Components/SpinnerBorder.vue";
 import { debounce } from "@/debounce";
 import GeneralLayout from "@/Layouts/GeneralLayout.vue";
 import { Head, Link, useForm, usePage } from "@inertiajs/vue3";
-import { ref } from "vue";
+import { onMounted, onUpdated, ref } from "vue";
 
 const page = usePage();
 const notifications = ref([]);
@@ -107,6 +119,7 @@ const form = useForm({
   _token: null,
   status_id: page.props.status_sekunder.id,
   datacontent: page.props.datacontent,
+  submitted: true,
 });
 
 //tablehandle
@@ -177,13 +190,22 @@ const handlePaste = (e) => {
     }
   }
 };
-
+const inputDisabled = ref(false);
+onMounted(() => {
+  if (page.props.status_sekunder.status == 2) inputDisabled.value = true;
+  else inputDisabled.value = false;
+});
+onUpdated(() => {
+  if (page.props.status_sekunder.status == 2) inputDisabled.value = true;
+  else inputDisabled.value = false;
+});
 //form
 const validateContent = () => {
   return form.datacontent.some((e) => isNaN(e.data));
 };
 const errorNaN = ref(false);
-const submit = async () => {
+const submit = async (thissubmit) => {
+  form.submitted = thissubmit;
   try {
     let result = validateContent();
     if (result) {

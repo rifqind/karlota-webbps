@@ -158,14 +158,31 @@
             <td class="text-center align-middle deleted">
               <Link
                 :href="route('sekunder.entri', { id: data.id })"
+                class="view-pen mx-1"
+              >
+                <font-awesome-icon icon="fa-solid fa-eye" title="Entri Data" />
+              </Link>
+              <Link
+                :href="route('master.sekunder.update', { id: data.sekunder_id })"
                 class="edit-pen mx-1"
               >
-                <font-awesome-icon icon="fa-solid fa-pencil" title="Cek/Edit" />
+                <font-awesome-icon icon="fa-solid fa-pen" title="Cek/Edit" />
               </Link>
-              <a @click="deleteUpdateModal(data.id)"
+              <a
+                class="edit-pen mx-1"
+                @click="
+                  () => {
+                    createModalStatus = true;
+                    form.id = data.sekunder_id;
+                  }
+                "
+              >
+                <font-awesome-icon icon="fa-solid fa-plus-circle" title="Tambah Tahun" />
+              </a>
+              <a @click="deleteUpdateModal(data.id)" class="mx-1"
                 ><font-awesome-icon
                   icon="fa-solid fa-trash-can"
-                  class="icon-trash-color mx-2"
+                  class="icon-trash-color"
                   title="Hapus"
               /></a>
             </td>
@@ -185,6 +202,39 @@
       :current-show-items="paginatedData.length"
     />
   </GeneralLayout>
+  <ModalBs
+    :-modal-status="createModalStatus"
+    @close="
+      () => {
+        createModalStatus = false;
+        form.reset();
+      }
+    "
+    :title="'Tambah Tahun'"
+    :modalSize="'min-w-[25vw]'"
+    ><template #modalBody>
+      <div class="form-group">
+        <div class="mb-1 space-y-2">
+          <label for="tahun">Pilih Tahun</label>
+          <Multiselect
+            v-model="form.tahun"
+            :options="yearDrop"
+            :searchable="true"
+            placeholder="-- Pilih Tahun --"
+            mode="tags"
+          />
+        </div>
+      </div>
+      <div class="text-danger" v-if="page.props.errors['tahun.0']">
+        {{ page.props.errors["tahun.0"] }}
+      </div>
+    </template>
+    <template #modalFunction>
+      <button type="button" class="btn-success-fordone btn-sm" @click.prevent="addYear">
+        Tambah Tahun
+      </button>
+    </template>
+  </ModalBs>
   <ModalBs
     :-modal-status="deleteModalStatus"
     @close="
@@ -222,6 +272,7 @@ import SpinnerBorder from "@/Components/SpinnerBorder.vue";
 import { debounce } from "@/debounce";
 import GeneralLayout from "@/Layouts/GeneralLayout.vue";
 import { Head, Link, useForm, usePage } from "@inertiajs/vue3";
+import Multiselect from "@vueform/multiselect";
 import { computed, ref, watch } from "vue";
 
 const page = usePage();
@@ -340,7 +391,15 @@ const clickToOrder = (value) => {
 const form = useForm({
   _token: null,
   id: null,
+  tahun: [],
 });
+const currentYear = new Date().getFullYear();
+const years = Array.from({ length: 6 }, (_, index) => currentYear + 1 - index);
+const yearDrop = ref(null);
+yearDrop.value = years.map((year) => ({
+  label: year.toString(),
+  value: year.toString(),
+}));
 //modal sense
 const deleteUpdateModal = (id) => {
   deleteModalStatus.value = true;
@@ -362,7 +421,22 @@ const deleteSubmit = async () => {
     console.error(error);
   }
 };
-
+const addYear = async () => {
+  try {
+    const token = await axios.get(route("token"));
+    form._token = token.data;
+    form.post(route("master.sekunder.addyear"), {
+      onSuccess: (response) => {
+        fetchData();
+        form.reset();
+        createModalStatus.value = false;
+        showNotification(response.props.notification);
+      },
+    });
+  } catch (error) {
+    console.error(error);
+  }
+};
 //row modified
 const indexExpandedRow = ref(Array(paginatedData.value.length).fill(false));
 const openOtherRow = (index) => {
@@ -379,4 +453,9 @@ const hiddenText = (value) => {
 };
 </script>
 
-<style scoped></style>
+<style scoped>
+.view-pen {
+  color: #1d845b;
+  cursor: pointer;
+}
+</style>
