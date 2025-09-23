@@ -232,7 +232,7 @@ class SekunderController extends Controller
             DB::beginTransaction();
             $status = StatusSekunder::where('id', $request->status_id)
                 ->update([
-                    'status' => ($request->submitted) ? 2 : 1,
+                    'status' => 2,
                     'updated_by' => Auth::user()->id
                 ]);
             foreach ($validated['datacontent'] as $key => $value) {

@@ -61,7 +61,7 @@ onMounted(async () => {
   if (isMobile.value) isSidebarVisible.value = false;
   window.addEventListener("resize", updateDeviceType);
   const { data } = await axios.get("/maintenance-status");
-  if (data.maintenance) {
+  if (data.maintenance == "1") {
     maintenanceStat.value = true;
   } else maintenanceStat.value = false;
 });

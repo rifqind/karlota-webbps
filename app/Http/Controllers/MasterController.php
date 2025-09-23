@@ -59,26 +59,66 @@ class MasterController extends Controller
 
     public function RowStore(Request $request)
     {
-        $validated = $request->validate([
-            'label' => ['required', 'string', 'max:100'],
-        ]);
         $notification = [];
         try {
             //code...
             DB::beginTransaction();
             if ($request->id) {
-                $request->validate(['label' => [Rule::unique('rows', 'label')->ignore($request->id)]]);
+                $validated = $request->validate(['label' => [
+                    'required',
+                    'string',
+                    'max:100',
+                    Rule::unique('rows', 'label')->ignore($request->id)
+                ]]);
                 $updated_rows = Row::findOrFail($request->id);
                 $updated_rows->update($validated);
                 $message = ['type' => 'success', 'message' => 'Berhasil mengedit Row ini'];
+                array_push($notification, $message);
             } else {
-                $request->validate(['label' => [Rule::unique('rows', 'label')]]);
-                $new_rows = Row::create([
-                    'label' => $validated['label'],
-                ]);
-                $message = ['type' => 'success', 'message' => 'Berhasil menambahkan Row baru'];
+                if ($request->fileUpload) {
+                    $fileData = $request->fileUpload;
+                    if ($fileData[0][0] != 'label') {
+                        DB::rollBack();
+                        return back()->withErrors([
+                            'fileUpload' => 'Ada baris yang berbeda dengan data yang sudah ada.'
+                        ]);
+                    }
+                    $inserted = 0;
+                    foreach ($fileData as $key => $value) {
+                        if ($key === 0) continue; // skip header
+                        if (sizeof($value) > 0) {
+                            $label = trim($value[0] ?? '');
+                            if ($label === '') {
+                                DB::rollBack();
+                                return back()->withErrors(['fileUpload' => 'Label tidak boleh kosong.']);
+                            }
+                            $exists = Row::whereRaw('LOWER(label) = ?', [strtolower($label)])->exists();
+                            if ($exists) {
+                                DB::rollBack();
+                                return back()->withErrors(['fileUpload' => "Label '{$label}' sudah ada."]);
+                            }
+                            Row::create(['label' => $label]);
+                            $inserted++;
+                        }
+                    }
+                    $notification[] = [
+                        'type' => 'success',
+                        'message' => "Berhasil menambahkan {$inserted} Row baru"
+                    ];
+                } else {
+                    $validated = $request->validate(['label' => [
+                        'required',
+                        'string',
+                        'max:100',
+                        Rule::unique('rows', 'label')
+                    ]]);
+                    $new_rows = Row::create([
+                        'label' => $validated['label'],
+                    ]);
+                    $message = ['type' => 'success', 'message' => 'Berhasil menambahkan Row baru'];
+                    array_push($notification, $message);
+                }
             }
-            array_push($notification, $message);
             DB::commit();
             return redirect()->route('master.rows.index')->with('notification', $notification);
         } catch (\Throwable $th) {

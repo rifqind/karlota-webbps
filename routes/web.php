@@ -176,6 +176,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
         $filePath = public_path('document/Panduan Aplikasi Karlota.pdf');
         return Response::download($filePath);
     })->name('download-guide');
+    Route::get('/download-template/rows', function () {
+        $filePath = public_path('document/Template Baris.xlsx');
+        return Response::download($filePath);
+    })->name('download-template-rows');
     //maintenance
     Route::post('/set-maintenance', function () {
         $maintenance = Maintenance::findOrFail(1);

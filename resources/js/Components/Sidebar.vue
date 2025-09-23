@@ -309,7 +309,6 @@ import { usePage } from "@inertiajs/vue3";
 import NavLinkSidebar from "./NavLinkSidebar.vue";
 import NavLinkParentSidebar from "./NavLinkParentSidebar.vue";
 import { onMounted, ref } from "vue";
-import { current } from "tailwindcss/colors";
 
 const page = usePage();
 const currentRoute = page.props.route;
@@ -348,7 +347,7 @@ const setMaintenance = async () => {
       },
     });
     const { data } = await axios.get("/maintenance-status");
-    if (data.maintenance) {
+    if (data.maintenance == "1") {
       maintenanceStat.value = true;
     } else maintenanceStat.value = false;
   } catch (error) {
@@ -357,7 +356,7 @@ const setMaintenance = async () => {
 };
 onMounted(async () => {
   const { data } = await axios.get("/maintenance-status");
-  if (data.maintenance) {
+  if (data.maintenance == "1") {
     maintenanceStat.value = true;
   } else maintenanceStat.value = false;
 });

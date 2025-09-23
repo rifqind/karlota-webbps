@@ -9,11 +9,11 @@
       </div>
       <div class="flex items-center w-full md:w-full lg:w-auto">
         <button
-          @click="form.reset()"
-          class="btn-success-fordone mr-2 mb-2 lg:mb-0"
-          title="Download"
+          @click="uploadModal = true"
+          class="btn-purple-fordone mr-2 mb-2 lg:mb-0"
+          title="Upload File"
         >
-          <font-awesome-icon icon="fa-solid fa-circle-down" />
+          <font-awesome-icon icon="fa-solid fa-file" /> Tambah dengan Template
         </button>
         <button @click="createModalStatus = true" class="btn-info-fordone mb-2 lg:mb-0">
           <font-awesome-icon icon="fa-solid fa-plus" /> Tambah Rows
@@ -138,6 +138,35 @@
         </button>
       </template>
     </ModalBs>
+    <ModalBs
+      :ModalStatus="uploadModal"
+      @close="uploadModal = false"
+      :title="'Tambah dengan Template'"
+    >
+      <template #modalBody>
+        <div class="flex mb-3 items-center flex-wrap justify-between">
+          <label>Download Template</label>
+          <button
+            type="button"
+            class="btn-success-fordone btn-sm"
+            @click="downloadTemplate"
+          >
+            Download
+          </button>
+        </div>
+        <div class="mb-3">
+          <input type="file" @change="handleUpload" class="form-control" />
+        </div>
+        <div class="text-danger" v-if="page.props.errors.fileUpload">
+          {{ page.props.errors.fileUpload }}
+        </div>
+      </template>
+      <template #modalFunction>
+        <button type="button" class="btn-success-fordone btn-sm" @click.prevent="submit">
+          Simpan
+        </button>
+      </template>
+    </ModalBs>
   </GeneralLayout>
 </template>
 
@@ -151,6 +180,7 @@ import { debounce } from "@/debounce";
 import GeneralLayout from "@/Layouts/GeneralLayout.vue";
 import { Head, useForm, usePage } from "@inertiajs/vue3";
 import { computed, ref, watch } from "vue";
+import * as XLSX from "xlsx";
 
 const page = usePage();
 var dataObject = page.props.row.data;
@@ -247,7 +277,32 @@ const form = useForm({
   id: null,
   _token: null,
   label: null,
+  fileUpload: null,
 });
+const uploadModal = ref(false);
+const downloadTemplate = () => {
+  window.location.href = "/download-template/rows";
+};
+const handleUpload = (e) => {
+  let fileS = e.target.files ? e.target.files[0] : null;
+  if (fileS) {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      /* Parse data */
+      const bstr = e.target.result;
+      const wb = XLSX.read(bstr, { type: "binary" });
+      /* Get first worksheet */
+      const wsname = wb.SheetNames[0];
+      const ws = wb.Sheets[wsname];
+      /* Convert array of arrays */
+      const data = XLSX.utils.sheet_to_json(ws, { header: 1 });
+      // console.log(data);
+      form.fileUpload = data;
+    };
+    reader.readAsBinaryString(fileS);
+    // console.log(result)
+  }
+};
 const submit = async () => {
   const response = await axios.get(route("token"));
   form._token = response.data;
@@ -261,10 +316,12 @@ const submit = async () => {
             id: null,
             _token: null,
             label: null,
+            fileUpload: null,
           })
           .reset();
         formError.value = [];
         createModalStatus.value = false;
+        uploadModal.value = false;
       } else {
         response.props.notification.forEach((element) => {
           formError.value.push(element.error);

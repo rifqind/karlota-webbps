@@ -170,8 +170,9 @@ const previewStatus = ref(false);
 const buildValue = () => {
   let rows = page.props.rows;
   let produsen = page.props.produsen;
+  const rowsMap = new Map(rows.map((x) => [x.value, x]));
   produsenBuildValue.value = produsen.find((x) => x.value == form.datas.produsen_id);
-  rowBuildValue.value = rows.filter((x) => form.rows.selected.includes(x.value));
+  rowBuildValue.value = form.rows.selected.map((id) => rowsMap.get(id)).filter(Boolean);
   previewStatus.value = true;
 };
 const tableRef = ref(null);
