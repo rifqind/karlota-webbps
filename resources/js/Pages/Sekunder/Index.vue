@@ -119,7 +119,7 @@
                 }}</span>
                 <span
                   v-if="
-                    data.rows.length > 5 ||
+                    !data.rows.length > 5 ||
                     indexExpandedRow[dataIndex] ||
                     openRowList(index)
                   "
@@ -130,7 +130,7 @@
               <span
                 v-if="data.rows.length > 5"
                 class="badge badge-info mr-1 cursor-pointer"
-                @clcik="openOtherRow(index)"
+                @click="openOtherRow(dataIndex)"
               >
                 <font-awesome-icon
                   v-if="!indexExpandedRow[dataIndex]"
