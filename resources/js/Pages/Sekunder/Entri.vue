@@ -30,7 +30,7 @@
         <table class="table shadow-md w-full mb-2" id="tabel-entry">
           <thead>
             <tr>
-              <th class="text-center align-middle fixed-thead">Data</th>
+              <th class="text-center align-middle fixed-thead table-info">Data</th>
               <th
                 class="text-center align-middle not-fixed"
                 v-for="(node, index) in [1, 2, 3, 4]"
@@ -38,6 +38,7 @@
               >
                 Triwulan {{ node }}
               </th>
+              <th class="text-center align-middle not-fixed">Tahunan</th>
             </tr>
           </thead>
           <tbody>
@@ -61,6 +62,7 @@
                   "
                 />
               </td>
+              <td class="text-right text-md font-bold">{{ getTahunan(node.id) }}</td>
             </tr>
           </tbody>
         </table>
@@ -71,17 +73,57 @@
           ><font-awesome-icon icon="fas fa-chevron-left" />
           Kembali
         </Link>
-        <!-- <button
-          v-if="inputDisabled"
-          class="ml-auto btn-red-fordone"
-          @click.prevent="submit(false)"
-        >
-          <font-awesome-icon icon="fa-solid fa-xmark" /> Unsubmit
-        </button> -->
-        <!-- v-if="!inputDisabled" -->
         <button class="ml-auto btn-success-fordone" @click.prevent="submit(true)">
           <font-awesome-icon icon="fa-solid fa-check" /> Simpan
         </button>
+      </div>
+      <!-- growth -->
+      <div class="my-2 bg-white shadow-md mb-2 rounded-sm border border-gray-200 mb-3">
+        <div class="p-5">
+          <div class="flex flex-wrap gap-2">
+            <button @click="showTab('g_qtoq')" :class="setActiveTab('g_qtoq')">
+              Growth (Q-to-Q)
+            </button>
+            <button @click="showTab('g_ytoy')" :class="setActiveTab('g_ytoy')">
+              Growth (Y-to-Y)
+            </button>
+            <!-- <button @click="showTab('g_ctoc')" :class="setActiveTab('g_ctoc')">
+              Growth (C-to-C)
+            </button> -->
+          </div>
+        </div>
+      </div>
+      <div class="overflow-x-scroll mb-2">
+        <table class="table shadow-md w-full mb-2" id="tabel-entry">
+          <thead>
+            <tr>
+              <th class="text-center align-middle fixed-thead table-success">Data</th>
+              <th
+                class="text-center table-success align-middle not-fixed"
+                v-for="(node, index) in [1, 2, 3, 4]"
+                :key="index"
+              >
+                Triwulan {{ node }}
+              </th>
+              <th class="text-center table-success align-middle not-fixed">Tahunan</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="(node, index) in page.props.rows" :key="index">
+              <td class="fixed-column">{{ node.label }}</td>
+              <td
+                class="text-right font-bold"
+                v-for="(item, idx) in [1, 2, 3, 4]"
+                :key="idx"
+              >
+                {{ getGrowth(node.id, item) }}
+              </td>
+              <td class="text-right text-md font-bold">
+                {{ getGrowthTahunan(node.id) }}
+              </td>
+            </tr>
+          </tbody>
+        </table>
       </div>
     </div>
   </GeneralLayout>
@@ -145,7 +187,7 @@ const handleInput = (e, r, tw) => {
 };
 const debounceHandleInput = debounce((e, r, tw) => {
   handleInput(e, r, tw);
-}, 700);
+}, 300);
 const handlePaste = (e) => {
   const items = e.clipboardData.items;
   for (let i = 0; i < items.length; i++) {
@@ -185,11 +227,80 @@ const handlePaste = (e) => {
     }
   }
 };
+const getTahunan = (r) => {
+  const filteredData = form.datacontent.filter((x) => x.row_id == r);
+  const result = filteredData.reduce((sum, item) => sum + Number(item.data), 0);
+  let formattedResult = formatNumberGerman(result);
+  return formattedResult;
+};
+// growth calculate
+var def = "btn-info-fordone";
+const activeTab = ref({
+  g_qtoq: def,
+  g_ytoy: def,
+  g_ctoc: def,
+});
+const setActiveTab = (value) => {
+  return activeTab.value[value];
+};
+const tabValue = ref(null);
+const showTab = (tab) => {
+  Object.keys(activeTab.value).forEach((key) => {
+    activeTab.value[key] = def;
+  });
+  activeTab.value[tab] = "btn-success-fordone";
+  tabValue.value = tab;
+};
+const getGrowth = (r, tw) => {
+  const databefore = page.props.datacontent_before;
+  const current = form.datacontent.find((x) => {
+    return x.row_id == r && x.triwulan == tw;
+  });
+  let previous = { data: 0 };
+  let growth = 0;
+  let divisor = 0;
+  let dividend = 0;
+  if (tabValue.value == "g_qtoq") {
+    if (tw == 1) {
+      previous = databefore.find((x) => {
+        return x.row_id == r && x.triwulan == 4;
+      });
+    } else {
+      previous = form.datacontent.find((x) => {
+        return x.row_id == r && x.triwulan == tw - 1;
+      });
+    }
+  } else if (tabValue.value == "g_ytoy") {
+    previous = databefore.find((x) => {
+      return x.row_id == r && x.triwulan == tw;
+    });
+  } else if (tabValue.value == "g_ctoc") {
+    for (let cumulative = 0; cumulative <= tw; cumulative++) {}
+  }
+  if (!previous) previous = { data: 0 };
+  divisor = previous.data;
+  dividend = current.data;
+  growth = divisor != 0 && dividend != 0 ? (dividend / divisor) * 100 - 100 : 0;
+  return formatNumberGerman(growth.toFixed(4), 2, 4);
+};
+const getGrowthTahunan = (r) => {
+  if (tabValue.value == "g_ytoy") {
+    const filteredData = form.datacontent.filter((x) => x.row_id == r);
+    const current = filteredData.reduce((sum, item) => sum + Number(item.data), 0);
+
+    const filterBefore = page.props.datacontent_before.filter((x) => x.row_id == r);
+    const previous = filterBefore.reduce((sum, item) => sum + Number(item.data), 0);
+
+    let divisor = previous;
+    let dividend = current;
+    let growth = divisor != 0 && dividend != 0 ? (dividend / divisor) * 100 - 100 : 0;
+    return formatNumberGerman(growth.toFixed(4), 2, 4);
+  }
+};
 // const inputDisabled = ref(false);
-// onMounted(() => {
-//   if (page.props.status_sekunder.status == 2) inputDisabled.value = true;
-//   else inputDisabled.value = false;
-// });
+onMounted(() => {
+  showTab("g_qtoq");
+});
 // onUpdated(() => {
 //   if (page.props.status_sekunder.status == 2) inputDisabled.value = true;
 //   else inputDisabled.value = false;
@@ -226,12 +337,19 @@ const submit = async () => {
   position: sticky;
   width: 400px;
   left: 0;
-  background-color: #175676;
   color: whitesmoke;
   z-index: 1;
   box-shadow: 2px 0 5px -2px rgba(0, 0, 0, 0.2);
   border-right: 1px solid #ccc;
   border-left: 1px solid #ccc;
+}
+
+.table-info {
+  background-color: #175676;
+}
+
+.table-success {
+  background-color: #1d845b;
 }
 
 .table {

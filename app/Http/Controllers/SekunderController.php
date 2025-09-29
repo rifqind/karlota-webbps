@@ -213,9 +213,15 @@ class SekunderController extends Controller
             ])->first();
         $sekunder = Sekunder::where('id', $status_sekunder->sekunder_id)
             ->first();
+        $status_sekunder_before = StatusSekunder::where('sekunder_id', $sekunder->id)
+            ->where('tahun', $status_sekunder->tahun - 1)
+            ->first();
+        if ($status_sekunder_before) $datacontent_before = Datacontent::where('status_id', $status_sekunder_before->id)->get();
+        else $datacontent_before = [];
         return Inertia::render('Sekunder/Entri', [
             'datacontent' => $datacontent,
             'rows' => $rows,
+            'datacontent_before' => sizeof($datacontent_before) > 0 ? $datacontent_before : [],
             'status_sekunder' => $status_sekunder,
             'sekunder' => $sekunder,
         ]);
