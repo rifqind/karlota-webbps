@@ -68,36 +68,37 @@
         </table>
       </div>
       <div v-if="errorNaN" class="text-danger">Masih ada NaN di data ini</div>
-      <div class="flex items-center justify-center">
-        <Link :href="route('sekunder.index')" class="btn btn-light-fordone border"
-          ><font-awesome-icon icon="fas fa-chevron-left" />
-          Kembali
-        </Link>
-        <button class="ml-auto btn-success-fordone" @click.prevent="submit(true)">
-          <font-awesome-icon icon="fa-solid fa-check" /> Simpan
-        </button>
-      </div>
-      <!-- growth -->
-      <div class="my-2 bg-white shadow-md mb-2 rounded-sm border border-gray-200 mb-3">
-        <div class="p-5">
-          <div class="flex flex-wrap gap-2">
-            <button @click="showTab('g_qtoq')" :class="setActiveTab('g_qtoq')">
-              Growth (Q-to-Q)
+      <div class="bg-white shadow-md mb-2 rounded-md border border-gray-200">
+        <div class="py-3 px-2">
+          <div class="flex items-center justify-center">
+            <Link :href="route('sekunder.index')" class="btn btn-light-fordone border"
+              ><font-awesome-icon icon="fas fa-chevron-left" />
+              Kembali
+            </Link>
+            <button class="ml-auto btn-success-fordone" @click.prevent="submit(true)">
+              <font-awesome-icon icon="fa-solid fa-check" /> Simpan
             </button>
-            <button @click="showTab('g_ytoy')" :class="setActiveTab('g_ytoy')">
-              Growth (Y-to-Y)
-            </button>
-            <!-- <button @click="showTab('g_ctoc')" :class="setActiveTab('g_ctoc')">
-              Growth (C-to-C)
-            </button> -->
           </div>
         </div>
+      </div>
+      <!-- growth -->
+
+      <div class="flex flex-wrap gap-2 mt-5 mb-2">
+        <button @click="showTab('g_qtoq')" :class="setActiveTab('g_qtoq')">
+          Growth (Q-to-Q)
+        </button>
+        <button @click="showTab('g_ytoy')" :class="setActiveTab('g_ytoy')">
+          Growth (Y-to-Y)
+        </button>
+        <!-- <button @click="showTab('g_ctoc')" :class="setActiveTab('g_ctoc')">
+              Growth (C-to-C)
+            </button> -->
       </div>
       <div class="overflow-x-scroll mb-2">
         <table class="table shadow-md w-full mb-2" id="tabel-entry">
           <thead>
             <tr>
-              <th class="text-center align-middle fixed-thead table-success">Data</th>
+              <th class="text-center align-middle fixed-thead table-success">Growth</th>
               <th
                 class="text-center table-success align-middle not-fixed"
                 v-for="(node, index) in [1, 2, 3, 4]"
