@@ -51,57 +51,59 @@ const ssoLogin = () => {
     <div v-if="status" class="mb-4 text-sm font-medium text-green-600">
       {{ status }}
     </div>
+    <form @submit.prevent="submit">
+      <div>
+        <InputLabel for="name" value="Username" />
 
-    <div>
-      <InputLabel for="name" value="Username" />
+        <TextInput
+          id="name"
+          type="text"
+          class="mt-1 block w-full"
+          v-model="form.name"
+          required
+          autofocus
+          autocomplete="username"
+          placeholder="Isikan Username"
+        />
 
-      <TextInput
-        id="name"
-        type="text"
-        class="mt-1 block w-full"
-        v-model="form.name"
-        required
-        autofocus
-        autocomplete="username"
-      />
+        <InputError class="mt-2" :message="form.errors.name" />
+      </div>
 
-      <InputError class="mt-2" :message="form.errors.name" />
-    </div>
+      <div class="mt-4">
+        <InputLabel for="password" value="Password" />
 
-    <div class="mt-4">
-      <InputLabel for="password" value="Password" />
+        <TextInput
+          id="password"
+          type="password"
+          class="mt-1 block w-full"
+          v-model="form.password"
+          required
+          placeholder="Isikan Password"
+          autocomplete="current-password"
+        />
 
-      <TextInput
-        id="password"
-        type="password"
-        class="mt-1 block w-full"
-        v-model="form.password"
-        required
-        autocomplete="current-password"
-      />
-
-      <InputError class="mt-2" :message="form.errors.password" />
-      <InputError class="mt-2" :message="form.errors.credentials" />
-    </div>
-    <div v-if="page.props.flash.error" class="text-red-500">
-      {{ page.props.flash.error }}
-    </div>
-    <div class="mt-4 flex items-center justify-end">
-      <PrimaryButton
-        @click.prevent="submit"
-        class="ms-4"
-        :class="{ 'opacity-25': form.processing }"
-        :disabled="form.processing"
-      >
-        Login
-      </PrimaryButton>
-      <PrimaryButton
-        class="ms-4"
-        @click.prevent="ssoLogin"
-        :class="{ 'opacity-25': form.processing }"
-      >
-        SSO Login
-      </PrimaryButton>
-    </div>
+        <InputError class="mt-2" :message="form.errors.password" />
+        <InputError class="mt-2" :message="form.errors.credentials" />
+      </div>
+      <div v-if="page.props.flash.error" class="text-red-500">
+        {{ page.props.flash.error }}
+      </div>
+      <div class="mt-4 flex items-center justify-end">
+        <PrimaryButton
+          class="ms-4"
+          :class="{ 'opacity-25': form.processing }"
+          :disabled="form.processing"
+        >
+          Login
+        </PrimaryButton>
+        <PrimaryButton
+          class="ms-4"
+          @click.prevent="ssoLogin"
+          :class="{ 'opacity-25': form.processing }"
+        >
+          SSO Login
+        </PrimaryButton>
+      </div>
+    </form>
   </GuestLayout>
 </template>

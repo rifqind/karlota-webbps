@@ -35,8 +35,8 @@ class MasterController extends Controller
         } else $query->orderBy('label');
         if ($request->ArrayFilter) {
             $filter = $request->ArrayFilter;
-            if (!empty($filter['label'])) {
-                $query->where('label', 'like', '%' .  $filter['label'] . '%');
+            if (!empty($filter['nama'])) {
+                $query->where('label', 'like', '%' .  $filter['nama'] . '%');
             }
         }
         $countData = $dataToCounted->count();

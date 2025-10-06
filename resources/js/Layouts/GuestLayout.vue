@@ -5,11 +5,17 @@ import { Link } from "@inertiajs/vue3";
 
 <template>
   <div
-    class="flex min-h-screen flex-col items-center bg-gray-100 pt-6 sm:justify-center sm:pt-0 dark:bg-gray-900"
+    class="animated-bg flex min-h-screen flex-col items-center bg-gray-100 pt-6 sm:justify-center sm:pt-0 dark:bg-gray-900"
   >
-    <div class="flex flex-items items-center">
+    <div class="flex flex-items items-center mb-2">
       <ApplicationLogo class="h-20 w-20 fill-current text-gray-500 mr-3" />
       <span class="text-4xl font-bold dark:text-white">KARLOTA</span>
+    </div>
+    <div class="">
+      <span class="text-lg dark:text-white">PENINGKATAN KUALITAS REKONSILIASI</span>
+    </div>
+    <div class="">
+      <span class="text-lg dark:text-white">PDRB KABUPATEN/KOTA SE-SULAWESI UTARA</span>
     </div>
 
     <div
@@ -19,3 +25,4 @@ import { Link } from "@inertiajs/vue3";
     </div>
   </div>
 </template>
+<style scope></style>

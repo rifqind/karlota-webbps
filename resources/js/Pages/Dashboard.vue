@@ -224,7 +224,7 @@
     </div>
     <div class="font-bold text-xl mt-3">GRAFIK</div>
     <div class="flex flex-wrap">
-      <div class="w-full lg:w-[50%] md:w-full xl:w-[50%]">
+      <div class="w-full">
         <div class="flex flex-wrap items-center my-3 space-x-1">
           <div class="w-full md:w-[75%] lg:w-[50%] xl:w-[50%] pr-1">
             <Multiselect
@@ -245,11 +245,15 @@
             Sort
           </button>
           <button @click="sortGraphData('reset')" class="btn btn-warning-fordone">
-            <font-awesome-icon icon="fa-solid fa-recycle" />
+            <font-awesome-icon icon="fa-solid fa-recycle" /> Reset
+          </button>
+          <button @click="graphViewed = !graphViewed" class="btn btn-red-fordone">
+            {{ graphViewed ? "Sembunyikan" : "Tampilkan" }}
           </button>
         </div>
-        <!-- v-if="showBar" -->
+
         <BarChart
+          v-if="graphViewed"
           :key="barIndex"
           :legend="graphData.legend"
           :chart-label="graphData.label"
@@ -322,6 +326,7 @@ const props = defineProps({
     required: false,
   },
 });
+const graphViewed = ref(true);
 const graphData = ref({
   data: [],
   label: [],
