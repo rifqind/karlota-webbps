@@ -11,7 +11,7 @@
     </div>
 
     <!-- Right navbar links -->
-    <div class="relative" :class="props.isSidebarVisible ? 'mr-[16%]' : 'mr-0'">
+    <div class="relative" :class="props.isSidebarVisible ? 'mr-[300px]' : 'mr-0'">
       <!-- <button class="nav-item dropdown"> -->
       <div class="nav-link cursor-pointer" @click="toggleDropdown">
         {{ page.props.auth.user.name }}

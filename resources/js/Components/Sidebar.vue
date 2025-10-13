@@ -275,6 +275,13 @@
           >
             Panduan Aplikasi</NavLinkSidebar
           >
+          <NavLinkSidebar
+            :navIcon="'fa-solid fa-sheet-plastic'"
+            :href="route('lk.dashboard')"
+            :currentRoute="currentRoute == 'lk.dashboard'"
+          >
+            Lembar Kerja
+          </NavLinkSidebar>
           <li
             v-if="page.props.auth.user.name == 'niu'"
             class="nav-item mb-1"

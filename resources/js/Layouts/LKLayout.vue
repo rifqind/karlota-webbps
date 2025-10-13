@@ -2,7 +2,7 @@
   <div class="mt-14">
     <!-- Sidebar -->
     <Transition name="slide">
-      <Sidebar
+      <SidebarLK
         v-if="isSidebarVisible"
         @update:updateSidebarValue="showSidebar"
         :isSidebarVisible="isSidebarVisible"
@@ -33,7 +33,7 @@
 import Footer from "@/Components/Footer.vue";
 import MaintenanceNotification from "@/Components/MaintenanceNotification.vue";
 import Navbar from "@/Components/Navbar.vue";
-import Sidebar from "@/Components/Sidebar.vue";
+import SidebarLK from "@/Components/SidebarLK.vue";
 import axios from "axios";
 import { computed, onMounted, onUnmounted, ref } from "vue";
 const props = defineProps({
