@@ -3,8 +3,11 @@
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\FenomenaController;
 use App\Http\Controllers\HomeController;
+use App\Http\Controllers\MasterController;
 use App\Http\Controllers\PdrbController;
 use App\Http\Controllers\PeriodController;
+use App\Http\Controllers\ProdusenController;
+use App\Http\Controllers\SekunderController;
 use App\Http\Controllers\SpvController;
 use App\Http\Controllers\SsoController;
 use App\Http\Controllers\SummaryController;
@@ -173,6 +176,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
         $filePath = public_path('document/Panduan Aplikasi Karlota.pdf');
         return Response::download($filePath);
     })->name('download-guide');
+    Route::get('/download-template/rows', function () {
+        $filePath = public_path('document/Template Baris.xlsx');
+        return Response::download($filePath);
+    })->name('download-template-rows');
     //maintenance
     Route::post('/set-maintenance', function () {
         $maintenance = Maintenance::findOrFail(1);
@@ -188,6 +195,35 @@ Route::middleware(['auth', 'verified'])->group(function () {
         return response()->json([
             'maintenance' => $result
         ]);
+    });
+    //produsen
+    Route::name('produsen.')->group(function () {
+        Route::get('/produsen/index', [ProdusenController::class, 'index'])->name('index');
+        Route::post('/produsen/store', [ProdusenController::class, 'store'])->name('store');
+        Route::get('/produsen/fetch/{id}', [ProdusenController::class, 'fetch'])->name('fetch');
+        Route::delete('/produsen/delete/{id}', [ProdusenController::class, 'destroy'])->name('destroy');
+    });
+    //master
+    Route::prefix('master')->name('master.')->group(function () {
+        Route::get('/rows/index', [MasterController::class, 'RowIndex'])->name('rows.index');
+        Route::post('/rows/store', [MasterController::class, 'RowStore'])->name('rows.store');
+        Route::get('/rows/fetch/{id}', [MasterController::class, 'RowFetch'])->name('rows.fetch');
+        Route::delete('/rows/delete/{id}', [MasterController::class, 'RowDestroy'])->name('rows.destroy');
+
+        Route::get('/sekunder/index', [MasterController::class, 'SekunderIndex'])->name('sekunder.index');
+        Route::get('/sekunder/update/{id}', [MasterController::class, 'SekunderUpdate'])->name('sekunder.update');
+        Route::post('/sekunder/update', [MasterController::class, 'SekunderUpdate']);
+        Route::post('/sekunder/addYear', [MasterController::class, 'SekunderAddYear'])->name('sekunder.addyear');
+        Route::delete('/sekunder/delete/{id}', [MasterController::class, 'SekunderDestroy'])->name('sekunder.destroy');
+    });
+    //sekunder
+    Route::name('sekunder.')->group(function () {
+        Route::get('/sekunder/index', [SekunderController::class, 'index'])->name('index');
+        Route::get('/sekunder/create', [SekunderController::class, 'create'])->name('create');
+        Route::post('/sekunder/store', [SekunderController::class, 'store'])->name('store');
+        Route::get('/sekunder/entri/{id}', [SekunderController::class, 'entri'])->name('entri');
+        Route::post('/sekunder/update', [SekunderController::class, 'update'])->name('update');
+        Route::delete('/sekunder/delete/{id}', [SekunderController::class, 'destroy'])->name('destroy');
     });
 });
 

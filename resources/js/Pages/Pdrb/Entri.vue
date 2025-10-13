@@ -1195,8 +1195,7 @@ const showGQtoQ = (current_dataset, previous_dataset) => {
               )
             : 0;
         }
-        let growth =
-          divisor != 0 && dividend != 0 ? (dividend / divisor) * 100 - 100 : 0;
+        let growth = divisor != 0 && dividend != 0 ? (dividend / divisor) * 100 - 100 : 0;
         return formatNumberGerman(growth.toFixed(4), 2, 4);
       });
   });
@@ -1224,8 +1223,7 @@ const showGYtoY = (current, previous) => {
           ? Number(previous_dataset[key][index].replaceAll(".", "").replaceAll(",", "."))
           : 0;
 
-        let growth =
-          divisor != 0 && dividend != 0 ? (dividend / divisor) * 100 - 100 : 0;
+        let growth = divisor != 0 && dividend != 0 ? (dividend / divisor) * 100 - 100 : 0;
         return formatNumberGerman(growth.toFixed(4), 2, 4);
       });
   });

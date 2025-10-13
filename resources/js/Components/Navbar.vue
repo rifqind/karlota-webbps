@@ -1,5 +1,8 @@
 <template>
-  <nav class="bg-white flex h-[56px] border-b justify-between items-center p-4">
+  <!-- fixed top-0 w-full z-30 -->
+  <nav
+    class="bg-white flex h-[56px] border-b justify-between items-center p-4 w-full fixed top-0 z-30"
+  >
     <!-- Left navbar links -->
     <div class="flex items-center">
       <a @click="triggerSidebar" class="nav-link" href="#"
@@ -8,7 +11,7 @@
     </div>
 
     <!-- Right navbar links -->
-    <div class="relative ml-auto">
+    <div class="relative" :class="props.isSidebarVisible ? 'mr-[16%]' : 'mr-0'">
       <!-- <button class="nav-item dropdown"> -->
       <div class="nav-link cursor-pointer" @click="toggleDropdown">
         {{ page.props.auth.user.name }}

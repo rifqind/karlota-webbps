@@ -25,7 +25,16 @@ import {
   CategoryScale,
   LinearScale,
 } from "chart.js";
-ChartJS.register(Title, Tooltip, Legend, BarElement, CategoryScale, LinearScale);
+import ChartDataLabels from "chartjs-plugin-datalabels";
+ChartJS.register(
+  Title,
+  Tooltip,
+  Legend,
+  BarElement,
+  CategoryScale,
+  LinearScale,
+  ChartDataLabels
+);
 defineComponent({
   Bar,
 });
@@ -56,6 +65,31 @@ const chartOptions = {
   maintainAspectRatio: true,
   responsive: true,
   indexAxis: "y",
+  plugins: {
+    datalabels: {
+      color: "#444", // Color of the text (e.g., dark gray)
+      anchor: "end", // Anchor the label to the end of the bar
+      align: "end", // Align the label text (for horizontal bar, 'end' is usually outside)
+      offset: 4, // Small offset to move it slightly outside the bar
+      font: {
+        weight: "bold",
+      },
+      formatter: (value, context) => {
+        // You can format the value here (e.g., add currency, percentage, etc.)
+        return value.toLocaleString();
+      },
+    },
+    // IMPORTANT: Hide the default Chart.js tooltip since we are using datalabels
+    tooltip: {
+      enabled: true,
+    },
+  },
+  scales: {
+    x: {
+      // Set max value or padding to ensure the label is not clipped
+      suggestedMax: Math.max(...props.chartValue) * 1.1, // Adds 10% space
+    },
+  },
 };
 </script>
 <template>
