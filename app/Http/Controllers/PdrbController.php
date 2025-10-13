@@ -10,6 +10,7 @@ use App\Models\Region;
 use App\Models\Sector;
 use App\Models\Subsector;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 
@@ -305,7 +306,7 @@ class PdrbController extends Controller
                 'dataContents.*.adhk' => ['sometimes', 'numeric', 'nullable'],
             ]);
             $dataset = Dataset::where('id', $request->id)
-                ->update(['status' => 'Submitted']);
+                ->update(['status' => 'Submitted', 'edited_by' => Auth::id()]);
             foreach ($request->dataContents as $key => $value) {
                 # code...
                 Pdrb::where('id', $value['id'])
@@ -353,7 +354,7 @@ class PdrbController extends Controller
                 'id' => ['required', 'integer']
             ]);
             $dataset = Dataset::where('id', $request->id)
-                ->update(['status' => 'Entry']);
+                ->update(['status' => 'Entry', 'edited_by' => Auth::id()]);
             $message = [
                 'type' => 'success',
                 'message' => 'Data kembali ke status Entry'
