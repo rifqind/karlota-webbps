@@ -1,0 +1,22 @@
+<?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
+
+class Komoditas extends Model
+{
+    //
+    use HasFactory;
+    protected $table = 'master_komoditas';
+    protected $fillable = [
+        'label',
+        'code',
+        'type',
+        'satuan',
+        'category_id',
+        'sector_id',
+        'subsector_id'
+    ];
+}

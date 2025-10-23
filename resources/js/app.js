@@ -91,6 +91,7 @@ import {
     faUsers,
     faXmark
 } from "@fortawesome/free-solid-svg-icons";
+import { faStackExchange } from '@fortawesome/free-brands-svg-icons';
 library.add(
     faAngleLeft,
     faAngleUp,
@@ -158,6 +159,7 @@ library.add(
     faSort,
     faSquarePen,
     faStar,
+    faStackExchange,
     faSunPlantWilt,
     faSearchengin,
     faTable,
@@ -167,7 +169,7 @@ library.add(
     faTrashCan,
     faUser,
     faUserTie,
-    faUsers, 
+    faUsers,
     faXmark
 );
 config.autoAddCss = false;

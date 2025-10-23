@@ -20,6 +20,12 @@
           Dashboard
         </NavLinkSidebar>
         <NavLinkSidebar
+          :nav-icon="'fa-brands fa-stack-exchange'"
+          :href="route('komoditas.index')"
+          :current-route="currentRoute == 'komoditas.index'"
+          >Master Komoditas</NavLinkSidebar
+        >
+        <NavLinkSidebar
           :navIcon="'fa-solid fa-k'"
           :href="route('dashboard')"
           :currentRoute="currentRoute == 'dashboard'"
