@@ -15,9 +15,9 @@
         >
           <font-awesome-icon icon="fa-solid fa-circle-down" />
         </button>
-        <Link :href="route('sekunder.create')" class="btn-info-fordone mb-2 lg:mb-0">
-          <font-awesome-icon icon="fa-solid fa-plus" /> Tambah Data Sekunder
-        </Link>
+        <button @click="createModalStatus = true" class="btn-info-fordone mb-2 lg:mb-0">
+          <font-awesome-icon icon="fa-solid fa-plus" /> Tambah Komoditas
+        </button>
       </div>
     </div>
     <div class="table-responsive-mobile overflow-x-auto">
@@ -140,16 +140,81 @@
         </tbody>
       </table>
     </div>
+    <Pagination
+      @update:currentPage="updateCurrentPage"
+      @update:showItems="updateShowItems"
+      :show-items="showItems"
+      :total-items="totalItems"
+      :current-page="currentPage"
+      :current-show-items="paginatedData.length"
+    />
+    <ModalBs
+      :-modal-status="createModalStatus"
+      @close="
+        () => {
+          createModalStatus = false;
+          form.reset();
+        }
+      "
+      :title="'Tambah Komoditas'"
+      :modal-size="'min-w-[25vw]'"
+    >
+      <template #modalBody>
+        <div class="space-y-3 form-group">
+          <div class="space-y-2">
+            <label>Upload File atau Manual?</label>
+            <Multiselect
+              :options="[
+                { label: 'Manual', value: 1 },
+                { label: 'Upload', value: 2 },
+              ]"
+              placeholder="-- Pilih Mode --"
+              :searchable="true"
+              v-model="modeKomoditas"
+            />
+          </div>
+          <template v-if="modeKomoditas == 2">
+            <div class="space-y-2">
+              <label>Download Template</label>
+              <div
+                class="btn btn-success-fordone btn-sm w-[130px] text-center"
+                @click="downloadTemplate"
+              >
+                <font-awesome-icon icon="fa-solid fa-file" />
+                Download
+              </div>
+            </div>
+            <div class="space-y-2">
+              <label>Pilih File</label>
+              <div>
+                <input type="file" @change="handleUpload" class="form-control" />
+              </div>
+            </div>
+          </template>
+        </div>
+      </template>
+      <template #modalFunction>
+        <button type="button" class="btn-sm btn-success-fordone">Simpan</button>
+      </template>
+    </ModalBs>
   </LKLayout>
 </template>
 
 <script setup>
 import { triggerSpinner } from "@/axiosSetup";
 import FlashFetch from "@/Components/FlashFetch.vue";
+import Pagination from "@/Components/Pagination.vue";
 import SpinnerBorder from "@/Components/SpinnerBorder.vue";
 import { debounce } from "@/debounce";
 import LKLayout from "@/Layouts/LKLayout.vue";
 import { watch, ref, computed } from "vue";
+import { Head, Link, useForm } from "@inertiajs/vue3";
+import ModalBs from "@/Components/ModalBs.vue";
+import Multiselect from "@vueform/multiselect";
+import * as XLSX from "xlsx";
+
+const createModalStatus = ref(false);
+const modeKomoditas = ref(null);
 
 const searchLabel = ref(null);
 const searchKode = ref(null);
@@ -158,14 +223,14 @@ const searchSubsektor = ref(null);
 const searchUpdatedAt = ref(null);
 const props = defineProps({
   komoditas: {
-    type: Array,
+    type: Object,
     required: true,
   },
   countData: {
     type: Number,
     required: true,
   },
-  subsektor: {
+  subsector: {
     type: Array,
     required: true,
   },
@@ -225,7 +290,26 @@ watch(
     komoditas.value = value;
   }
 );
-const fetchData = () => {};
+const fetchData = async () => {
+  try {
+    const response = await axios.get(route("komoditas.index"), {
+      params: {
+        currentPage: currentPage.value,
+        paginated: showItems.value,
+        ArrayFilter: {
+          label: searchLabel.value,
+          code: searchKode.value,
+          satuan: searchSatuan.value,
+          subsector_label: searchSubsektor.value,
+          subsector_updatedAt: searchUpdatedAt.value,
+        },
+        orderAttribute: orderAttribute.value,
+      },
+    });
+  } catch (error) {
+    console.error("Error fetching data:", error);
+  }
+};
 const orderAttribute = ref({
   before: null,
   label: null,
@@ -241,6 +325,38 @@ const clickToOrder = (value) => {
   orderAttribute.value.before = value;
   fetchData();
 };
+const downloadTemplate = () => {
+  window.location.href = "/komoditas/download-template/komoditas";
+};
+const dataPreview = ref(null);
+const handleUpload = (e) => {
+  const pickedFile = e.target.files?.[0];
+  if (!pickedFile) return;
+  const reader = new FileReader();
+
+  reader.onload = (evt) => {
+    const binaryStr = evt.target.result;
+
+    // Baca workbook dari hasil FileReader
+    const workbook = XLSX.read(binaryStr, { type: "binary" });
+
+    // Ambil sheet pertama
+    const firstSheetName = workbook.SheetNames[0];
+    const worksheet = workbook.Sheets[firstSheetName];
+
+    // Ubah isi sheet menjadi array of arrays
+    const data = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+
+    // Simpan ke variabel reactive / state form
+    form.fileUpload = data;
+    dataPreview.value = data;
+  };
+  // baca file
+  reader.readAsBinaryString(pickedFile);
+};
+const form = useForm({
+  fileUpload: null,
+});
 </script>
 
 <style lang="scss" scoped></style>

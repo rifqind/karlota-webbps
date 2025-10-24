@@ -21,7 +21,7 @@ class KomoditasController extends Controller
         $number = 1;
 
         $query = Komoditas::query();
-        $dataToCounted = $query->join('subsectors as s', 's.id', '=' . 'master_komoditas.subsector_id')
+        $dataToCounted = $query->join('subsectors as s', 's.id', '=' ,'master_komoditas.subsector_id')
             ->join('users as u', 'u.id', '=', 'master_komoditas.edited_by')
             ->select([
                 'komoditas.*',
