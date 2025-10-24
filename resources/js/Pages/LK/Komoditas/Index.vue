@@ -102,37 +102,7 @@
               <br />
               <span>{{ data.updated_time }}</span>
             </td>
-            <td class="text-center align-middle deleted">
-              <Link
-                :href="route('sekunder.entri', { id: data.id })"
-                class="view-pen mx-1"
-              >
-                <font-awesome-icon icon="fa-solid fa-eye" title="Entri Data" />
-              </Link>
-              <Link
-                :href="route('master.sekunder.update', { id: data.sekunder_id })"
-                class="edit-pen mx-1"
-              >
-                <font-awesome-icon icon="fa-solid fa-pen" title="Cek/Edit" />
-              </Link>
-              <a
-                class="edit-pen mx-1"
-                @click="
-                  () => {
-                    createModalStatus = true;
-                    form.id = data.sekunder_id;
-                  }
-                "
-              >
-                <font-awesome-icon icon="fa-solid fa-plus-circle" title="Tambah Tahun" />
-              </a>
-              <a @click="deleteUpdateModal(data.id)" class="mx-1"
-                ><font-awesome-icon
-                  icon="fa-solid fa-trash-can"
-                  class="icon-trash-color"
-                  title="Hapus"
-              /></a>
-            </td>
+            <td class="text-center align-middle deleted"></td>
           </tr>
           <tr v-else>
             <td colspan="8" class="text-center">Data Tidak Ada</td>
@@ -191,10 +161,62 @@
               </div>
             </div>
           </template>
+          <template v-if="modeKomoditas == 1">
+            <div class="space-y-2">
+              <label>Nama Komoditas</label>
+              <input
+                type="text"
+                v-model="form.manual.label"
+                class="input-fordone w-full"
+                placeholder="Isikan nama komoditas"
+              />
+            </div>
+            <div class="space-y-2">
+              <label>Kode Komoditas</label>
+              <input
+                type="text"
+                v-model="form.manual.code"
+                class="input-fordone w-full"
+                placeholder="Bisa dikosongkan"
+              />
+            </div>
+            <div class="space-y-2">
+              <label>Satuan</label>
+              <input
+                type="text"
+                v-model="form.manual.satuan"
+                class="input-fordone w-full"
+                placeholder="Isikan satuan komoditas"
+              />
+            </div>
+            <div class="space-y-2">
+              <label>Tipe Komoditas</label>
+              <Multiselect
+                :options="[
+                  { label: 'Produksi', value: 1 },
+                  { label: 'Output', value: 2 },
+                ]"
+                :searchable="true"
+                v-model="form.manual.type"
+                placeholder="Pilih sesuai ketersediaan data, data produksi atau data output"
+              />
+            </div>
+            <div class="space-y-2">
+              <label>Subsektor</label>
+              <Multiselect
+                :options="props.subsector"
+                v-model="form.manual.subsector_id"
+                placeholder="-- Pilih Subsektor --"
+                :searchable="true"
+              />
+            </div>
+          </template>
         </div>
       </template>
       <template #modalFunction>
-        <button type="button" class="btn-sm btn-success-fordone">Simpan</button>
+        <button type="button" @click="submit" class="btn-sm btn-success-fordone">
+          Simpan
+        </button>
       </template>
     </ModalBs>
   </LKLayout>
@@ -236,7 +258,7 @@ const props = defineProps({
   },
 });
 
-const komoditas = ref(props.komoditas);
+const komoditas = ref(props.komoditas.data);
 const notifications = ref([]);
 const showNotification = (notification) => {
   notifications.value = notification;
@@ -306,6 +328,8 @@ const fetchData = async () => {
         orderAttribute: orderAttribute.value,
       },
     });
+    komoditas.value = response.data.komoditas.data;
+    totalItems.value = response.data.countData;
   } catch (error) {
     console.error("Error fetching data:", error);
   }
@@ -329,6 +353,13 @@ const downloadTemplate = () => {
   window.location.href = "/komoditas/download-template/komoditas";
 };
 const dataPreview = ref(null);
+const headers = computed(() => {
+  if (!dataPreview.value || dataPreview.value.length == 0) return [];
+  return Object.keys(dataPreview.value[0]);
+});
+const rows = computed(() => {
+  return dataPreview.value ?? [];
+});
 const handleUpload = (e) => {
   const pickedFile = e.target.files?.[0];
   if (!pickedFile) return;
@@ -346,17 +377,59 @@ const handleUpload = (e) => {
 
     // Ubah isi sheet menjadi array of arrays
     const data = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
-
+    const rowsAsObjects = XLSX.utils.sheet_to_json(worksheet, {
+      defval: null,
+      raw: true,
+    });
     // Simpan ke variabel reactive / state form
-    form.fileUpload = data;
-    dataPreview.value = data;
+    // form.fileUpload = data;
+    // dataPreview.value = data;
+    form.fileUpload = rowsAsObjects;
+    dataPreview.value = rowsAsObjects;
   };
   // baca file
   reader.readAsBinaryString(pickedFile);
 };
 const form = useForm({
+  _token: null,
   fileUpload: null,
+  headers: null,
+  rows: null,
+  manual: {
+    label: null,
+    code: null,
+    satuan: null,
+    type: null,
+    subsector_id: null,
+  },
+  mode: null,
 });
+const submit = async () => {
+  try {
+    const token = await axios.get(route("token"));
+    form._token = token.data;
+    form.mode = modeKomoditas.value;
+    form.headers = headers.value;
+    form.rows = rows.value;
+    form.post(route("komoditas.store"), {
+      onSuccess: (response) => {
+        form.reset();
+        fetchData();
+        let notification = [];
+        notification.push(response.props.notification);
+        showNotification(response.props.notification);
+      },
+      onFinish: () => {
+        createModalStatus.value = false;
+      },
+      onError: (errors) => {
+        let errorList = [];
+        errorList.push(errors.notifications);
+        showNotification(errorList);
+      },
+    });
+  } catch (error) {}
+};
 </script>
 
 <style lang="scss" scoped></style>

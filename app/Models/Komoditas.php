@@ -9,7 +9,7 @@ class Komoditas extends Model
 {
     //
     use HasFactory;
-    protected $table = 'master_komoditas';
+    public $table = 'master_komoditas';
     protected $fillable = [
         'label',
         'code',
@@ -17,6 +17,7 @@ class Komoditas extends Model
         'satuan',
         'category_id',
         'sector_id',
-        'subsector_id'
+        'subsector_id',
+        'edited_by'
     ];
 }

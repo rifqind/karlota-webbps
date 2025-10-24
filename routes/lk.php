@@ -12,6 +12,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     });
     Route::prefix('komoditas')->name('komoditas.')->group(function () {
         Route::get('/index', [KomoditasController::class, 'index'])->name('index');
+        Route::post('/store', [KomoditasController::class, 'store'])->name('store');
         Route::get('/download-template/komoditas', function () {
             $filePath = public_path('document/Template Komoditas.xlsx');
             return Response::download($filePath);
