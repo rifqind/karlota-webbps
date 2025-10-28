@@ -415,8 +415,8 @@ const submit = async () => {
       onSuccess: (response) => {
         form.reset();
         fetchData();
-        let notification = [];
-        notification.push(response.props.notification);
+        // let notification = [];
+        // notification.push(response.props.notification);
         showNotification(response.props.notification);
       },
       onFinish: () => {

@@ -16,7 +16,13 @@ const emit = defineEmits(["remove"]);
         v-for="(notif, index) in notifications"
         :key="index"
         class="p-2 rounded shadow-md text-white max-w-[500px]"
-        :class="notif.type == 'error' ? 'bg-red-700' : 'bg-green-700'"
+        :class="
+          notif.type == 'error'
+            ? 'bg-red-700'
+            : notif.type == 'success'
+            ? 'bg-green-700'
+            : 'bg-blue-700'
+        "
       >
         {{ notif.message }}
       </div>

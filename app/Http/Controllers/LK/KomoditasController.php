@@ -69,7 +69,7 @@ class KomoditasController extends Controller
         }
         if ($request->paginated) {
             return response()->json([
-                'sekunder' => $komoditas,
+                'komoditas' => $komoditas,
                 'countData' => $countData
             ]);
         }
@@ -138,47 +138,171 @@ class KomoditasController extends Controller
                 DB::commit();
                 return back()->with('notifications', $notifications);
             } else if ($request->mode == 2) {
-                //import excel
-                // dd($request->rows);
+                // import excel
                 $validated = $request->validate([
                     'rows' => 'required|array|min:1',
                     'rows.*.label' => 'required|string|max:255',
                     'rows.*.code' => 'nullable|sometimes|string|max:100|distinct|unique:master_komoditas,code',
                     'rows.*.satuan' => 'required|string|max:50',
-                    'rows.*.type' => 'required|tinyint',
+                    'rows.*.type' => 'required|integer|in:1,2',
                     'rows.*.subsector_id' => 'required|exists:subsectors,id',
                 ]);
+
                 $rows = $validated['rows'];
+
+                // Ambil subsector + relasi buat prefix
                 $subsectorIds = collect($rows)->pluck('subsector_id')->unique()->values();
                 $subsectors = Subsector::with('sector.category')
-                    ->whereIn('id', $subsectorIds)
-                    ->get()
-                    ->keyBy('id');
+                    ->whereIn('id', $subsectorIds)->get()->keyBy('id');
+
+                // Prefix per subsector
+                $prefixMap = [];
+                foreach ($subsectors as $sid => $sub) {
+                    $prefixMap[$sid] =
+                        (string) ($sub->sector->category->code ?? '') .
+                        (string) ($sub->sector->code ?? '') .
+                        (string) ($sub->code ?? '');
+                }
+
+                DB::beginTransaction();
+
+                // Kunci subsector & siapkan next sequence per subsector
+                $nextSeq = [];
+                foreach ($subsectorIds as $sid) {
+                    $prefix = $prefixMap[$sid] ?? '';
+                    $lastCode = Komoditas::where('subsector_id', $sid)
+                        ->when($prefix !== '', fn($q) => $q->where('code', 'like', $prefix . '%'))
+                        ->lockForUpdate()
+                        ->orderByDesc('code')
+                        ->value('code');
+
+                    $seq = 1;
+                    if ($lastCode && preg_match('/(\d{3})$/', (string) $lastCode, $m)) {
+                        $seq = ((int) $m[1]) + 1;
+                    }
+                    $nextSeq[$sid] = $seq;
+                }
+
+                // Ambil semua code yang DIISI di file, untuk cek duplikat di DB (skip)
+                $providedCodes = collect($rows)->pluck('code')->filter()->values();
+                $existingProvided = $providedCodes->isNotEmpty()
+                    ? Komoditas::whereIn('code', $providedCodes)->pluck('code')->flip()->all()
+                    : [];
+
                 $now = now();
-                $payloads = collect($rows)->map(function ($r) use ($subsectors, $now) {
-                    $sub = $subsectors[$r['subsector_id']];
-                    return [
+                $payloads = [];
+                $codesInPayload = []; // cegah duplikat dalam batch
+                $skipped = [];        // simpan info baris yang diskip
+
+                foreach ($rows as $idx => $r) {
+                    $sid = $r['subsector_id'];
+                    $sub = $subsectors[$sid] ?? null;
+                    if (!$sub) {
+                        $skipped[] = [
+                            'row' => $idx + 1,
+                            'reason' => 'Subsector tidak ditemukan',
+                            'label' => $r['label'] ?? null,
+                            'code'  => $r['code'] ?? null,
+                        ];
+                        continue;
+                    }
+
+                    $code = $r['code'] ?? null;
+
+                    // Jika code DIISI dan SUDAH ADA di DB, SKIP baris ini
+                    if (!empty($code) && isset($existingProvided[$code])) {
+                        $skipped[] = [
+                            'row' => $idx + 1,
+                            'reason' => 'Kode sudah ada di database',
+                            'label' => $r['label'] ?? null,
+                            'code'  => $code,
+                        ];
+                        continue;
+                    }
+
+                    // Jika code kosong -> generate
+                    if (empty($code)) {
+                        $prefix = $prefixMap[$sid] ?? '';
+                        do {
+                            $code = $prefix . str_pad($nextSeq[$sid], 3, '0', STR_PAD_LEFT);
+                            $nextSeq[$sid]++;
+
+                            // Antisipasi sangat jarang: kalau (karena race) code sudah ada di DB,
+                            // ulangi sampai dapat yang belum ada & belum dipakai di payload
+                        } while (
+                            isset($codesInPayload[$code]) ||
+                            Komoditas::where('code', $code)->exists()
+                        );
+                    } else {
+                        // Cegah duplikat dalam file yang sama (selain validator distinct)
+                        if (isset($codesInPayload[$code])) {
+                            $skipped[] = [
+                                'row' => $idx + 1,
+                                'reason' => 'Kode duplikat di file import',
+                                'label' => $r['label'] ?? null,
+                                'code'  => $code,
+                            ];
+                            continue;
+                        }
+                    }
+
+                    $labelWithSatuanandSubId = Komoditas::where('label', $r['label'])
+                        ->where('satuan', $r['satuan'])
+                        ->where('subsector_id', $sid)
+                        ->first();
+
+                    if ($labelWithSatuanandSubId) {
+                        $skipped[] = [
+                            'row' => $idx + 1,
+                            'reason' => 'Komoditas dengan label, satuan, dan subsector yang sama sudah ada di database',
+                            'label' => $r['label'] ?? null,
+                            'code'  => $code,
+                        ];
+                        continue;
+                    }
+
+                    $codesInPayload[$code] = true;
+
+                    $payloads[] = [
                         'label'        => $r['label'],
-                        'code'         => $r['code'],
+                        'code'         => $code,
                         'satuan'       => $r['satuan'],
                         'type'         => $r['type'],
-                        'subsector_id' => $r['subsector_id'],
+                        'subsector_id' => $sid,
                         'sector_id'    => $sub->sector->id,
                         'category_id'  => $sub->sector->category->id,
                         'edited_by'    => Auth::id(),
                         'created_at'   => $now,
                         'updated_at'   => $now,
                     ];
-                })->all();
-                DB::beginTransaction();
-                Komoditas::insert($payloads);
+                }
+
+                // Insert yang lolos. Pakai insertOrIgnore agar kalau ada race kecil, baris konflik di-skip oleh DB.
+                // (pastikan ada UNIQUE index di kolom code)
+                Komoditas::insertOrIgnore($payloads);
+
                 $message = [
                     'type' => 'success',
-                    'message' => 'Komoditas berhasil diimport.'
+                    'message' => 'Import selesai. ' .
+                        'Berhasil diproses: ' . count($payloads) . ' baris. ' .
+                        'Diskip: ' . count($skipped) . ' baris.'
                 ];
                 array_push($notifications, $message);
+
+                // Optional: kalau mau tampilkan daftar singkat baris yang diskip
+                if (!empty($skipped)) {
+                    $detail = collect($skipped)->map(function ($s) {
+                        return "{$s['label']}  - sudah ada di database";
+                    })->take(10)->implode('; ');
+                    // $message['detail'] = $detail . (count($skipped) > 10 ? ' (+ lainnya)' : '');
+                    $message = [
+                        'type' => 'info', 
+                        'message' => $detail . (count($skipped) > 10 ? ' (+ lainnya)' : '')
+                    ];
+                }
+                array_push($notifications, $message);
                 DB::commit();
-                return back()->with('notifications', $notifications);
+                return back()->with('notification', $notifications);
             }
         } catch (\Throwable $th) {
             //throw $th;
@@ -189,7 +313,7 @@ class KomoditasController extends Controller
                 'error' => $th->getMessage(),
             ];
             array_push($notifications, $message);
-            return back()->withErrors(['notifications' => $notifications]);
+            return back()->withErrors(['notification' => $notifications]);
         }
     }
 }
