@@ -9,6 +9,8 @@ use App\Models\Subsector;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 
 class KomoditasController extends Controller
@@ -50,13 +52,16 @@ class KomoditasController extends Controller
                 $query->where('label', 'like', '%' .  $filter['label'] . '%');
             }
             if (!empty($filter['code'])) {
-                $query->where('code', 'like', '%' . $filter['code'] . '%');
-            }
-            if (!empty($filter['type'])) {
-                $query->where('type', 'like', '%' . $filter['type'] . '%');
+                $query->where('master_komoditas.code', 'like', '%' . $filter['code'] . '%');
             }
             if (!empty($filter['satuan'])) {
                 $query->where('satuan', 'like', '%' . $filter['satuan'] . '%');
+            }
+            if (!empty($filter['subsector_label'])) {
+                $query->where('s.id', '=',  $filter['subsector_label']);
+            }
+            if (!empty($filter['subsector_updatedAt'])) {
+                $query->where(DB::raw("CONCAT(u.name, ' - ', master_komoditas.updated_at)"), 'like', '%' . $filter['subsector_updatedAt'] . '%');
             }
         }
 
@@ -119,6 +124,12 @@ class KomoditasController extends Controller
 
                     $validated['manual']['code'] = $prefix . str_pad($seq, 3, '0', STR_PAD_LEFT);
                 }
+                $labelWithSatuanandSubId = Komoditas::where('label', $validated['manual']['label'])
+                    ->where('satuan', $validated['manual']['satuan'])
+                    ->where('subsector_id', $validated['manual']['subsector_id'])
+                    // ->whereNot('id', $request->id)
+                    ->first();
+                if ($labelWithSatuanandSubId) throw new \Exception('Komoditas sudah ada');
                 $payload = [
                     'label'        => $validated['manual']['label'],
                     'code'         => $validated['manual']['code'],
@@ -296,11 +307,11 @@ class KomoditasController extends Controller
                     })->take(10)->implode('; ');
                     // $message['detail'] = $detail . (count($skipped) > 10 ? ' (+ lainnya)' : '');
                     $message = [
-                        'type' => 'info', 
+                        'type' => 'info',
                         'message' => $detail . (count($skipped) > 10 ? ' (+ lainnya)' : '')
                     ];
+                    array_push($notifications, $message);
                 }
-                array_push($notifications, $message);
                 DB::commit();
                 return back()->with('notification', $notifications);
             }
@@ -315,5 +326,92 @@ class KomoditasController extends Controller
             array_push($notifications, $message);
             return back()->withErrors(['notification' => $notifications]);
         }
+    }
+
+    public function update(Request $request, $id = null)
+    {
+        //
+        $id = $id ?? $request->id;
+        if ($request->isMethod('post')) {
+            $notifications = [];
+            try {
+                //code...
+                $validated = $request->validate([
+                    'label' => ['required', 'string', 'max:255'],
+                    'code'  => [
+                        'nullable',
+                        'sometimes',
+                        'string',
+                        'max:100',
+                        Rule::unique('master_komoditas', 'code')->ignore($id),
+                    ],
+                    'satuan'       => ['required', 'string', 'max:50'],
+                    'type'         => ['required', 'integer', 'in:1,2'],
+                    'subsector_id' => ['required', 'exists:subsectors,id'],
+                ]);
+                DB::beginTransaction();
+                $sub = Subsector::with('sector.category')->findOrFail($validated['subsector_id']);
+                if (empty($validated['code'])) {
+                    // Bangun prefix (tanpa underscore, agar sort lexicographical rapi)
+                    $prefix =
+                        (string) ($sub->sector->category->code ?? '') .
+                        (string) ($sub->sector->code ?? '') .
+                        (string) ($sub->code ?? '');
+
+                    // Ambil terakhir berdasarkan prefix yang sama, KUNCI baris untuk update
+                    $last = Komoditas::where('subsector_id', $sub->id)
+                        ->where('code', 'like', $prefix . '%')
+                        ->lockForUpdate()
+                        ->orderByDesc('code')
+                        ->first();
+
+                    $seq = 1;
+                    if ($last && preg_match('/(\d{3})$/', (string) $last->code, $m)) {
+                        $seq = ((int) $m[1]) + 1;
+                    }
+
+                    $validated['code'] = $prefix . str_pad($seq, 3, '0', STR_PAD_LEFT);
+                }
+                $payload = [
+                    'label'        => $validated['label'],
+                    'code'         => $validated['code'],
+                    'satuan'       => $validated['satuan'],
+                    'type'         => $validated['type'],
+                    'subsector_id' => $validated['subsector_id'],
+                    'sector_id'    => $sub->sector->id,
+                    'category_id'  => $sub->sector->category->id,
+                    'edited_by'    => Auth::user()->id,
+                ];
+                $labelWithSatuanandSubId = Komoditas::where('label', $validated['label'])
+                    ->where('satuan', $validated['satuan'])
+                    ->where('subsector_id', $validated['subsector_id'])
+                    ->whereNot('id', $request->id)
+                    ->first();
+                if ($labelWithSatuanandSubId) throw new \Exception('Komoditas sudah ada');
+                $update_komoditas = Komoditas::where('id', $request->id)
+                    ->update($payload);
+                $message = [
+                    'type' => 'success',
+                    'message' => 'Komoditas berhasil diedit.'
+                ];
+                array_push($notifications, $message);
+                DB::commit();
+                return back()->with('notification', $notifications);
+            } catch (\Throwable $th) {
+                //throw $th;
+                DB::rollBack();
+                $message = [
+                    'type' => 'error',
+                    'message' => 'Ada kesalahan : ' . $th->getMessage(),
+                ];
+                array_push($notifications, $message);
+                return back()->withErrors(['notification' => $notifications]);
+            } catch (ValidationException $ex) {
+            }
+        }
+        $this_komoditas = Komoditas::findOrFail($id);
+        return response()->json([
+            'this_komoditas' => $this_komoditas
+        ]);
     }
 }

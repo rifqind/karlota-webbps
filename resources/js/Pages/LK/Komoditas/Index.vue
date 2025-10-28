@@ -28,7 +28,7 @@
             <th class="text-center th-order" @click="clickToOrder('label')">
               Nama Komoditas
             </th>
-            <th class="text-center th-order" @click="clickToOrder('code')">
+            <th class="text-center th-order tabel-width-8" @click="clickToOrder('code')">
               Kode Komoditas
             </th>
             <th
@@ -37,12 +37,12 @@
             >
               Satuan
             </th>
-            <th class="text-center th-order" @click="clickToOrder('subsectors.label')">
+            <th class="text-center th-order" @click="clickToOrder('subsector_label')">
               Subsektor
             </th>
             <th
               class="text-center th-order tabel-width-8"
-              @click="clickToOrder('status_sekunder.updated_at')"
+              @click="clickToOrder('master_komoditas.updated_at')"
             >
               Terakhir di-update
             </th>
@@ -68,10 +68,11 @@
               />
             </td>
             <td class="search-header">
-              <input
-                v-model.trim="searchSubsektor"
-                type="text"
-                class="input-fordone w-full"
+              <Multiselect
+                :options="props.subsector"
+                :searchable="true"
+                placeholder="Cari Subsektor"
+                v-model="searchSubsektor"
               />
             </td>
             <td class="search-header">
@@ -102,7 +103,11 @@
               <br />
               <span>{{ data.updated_time }}</span>
             </td>
-            <td class="text-center align-middle deleted"></td>
+            <td class="text-center align-middle deleted">
+              <a @click="updateData(data.id)"
+                ><font-awesome-icon icon="fa-solid fa-pen" title="Edit" class="edit-pen"
+              /></a>
+            </td>
           </tr>
           <tr v-else>
             <td colspan="8" class="text-center">Data Tidak Ada</td>
@@ -219,6 +224,75 @@
         </button>
       </template>
     </ModalBs>
+    <ModalBs
+      :-modal-status="updateModalStatus"
+      @close="
+        () => {
+          updateModalStatus = false;
+          updateForm.reset();
+        }
+      "
+      :title="'Update Komoditas'"
+      :modal-size="'min-w-[25vw]'"
+    >
+      <template #modalBody>
+        <div class="space-y-3 form-group">
+          <div class="space-y-2">
+            <label>Nama Komoditas</label>
+            <input
+              type="text"
+              v-model="updateForm.label"
+              class="input-fordone w-full"
+              placeholder="Isikan nama komoditas"
+            />
+          </div>
+          <div class="space-y-2">
+            <label>Kode Komoditas</label>
+            <input
+              type="text"
+              v-model="updateForm.code"
+              class="input-fordone w-full"
+              placeholder="Bisa dikosongkan"
+            />
+          </div>
+          <div class="space-y-2">
+            <label>Satuan</label>
+            <input
+              type="text"
+              v-model="updateForm.satuan"
+              class="input-fordone w-full"
+              placeholder="Isikan satuan komoditas"
+            />
+          </div>
+          <div class="space-y-2">
+            <label>Tipe Komoditas</label>
+            <Multiselect
+              :options="[
+                { label: 'Produksi', value: 1 },
+                { label: 'Output', value: 2 },
+              ]"
+              :searchable="true"
+              v-model="updateForm.type"
+              placeholder="Pilih sesuai ketersediaan data, data produksi atau data output"
+            />
+          </div>
+          <div class="space-y-2">
+            <label>Subsektor</label>
+            <Multiselect
+              :options="props.subsector"
+              v-model="updateForm.subsector_id"
+              placeholder="-- Pilih Subsektor --"
+              :searchable="true"
+            />
+          </div>
+        </div>
+      </template>
+      <template #modalFunction>
+        <button type="button" @click="updateSubmit" class="btn-sm btn-warning-fordone">
+          Update
+        </button>
+      </template>
+    </ModalBs>
   </LKLayout>
 </template>
 
@@ -236,6 +310,7 @@ import Multiselect from "@vueform/multiselect";
 import * as XLSX from "xlsx";
 
 const createModalStatus = ref(false);
+const updateModalStatus = ref(false);
 const modeKomoditas = ref(null);
 
 const searchLabel = ref(null);
@@ -428,7 +503,55 @@ const submit = async () => {
         showNotification(errorList);
       },
     });
-  } catch (error) {}
+  } catch (error) {
+    console.error("Error submit : " + error);
+  }
+};
+
+//update
+const updateForm = useForm({
+  _token: null,
+  id: null,
+  label: null,
+  code: null,
+  satuan: null,
+  type: null,
+  subsector_id: null,
+});
+const updateData = async (id) => {
+  try {
+    const komoditas = await axios.get("/komoditas/update/" + id);
+    updateForm.id = id;
+    updateForm.label = komoditas.data.this_komoditas.label;
+    updateForm.code = komoditas.data.this_komoditas.code;
+    updateForm.satuan = komoditas.data.this_komoditas.satuan;
+    updateForm.type = komoditas.data.this_komoditas.type;
+    updateForm.subsector_id = komoditas.data.this_komoditas.subsector_id;
+    updateModalStatus.value = true;
+  } catch (error) {
+    console.error("Error fetching komoditas data: ", error);
+  }
+};
+const updateSubmit = async () => {
+  try {
+    const token = await axios.get(route("token"));
+    updateForm._token = token.data;
+    updateForm.post(route("komoditas.update"), {
+      onSuccess: (response) => {
+        updateForm.reset();
+        fetchData();
+        showNotification(response.props.notification);
+        updateModalStatus.value = false;
+      },
+      onError: (error) => {
+        let errorList = [];
+        errorList.push(error.notification);
+        showNotification(errorList);
+      },
+    });
+  } catch (error) {
+    console.error("Error update :" + error);
+  }
 };
 </script>
 

@@ -17,5 +17,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
             $filePath = public_path('document/Template Komoditas.xlsx');
             return Response::download($filePath);
         });
+        Route::get('/update/{id}', [KomoditasController::class, 'update']);
+        Route::post('/update', [KomoditasController::class, 'update'])->name('update');
     });
 });
