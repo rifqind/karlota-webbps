@@ -19,5 +19,6 @@ Route::middleware(['auth', 'verified'])->group(function () {
         });
         Route::get('/update/{id}', [KomoditasController::class, 'update']);
         Route::post('/update', [KomoditasController::class, 'update'])->name('update');
+        Route::delete('/destroy/{id}', [KomoditasController::class, 'destroy'])->name('destroy');
     });
 });

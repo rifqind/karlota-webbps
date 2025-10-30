@@ -103,9 +103,15 @@
               <br />
               <span>{{ data.updated_time }}</span>
             </td>
-            <td class="text-center align-middle deleted">
+            <td class="text-center align-middle deleted space-x-2">
               <a @click="updateData(data.id)"
                 ><font-awesome-icon icon="fa-solid fa-pen" title="Edit" class="edit-pen"
+              /></a>
+              <a @click="deleteData(data.id)"
+                ><font-awesome-icon
+                  icon="fa-solid fa-trash-can"
+                  title="Hapus"
+                  class="icon-trash-color"
               /></a>
             </td>
           </tr>
@@ -293,6 +299,36 @@
         </button>
       </template>
     </ModalBs>
+    <ModalBs
+      :-modal-status="deleteModalStatus"
+      @close="
+        () => {
+          deleteModalStatus = false;
+          updateForm.reset();
+        }
+      "
+      :title="'Hapus Data'"
+    >
+      <template #modalBody>
+        <div class="form-group">
+          <div>
+            <label
+              >Apakah Anda yakin ingin menghapus data ini? Data akan terhapus
+              selamanya</label
+            >
+          </div>
+        </div>
+      </template>
+      <template #modalFunction>
+        <button
+          type="button"
+          class="btn-red-fordone btn-sm"
+          @click.prevent="deleteSubmit"
+        >
+          Hapus
+        </button>
+      </template>
+    </ModalBs>
   </LKLayout>
 </template>
 
@@ -311,6 +347,7 @@ import * as XLSX from "xlsx";
 
 const createModalStatus = ref(false);
 const updateModalStatus = ref(false);
+const deleteModalStatus = ref(false);
 const modeKomoditas = ref(null);
 
 const searchLabel = ref(null);
@@ -551,6 +588,33 @@ const updateSubmit = async () => {
     });
   } catch (error) {
     console.error("Error update :" + error);
+  }
+};
+
+//delete
+const deleteData = (id) => {
+  updateForm.id = id;
+  deleteModalStatus.value = true;
+};
+const deleteSubmit = async () => {
+  try {
+    const token = await axios.get(route("token"));
+    updateForm._token = token.data;
+    updateForm.delete(route("komoditas.destroy", { id: updateForm.id }), {
+      onSuccess: (response) => {
+        updateForm.reset();
+        fetchData();
+        showNotification(response.props.notification);
+        deleteModalStatus.value = false;
+      },
+      onError: (error) => {
+        let errorList = [];
+        errorList.push(error.notification);
+        showNotification(errorList);
+      },
+    });
+  } catch (error) {
+    console.error("Error Fetching Data : ", error);
   }
 };
 </script>

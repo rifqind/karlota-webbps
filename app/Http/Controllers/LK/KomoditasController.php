@@ -178,27 +178,54 @@ class KomoditasController extends Controller
                 DB::beginTransaction();
 
                 // Kunci subsector & siapkan next sequence per subsector
-                $nextSeq = [];
-                foreach ($subsectorIds as $sid) {
-                    $prefix = $prefixMap[$sid] ?? '';
-                    $lastCode = Komoditas::where('subsector_id', $sid)
-                        ->when($prefix !== '', fn($q) => $q->where('code', 'like', $prefix . '%'))
-                        ->lockForUpdate()
-                        ->orderByDesc('code')
-                        ->value('code');
+                $existingCodes = Komoditas::whereIn('subsector_id', $subsectorIds)
+                    ->pluck('code', 'code')
+                    ->keys()
+                    ->toArray();
+                $existingSet = array_flip($existingCodes);
 
-                    $seq = 1;
-                    if ($lastCode && preg_match('/(\d{3})$/', (string) $lastCode, $m)) {
-                        $seq = ((int) $m[1]) + 1;
-                    }
-                    $nextSeq[$sid] = $seq;
-                }
+                // foreach ($subsectorIds as $sid) {
+                //     $prefix = $prefixMap[$sid] ?? '';
+                //     $lastCode = Komoditas::where('subsector_id', $sid)
+                //         ->when($prefix !== '', fn($q) => $q->where('code', 'like', $prefix . '%'))
+                //         ->lockForUpdate()
+                //         ->orderByDesc('code')
+                //         ->value('code');
+
+                //     $seq = 1;
+                //     if ($lastCode && preg_match('/(\d{3})$/', (string) $lastCode, $m)) {
+                //         $seq = ((int) $m[1]) + 1;
+                //     }
+                //     $nextSeq[$sid] = $seq;
+                // }
 
                 // Ambil semua code yang DIISI di file, untuk cek duplikat di DB (skip)
                 $providedCodes = collect($rows)->pluck('code')->filter()->values();
                 $existingProvided = $providedCodes->isNotEmpty()
                     ? Komoditas::whereIn('code', $providedCodes)->pluck('code')->flip()->all()
                     : [];
+
+                $nextSeq = [];
+                foreach ($subsectorIds as $sid) {
+                    $prefix = $prefixMap[$sid] ?? '';
+
+                    // Ambil semua kode dengan prefix ini
+                    $codes = Komoditas::where('subsector_id', $sid)
+                        ->where('code', 'like', $prefix . '%')
+                        ->lockForUpdate()
+                        ->pluck('code');
+
+                    // Ambil semua suffix angka yang sudah dipakai (contoh: 001, 002, 004 → [1,2,4])
+                    $suffixes = [];
+                    foreach ($codes as $c) {
+                        if (preg_match('/(\d{3})$/', $c, $m)) {
+                            $suffixes[(int) $m[1]] = true;
+                        }
+                    }
+                    $usedSeq[$sid] = $suffixes;
+                    // Mulai dari 1 (akan dicari yang kosong di loop)
+                    $nextSeq[$sid] = 1;
+                }
 
                 $now = now();
                 $payloads = [];
@@ -231,32 +258,6 @@ class KomoditasController extends Controller
                         continue;
                     }
 
-                    // Jika code kosong -> generate
-                    if (empty($code)) {
-                        $prefix = $prefixMap[$sid] ?? '';
-                        do {
-                            $code = $prefix . str_pad($nextSeq[$sid], 3, '0', STR_PAD_LEFT);
-                            $nextSeq[$sid]++;
-
-                            // Antisipasi sangat jarang: kalau (karena race) code sudah ada di DB,
-                            // ulangi sampai dapat yang belum ada & belum dipakai di payload
-                        } while (
-                            isset($codesInPayload[$code]) ||
-                            Komoditas::where('code', $code)->exists()
-                        );
-                    } else {
-                        // Cegah duplikat dalam file yang sama (selain validator distinct)
-                        if (isset($codesInPayload[$code])) {
-                            $skipped[] = [
-                                'row' => $idx + 1,
-                                'reason' => 'Kode duplikat di file import',
-                                'label' => $r['label'] ?? null,
-                                'code'  => $code,
-                            ];
-                            continue;
-                        }
-                    }
-
                     $labelWithSatuanandSubId = Komoditas::where('label', $r['label'])
                         ->where('satuan', $r['satuan'])
                         ->where('subsector_id', $sid)
@@ -270,6 +271,34 @@ class KomoditasController extends Controller
                             'code'  => $code,
                         ];
                         continue;
+                    }
+                    
+                    // Jika code kosong -> generate
+                    if (empty($code)) {
+                        $prefix = $prefixMap[$sid] ?? '';
+                        for ($i = $nextSeq[$sid]; $i <= 999; $i++) {
+                            if (
+                                empty($usedSeq[$sid][$i]) &&
+                                !isset($codesInPayload[$prefix . str_pad($i, 3, '0', STR_PAD_LEFT)]) &&
+                                !isset($existingSet[$prefix . str_pad($i, 3, '0', STR_PAD_LEFT)])
+                            ) {
+                                $code = $prefix . str_pad($i, 3, '0', STR_PAD_LEFT);
+                                $usedSeq[$sid][$i] = true;
+                                $nextSeq[$sid] = $i + 1; // increment setelah dipakai
+                                break;
+                            }
+                        }
+                    } else {
+                        // Cegah duplikat dalam file yang sama (selain validator distinct)
+                        if (isset($codesInPayload[$code])) {
+                            $skipped[] = [
+                                'row' => $idx + 1,
+                                'reason' => 'Kode duplikat di file import',
+                                'label' => $r['label'] ?? null,
+                                'code'  => $code,
+                            ];
+                            continue;
+                        }
                     }
 
                     $codesInPayload[$code] = true;
@@ -413,5 +442,31 @@ class KomoditasController extends Controller
         return response()->json([
             'this_komoditas' => $this_komoditas
         ]);
+    }
+
+    public function destroy($id)
+    {
+        $notifications = [];
+        try {
+            DB::beginTransaction();
+            $komoditas = Komoditas::find($id);
+            if (!$komoditas) {
+                throw new \Exception('Komoditas tidak ditemukan.');
+            }
+            $komoditas->delete();
+            $notifications[] = [
+                'type' => 'success',
+                'message' => 'Komoditas berhasil dihapus.',
+            ];
+            DB::commit();
+            return back()->with('notification', $notifications);
+        } catch (\Throwable $th) {
+            DB::rollBack();
+            $notifications[] = [
+                'type' => 'error',
+                'message' => 'Ada kesalahan: ' . $th->getMessage(),
+            ];
+            return back()->withErrors(['notification' => $notifications]);
+        }
     }
 }
