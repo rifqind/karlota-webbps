@@ -1,6 +1,6 @@
 <script setup>
-import { computed } from "vue";
-import { ref } from "vue";
+import { useBodyScrollLock } from "@/Composables/useBodyScrollLock";
+import { computed, watch } from "vue";
 
 const props = defineProps({
   title: {
@@ -34,16 +34,15 @@ const props = defineProps({
     type: Boolean,
     default: false,
   },
-  // toggleModalClose: {
-  //     type: Function,
-  //     require: true,
-  // }
 });
+const isOpen = computed(() => props.ModalStatus);
+const { lock, unlock } = useBodyScrollLock(isOpen);
+watch(isOpen, (v) => (v ? lock() : unlock()), { immediate: true });
 </script>
 <template>
   <div
     v-if="ModalStatus"
-    class="modalbs fixed inset-0 z-[1300] bg-black bg-opacity-50 flex justify-center transition-opacity"
+    class="modalbs fixed inset-0 z-[1300] bg-black bg-opacity-50 flex justify-center transition-opacity overflow-y-scroll"
     :class="modalPosition"
     tabindex="-1"
   >
