@@ -46,23 +46,57 @@
           </div>
           <div class="mb-3 space-y-2">
             <label for="pdrb">Password<span class="text-danger">*</span></label>
-            <input
-              type="password"
-              placeholder="Boleh dikosongkan jika tidak ingin ganti password"
-              v-model="form.password"
-              class="input-fordone w-full"
-            />
+            <div class="relative">
+              <input
+                :type="isShowPassword['password'] ? 'text' : 'password'"
+                placeholder="Boleh dikosongkan jika tidak ingin ganti password"
+                v-model="form.password"
+                class="input-fordone w-full pr-10"
+              />
+              <button
+                type="button"
+                @click="showPassword('password')"
+                class="absolute inset-y-0 right-3 flex items-center text-gray-500 hover:text-gray-700"
+                tabindex="-1"
+              >
+                <font-awesome-icon
+                  v-if="!isShowPassword['password']"
+                  icon="fa-solid fa-eye"
+                />
+                <font-awesome-icon
+                  v-if="isShowPassword['password']"
+                  icon="fa-solid fa-eye-slash"
+                />
+              </button>
+            </div>
           </div>
           <div class="mb-3 space-y-2">
             <label for="pdrb"
               >Konfirmasi Password<span class="text-danger">*</span></label
             >
-            <input
-              type="password"
-              placeholder="Boleh dikosongkan jika tidak ingin ganti password"
-              v-model="form.password_confirmation"
-              class="input-fordone w-full"
-            />
+            <div class="relative">
+              <input
+                :type="isShowPassword['konfirmasi'] ? 'text' : 'password'"
+                placeholder="Boleh dikosongkan jika tidak ingin ganti password"
+                v-model="form.password_confirmation"
+                class="input-fordone w-full pr-10"
+              />
+              <button
+                type="button"
+                @click="showPassword('konfirmasi')"
+                class="absolute inset-y-0 right-3 flex items-center text-gray-500 hover:text-gray-700"
+                tabindex="-1"
+              >
+                <font-awesome-icon
+                  v-if="!isShowPassword['konfirmasi']"
+                  icon="fa-solid fa-eye"
+                />
+                <font-awesome-icon
+                  v-if="isShowPassword['konfirmasi']"
+                  icon="fa-solid fa-eye-slash"
+                />
+              </button>
+            </div>
           </div>
           <div class="flex items-center space-x-2 justify-end">
             <div
@@ -113,6 +147,13 @@ const submit = async () => {
       showNotification(response.props.notification);
     },
   });
+};
+const isShowPassword = ref({
+  password: false,
+  konfirmasi: false,
+});
+const showPassword = (key) => {
+  isShowPassword.value[key] = !isShowPassword.value[key];
 };
 </script>
 
