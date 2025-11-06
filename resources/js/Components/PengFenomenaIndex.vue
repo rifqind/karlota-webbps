@@ -56,7 +56,7 @@
                   node.id,
                   quarter,
                   nodeSubsectors.sector.category_id,
-                  null,
+                  nodeSubsectors.sector.id,
                   null,
                   type
                 )
@@ -66,7 +66,7 @@
                   node.id,
                   quarter,
                   nodeSubsectors.sector.category_id,
-                  null,
+                  nodeSubsectors.sector.id,
                   null,
                   type
                 )
