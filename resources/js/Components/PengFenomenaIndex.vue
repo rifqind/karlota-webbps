@@ -20,7 +20,7 @@
                 node.id,
                 quarter,
                 nodeSubsectors.sector.category_id,
-                null,
+                nodeSubsectors.sector.id,
                 null,
                 type
               )
@@ -31,7 +31,7 @@
                   node.id,
                   quarter,
                   nodeSubsectors.sector.category_id,
-                  null,
+                  nodeSubsectors.sector.id,
                   null,
                   type
                 )
@@ -41,7 +41,7 @@
                   node.id,
                   quarter,
                   nodeSubsectors.sector.category_id,
-                  null,
+                  nodeSubsectors.sector.id,
                   null,
                   type
                 )
@@ -97,7 +97,7 @@
                 quarter,
                 nodeSubsectors.sector.category_id,
                 nodeSubsectors.sector_id,
-                null,
+                nodeSubsectors.id,
                 type
               )
             }}
@@ -108,7 +108,7 @@
                   quarter,
                   nodeSubsectors.sector.category_id,
                   nodeSubsectors.sector_id,
-                  null,
+                  nodeSubsectors.id,
                   type
                 )
               "
@@ -118,7 +118,7 @@
                   quarter,
                   nodeSubsectors.sector.category_id,
                   nodeSubsectors.sector_id,
-                  null,
+                  nodeSubsectors.id,
                   type
                 )
               "
@@ -133,7 +133,7 @@
                   quarter,
                   nodeSubsectors.sector.category_id,
                   nodeSubsectors.sector_id,
-                  null,
+                  nodeSubsectors.id,
                   type
                 )
               "
@@ -143,7 +143,7 @@
                   quarter,
                   nodeSubsectors.sector.category_id,
                   nodeSubsectors.sector_id,
-                  null,
+                  nodeSubsectors.id,
                   type
                 )
               "
