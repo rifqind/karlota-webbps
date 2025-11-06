@@ -619,4 +619,8 @@ const deleteSubmit = async () => {
 };
 </script>
 
-<style lang="scss" scoped></style>
+<style scoped>
+table {
+  font-size: smaller;
+}
+</style>

@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Lk\IndeksHargaController;
 use App\Http\Controllers\LK\KomoditasController;
 use App\Http\Controllers\LK\LkController;
 use Illuminate\Support\Facades\Response;
@@ -20,5 +21,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/update/{id}', [KomoditasController::class, 'update']);
         Route::post('/update', [KomoditasController::class, 'update'])->name('update');
         Route::delete('/destroy/{id}', [KomoditasController::class, 'destroy'])->name('destroy');
+    });
+    Route::prefix('ih')->name('ih.')->group(function () {
+        Route::get('/dasar', [IndeksHargaController::class, 'idxdasar'])->name('dasar.index');
     });
 });

@@ -66,7 +66,10 @@
 }
 
 .multiselect-placeholder {
-    color: var(--ms-placeholder-color, #9ca3af)
+    color: var(--ms-placeholder-color, #9ca3af);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .multiselect-single-label-text {

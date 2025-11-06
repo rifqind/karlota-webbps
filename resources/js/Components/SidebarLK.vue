@@ -26,6 +26,12 @@
           >Master Komoditas</NavLinkSidebar
         >
         <NavLinkSidebar
+          :nav-icon="'fa-solid fa-money-bill-transfer'"
+          :href="route('ih.dasar.index')"
+          :current-route="currentRoute == 'ih.dasar.index'"
+          >Indeks Harga Dasar</NavLinkSidebar
+        >
+        <NavLinkSidebar
           :navIcon="'fa-solid fa-k'"
           :href="route('dashboard')"
           :currentRoute="currentRoute == 'dashboard'"

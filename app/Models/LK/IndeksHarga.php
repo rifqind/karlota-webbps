@@ -1,10 +1,10 @@
 <?php
 
-namespace App\Models;
+namespace App\Models\LK;
 
 use Illuminate\Database\Eloquent\Model;
 
-class Lk extends Model
+class IndeksHarga extends Model
 {
     //
 }

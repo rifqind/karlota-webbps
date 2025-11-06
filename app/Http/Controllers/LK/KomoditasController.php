@@ -4,7 +4,7 @@ namespace App\Http\Controllers\LK;
 
 use App\Http\Controllers\Controller;
 use App\Models\Category;
-use App\Models\Komoditas;
+use App\Models\LK\Komoditas;
 use App\Models\Subsector;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
