@@ -42,6 +42,12 @@
             </th>
             <th
               class="text-center th-order tabel-width-8"
+              @click="clickToOrder('subsector_label')"
+            >
+              Harga Dasar (2010)
+            </th>
+            <th
+              class="text-center th-order tabel-width-8"
               @click="clickToOrder('master_komoditas.updated_at')"
             >
               Terakhir di-update
@@ -75,6 +81,7 @@
                 v-model="searchSubsektor"
               />
             </td>
+            <td class="search-header"></td>
             <td class="search-header">
               <input
                 v-model.trim="searchUpdatedAt"
@@ -94,6 +101,7 @@
             <td class="align-middle">{{ data.number }}</td>
             <td class="align-middle">{{ data.label }}</td>
             <td class="align-middle">{{ data.code }}</td>
+            <td class="align-middle">{{ data.satuan }}</td>
             <td class="align-middle">{{ data.satuan }}</td>
             <td class="align-middle">
               {{ data.subsector_label }}
@@ -138,7 +146,7 @@
         }
       "
       :title="'Tambah Komoditas'"
-      :modal-size="'min-w-[25vw]'"
+      :modal-size="'min-w-[30vw]'"
     >
       <template #modalBody>
         <div class="space-y-3 form-group">
@@ -221,6 +229,15 @@
                 :searchable="true"
               />
             </div>
+            <div class="space-y-2">
+              <label>Harga Dasar (2010)</label>
+              <input
+                type="text"
+                v-model="form.manual.harga_dasar"
+                class="input-fordone w-full"
+                placeholder="Isikan harga dasar (2010), jika belum ada bisa dikosongkan"
+              />
+            </div>
           </template>
         </div>
       </template>
@@ -289,6 +306,15 @@
               v-model="updateForm.subsector_id"
               placeholder="-- Pilih Subsektor --"
               :searchable="true"
+            />
+          </div>
+          <div class="space-y-2">
+            <label>Harga Dasar (2010)</label>
+            <input
+              type="text"
+              v-model="updateForm.harga_dasar"
+              class="input-fordone w-full"
+              placeholder="Isikan harga dasar (2010), jika belum ada bisa dikosongkan"
             />
           </div>
         </div>
@@ -513,6 +539,7 @@ const form = useForm({
     satuan: null,
     type: null,
     subsector_id: null,
+    harga_dasar: null,
   },
   mode: null,
 });
@@ -554,6 +581,7 @@ const updateForm = useForm({
   satuan: null,
   type: null,
   subsector_id: null,
+  harga_dasar: null,
 });
 const updateData = async (id) => {
   try {
@@ -564,6 +592,7 @@ const updateData = async (id) => {
     updateForm.satuan = komoditas.data.this_komoditas.satuan;
     updateForm.type = komoditas.data.this_komoditas.type;
     updateForm.subsector_id = komoditas.data.this_komoditas.subsector_id;
+    updateForm.harga_dasar = komoditas.data.this_komoditas.harga_dasar;
     updateModalStatus.value = true;
   } catch (error) {
     console.error("Error fetching komoditas data: ", error);

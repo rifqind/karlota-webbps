@@ -4,6 +4,7 @@ namespace App\Http\Controllers\LK;
 
 use App\Http\Controllers\Controller;
 use App\Models\Category;
+use App\Models\HargaDasar;
 use App\Models\LK\Komoditas;
 use App\Models\Subsector;
 use Illuminate\Http\Request;
@@ -27,10 +28,12 @@ class KomoditasController extends Controller
         $query = Komoditas::query();
         $dataToCounted = $query->join('subsectors as s', 's.id', '=', 'master_komoditas.subsector_id')
             ->join('users as u', 'u.id', '=', 'master_komoditas.edited_by')
+            ->leftJoin('master_harga as mh', 'mh.komoditas_id', '=', 'master_komoditas.id')
             ->select([
                 'master_komoditas.*',
                 's.name as subsector_label',
                 'u.name as username',
+                'mh.harga_konstan as harga_konstan',
                 'master_komoditas.updated_at as updated_time'
             ]);
         if ($request->orderAttribute) {
@@ -101,6 +104,7 @@ class KomoditasController extends Controller
                     'manual.satuan' => 'required|string|max:50',
                     'manual.type' => 'required|integer|in:1,2',
                     'manual.subsector_id' => 'required|exists:subsectors,id',
+                    'manual.harga_dasar' => 'nullable|sometimes|numeric',
                 ]);
                 $sub = Subsector::with('sector.category')->findOrFail($validated['manual']['subsector_id']);
                 if (empty($validated['manual']['code'])) {
@@ -141,6 +145,12 @@ class KomoditasController extends Controller
                     'edited_by'    => Auth::user()->id,
                 ];
                 $new_komoditas = Komoditas::create($payload);
+                if (!empty($validated['harga_dasar'])) {
+                    $new_harga_dasar = HargaDasar::create([
+                        'komoditas_id' => $new_komoditas->id,
+                        'harga_konstan' => $validated['harga_dasar']
+                    ]);
+                }
                 $message = [
                     'type' => 'success',
                     'message' => 'Komoditas berhasil ditambahkan.'
@@ -157,6 +167,7 @@ class KomoditasController extends Controller
                     'rows.*.satuan' => 'required|string|max:50',
                     'rows.*.type' => 'required|integer|in:1,2',
                     'rows.*.subsector_id' => 'required|exists:subsectors,id',
+                    'rows.*.harga_dasar' => 'nullable|sometimes|numeric'
                 ]);
 
                 $rows = $validated['rows'];
@@ -272,7 +283,7 @@ class KomoditasController extends Controller
                         ];
                         continue;
                     }
-                    
+
                     // Jika code kosong -> generate
                     if (empty($code)) {
                         $prefix = $prefixMap[$sid] ?? '';
