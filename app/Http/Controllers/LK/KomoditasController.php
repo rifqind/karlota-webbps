@@ -100,11 +100,11 @@ class KomoditasController extends Controller
                 DB::beginTransaction();
                 $validated = $request->validate([
                     'manual.label' => 'required|string|max:255',
-                    'manual.code' => 'nullable|sometimes|string|max:100|unique:master_komoditas,code',
+                    'manual.code' => 'sometimes|nullable|string|max:100|unique:master_komoditas,code',
                     'manual.satuan' => 'required|string|max:50',
                     'manual.type' => 'required|integer|in:1,2',
                     'manual.subsector_id' => 'required|exists:subsectors,id',
-                    'manual.harga_dasar' => 'nullable|sometimes|numeric',
+                    'manual.harga_konstan' => 'sometimes|nullable|numeric',
                 ]);
                 $sub = Subsector::with('sector.category')->findOrFail($validated['manual']['subsector_id']);
                 if (empty($validated['manual']['code'])) {
@@ -145,10 +145,10 @@ class KomoditasController extends Controller
                     'edited_by'    => Auth::user()->id,
                 ];
                 $new_komoditas = Komoditas::create($payload);
-                if (!empty($validated['harga_dasar'])) {
-                    $new_harga_dasar = HargaDasar::create([
+                if (!empty($validated['harga_konstan'])) {
+                    $new_harga_konstan = HargaDasar::create([
                         'komoditas_id' => $new_komoditas->id,
-                        'harga_konstan' => $validated['harga_dasar']
+                        'harga_konstan' => $validated['harga_konstan']
                     ]);
                 }
                 $message = [
@@ -163,11 +163,11 @@ class KomoditasController extends Controller
                 $validated = $request->validate([
                     'rows' => 'required|array|min:1',
                     'rows.*.label' => 'required|string|max:255',
-                    'rows.*.code' => 'nullable|sometimes|string|max:100|distinct|unique:master_komoditas,code',
+                    'rows.*.code' => 'sometimes|nullable|string|max:100|distinct|unique:master_komoditas,code',
                     'rows.*.satuan' => 'required|string|max:50',
                     'rows.*.type' => 'required|integer|in:1,2',
                     'rows.*.subsector_id' => 'required|exists:subsectors,id',
-                    'rows.*.harga_dasar' => 'nullable|sometimes|numeric'
+                    'rows.*.harga_konstan' => 'sometimes|nullable|numeric'
                 ]);
 
                 $rows = $validated['rows'];
@@ -194,21 +194,6 @@ class KomoditasController extends Controller
                     ->keys()
                     ->toArray();
                 $existingSet = array_flip($existingCodes);
-
-                // foreach ($subsectorIds as $sid) {
-                //     $prefix = $prefixMap[$sid] ?? '';
-                //     $lastCode = Komoditas::where('subsector_id', $sid)
-                //         ->when($prefix !== '', fn($q) => $q->where('code', 'like', $prefix . '%'))
-                //         ->lockForUpdate()
-                //         ->orderByDesc('code')
-                //         ->value('code');
-
-                //     $seq = 1;
-                //     if ($lastCode && preg_match('/(\d{3})$/', (string) $lastCode, $m)) {
-                //         $seq = ((int) $m[1]) + 1;
-                //     }
-                //     $nextSeq[$sid] = $seq;
-                // }
 
                 // Ambil semua code yang DIISI di file, untuk cek duplikat di DB (skip)
                 $providedCodes = collect($rows)->pluck('code')->filter()->values();
@@ -242,6 +227,7 @@ class KomoditasController extends Controller
                 $payloads = [];
                 $codesInPayload = []; // cegah duplikat dalam batch
                 $skipped = [];        // simpan info baris yang diskip
+                $hargaByCode = [];
 
                 foreach ($rows as $idx => $r) {
                     $sid = $r['subsector_id'];
@@ -326,11 +312,27 @@ class KomoditasController extends Controller
                         'created_at'   => $now,
                         'updated_at'   => $now,
                     ];
-                }
 
-                // Insert yang lolos. Pakai insertOrIgnore agar kalau ada race kecil, baris konflik di-skip oleh DB.
-                // (pastikan ada UNIQUE index di kolom code)
-                Komoditas::insertOrIgnore($payloads);
+                    if (array_key_exists('harga_konstan', $r) && $r['harga_konstan'] !== null && $r['harga_konstan'] !== '') {
+                        $hargaByCode[$code] = (float) $r['harga_konstan'];
+                    }
+                }
+                if (!empty($payloads)) Komoditas::insertOrIgnore($payloads);
+                $harga_konstan = [];
+                if (!empty($hargaByCode)) {
+                    $komoditasMap = Komoditas::whereIn('code', array_keys($hargaByCode))->pluck('id', 'code');
+                    foreach ($hargaByCode as $key => $value) {
+                        # code...
+                        $kid = $komoditasMap[$key] ?? null;
+                        if ($kid) {
+                            $harga_konstan[] = [
+                                'komoditas_id' => $kid,
+                                'harga_konstan' => $value,
+                            ];
+                        }
+                    }
+                    if (!empty($harga_konstan)) HargaDasar::insertOrIgnore($harga_konstan);
+                }
 
                 $message = [
                     'type' => 'success',

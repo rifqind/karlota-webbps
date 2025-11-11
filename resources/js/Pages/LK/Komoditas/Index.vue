@@ -102,9 +102,11 @@
             <td class="align-middle">{{ data.label }}</td>
             <td class="align-middle">{{ data.code }}</td>
             <td class="align-middle">{{ data.satuan }}</td>
-            <td class="align-middle">{{ data.satuan }}</td>
             <td class="align-middle">
               {{ data.subsector_label }}
+            </td>
+            <td class="align-middle">
+              Rp {{ formatNumberGerman(data.harga_konstan, 2, 5) }}
             </td>
             <td class="align-middle text-center">
               <span class="badge badge-info">{{ data.username }}</span>
@@ -230,12 +232,12 @@
               />
             </div>
             <div class="space-y-2">
-              <label>Harga Dasar (2010)</label>
+              <label>Harga Konstan (2010)</label>
               <input
                 type="text"
-                v-model="form.manual.harga_dasar"
+                v-model="form.manual.harga_konstan"
                 class="input-fordone w-full"
-                placeholder="Isikan harga dasar (2010), jika belum ada bisa dikosongkan"
+                placeholder="Isikan harga konstan (2010), jika belum ada bisa dikosongkan"
               />
             </div>
           </template>
@@ -309,12 +311,12 @@
             />
           </div>
           <div class="space-y-2">
-            <label>Harga Dasar (2010)</label>
+            <label>Harga Konstan (2010)</label>
             <input
               type="text"
-              v-model="updateForm.harga_dasar"
+              v-model="updateForm.harga_konstan"
               class="input-fordone w-full"
-              placeholder="Isikan harga dasar (2010), jika belum ada bisa dikosongkan"
+              placeholder="Isikan harga konstan (2010), jika belum ada bisa dikosongkan"
             />
           </div>
         </div>
@@ -395,7 +397,12 @@ const props = defineProps({
     required: true,
   },
 });
-
+const formatNumberGerman = (num, min = 2, max = 5) => {
+  return new Intl.NumberFormat("de-DE", {
+    minimumFractionDigits: min,
+    maximumFractionDigits: max,
+  }).format(num);
+};
 const komoditas = ref(props.komoditas.data);
 const notifications = ref([]);
 const showNotification = (notification) => {
@@ -539,7 +546,7 @@ const form = useForm({
     satuan: null,
     type: null,
     subsector_id: null,
-    harga_dasar: null,
+    harga_konstan: null,
   },
   mode: null,
 });
@@ -581,7 +588,7 @@ const updateForm = useForm({
   satuan: null,
   type: null,
   subsector_id: null,
-  harga_dasar: null,
+  harga_konstan: null,
 });
 const updateData = async (id) => {
   try {
@@ -592,7 +599,7 @@ const updateData = async (id) => {
     updateForm.satuan = komoditas.data.this_komoditas.satuan;
     updateForm.type = komoditas.data.this_komoditas.type;
     updateForm.subsector_id = komoditas.data.this_komoditas.subsector_id;
-    updateForm.harga_dasar = komoditas.data.this_komoditas.harga_dasar;
+    updateForm.harga_konstan = komoditas.data.this_komoditas.harga_konstan;
     updateModalStatus.value = true;
   } catch (error) {
     console.error("Error fetching komoditas data: ", error);
