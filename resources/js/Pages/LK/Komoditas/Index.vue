@@ -41,10 +41,10 @@
               Subsektor
             </th>
             <th
-              class="text-center th-order tabel-width-8"
+              class="text-center th-order tabel-width-10"
               @click="clickToOrder('subsector_label')"
             >
-              Harga Dasar (2010)
+              Harga Konstan (2010)
             </th>
             <th
               class="text-center th-order tabel-width-8"
@@ -148,7 +148,7 @@
         }
       "
       :title="'Tambah Komoditas'"
-      :modal-size="'min-w-[30vw]'"
+      :modal-size="'min-w-[50vw]'"
     >
       <template #modalBody>
         <div class="space-y-3 form-group">
@@ -235,7 +235,12 @@
               <label>Harga Konstan (2010)</label>
               <input
                 type="text"
-                v-model="form.manual.harga_konstan"
+                @input="
+                  (event) => {
+                    debounceHandleInput(event, 'store');
+                  }
+                "
+                :value="getData('store')"
                 class="input-fordone w-full"
                 placeholder="Isikan harga konstan (2010), jika belum ada bisa dikosongkan"
               />
@@ -258,7 +263,7 @@
         }
       "
       :title="'Update Komoditas'"
-      :modal-size="'min-w-[25vw]'"
+      :modal-size="'min-w-[50vw]'"
     >
       <template #modalBody>
         <div class="space-y-3 form-group">
@@ -314,7 +319,12 @@
             <label>Harga Konstan (2010)</label>
             <input
               type="text"
-              v-model="updateForm.harga_konstan"
+              @input="
+                (event) => {
+                  debounceHandleInput(event, 'update');
+                }
+              "
+              :value="getData('update')"
               class="input-fordone w-full"
               placeholder="Isikan harga konstan (2010), jika belum ada bisa dikosongkan"
             />
@@ -550,6 +560,7 @@ const form = useForm({
   },
   mode: null,
 });
+const harga_konstan = ref({ store: null, update: null });
 const submit = async () => {
   try {
     const token = await axios.get(route("token"));
@@ -653,10 +664,38 @@ const deleteSubmit = async () => {
     console.error("Error Fetching Data : ", error);
   }
 };
+
+//handleinput
+const handleInput = (event, type) => {
+  let value = event.target.value;
+  value = String(value).replaceAll(".", "").replace(",", ".");
+  if (type == "store") form.manual.harga_konstan = Number(value);
+  if (type == "update") updateForm.harga_konstan = Number(value);
+};
+const debounceHandleInput = debounce((event, type) => {
+  handleInput(event, type);
+}, 400);
+const getData = (type) => {
+  let formattedResult = null;
+  if (type == "store") {
+    formattedResult =
+      form.manual.harga_konstan == "" || form.manual.harga_konstan == null
+        ? null
+        : formatNumberGerman(Number(form.manual.harga_konstan), 0, 9);
+  } else
+    formattedResult =
+      updateForm.harga_konstan == "" || updateForm.harga_konstan == null
+        ? null
+        : formatNumberGerman(Number(updateForm.harga_konstan), 0, 9);
+  return formattedResult;
+};
 </script>
 
 <style scoped>
 table {
+  font-size: smaller;
+}
+input::placeholder {
   font-size: smaller;
 }
 </style>

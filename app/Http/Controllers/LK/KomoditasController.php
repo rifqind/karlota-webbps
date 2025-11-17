@@ -42,12 +42,14 @@ class KomoditasController extends Controller
             else {
                 $query->orderBy('category_id', 'asc')
                     ->orderBy('sector_id', 'asc')
-                    ->orderBy('subsector_id', 'asc');
+                    ->orderBy('subsector_id', 'asc')
+                    ->orderBy('code', 'asc');
             }
         } else {
             $query->orderBy('category_id', 'asc')
                 ->orderBy('sector_id', 'asc')
-                ->orderBy('subsector_id', 'asc');
+                ->orderBy('subsector_id', 'asc')
+                ->orderBy('code', 'asc');
         }
         if ($request->ArrayFilter) {
             $filter = $request->ArrayFilter;
@@ -390,6 +392,7 @@ class KomoditasController extends Controller
                     'satuan'       => ['required', 'string', 'max:50'],
                     'type'         => ['required', 'integer', 'in:1,2'],
                     'subsector_id' => ['required', 'exists:subsectors,id'],
+                    'harga_konstan' => ['sometimes', 'nullable', 'numeric'],
                 ]);
                 DB::beginTransaction();
                 $sub = Subsector::with('sector.category')->findOrFail($validated['subsector_id']);
@@ -432,6 +435,10 @@ class KomoditasController extends Controller
                 if ($labelWithSatuanandSubId) throw new \Exception('Komoditas sudah ada');
                 $update_komoditas = Komoditas::where('id', $request->id)
                     ->update($payload);
+                $update_harga_konstan = HargaDasar::updateOrCreate(
+                    ['komoditas_id' => $request->id],
+                    ['harga_konstan' => $validated['harga_konstan']]
+                );
                 $message = [
                     'type' => 'success',
                     'message' => 'Komoditas berhasil diedit.'
@@ -452,6 +459,7 @@ class KomoditasController extends Controller
             }
         }
         $this_komoditas = Komoditas::findOrFail($id);
+        $this_komoditas->harga_konstan = HargaDasar::where('komoditas_id', $id)->value('harga_konstan');
         return response()->json([
             'this_komoditas' => $this_komoditas
         ]);
