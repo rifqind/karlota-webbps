@@ -29,7 +29,7 @@
           :nav-icon="'fa-solid fa-money-bill-transfer'"
           :href="route('ih.dasar.index')"
           :current-route="currentRoute == 'ih.dasar.index'"
-          >Indeks Harga Dasar</NavLinkSidebar
+          >Indeks Harga</NavLinkSidebar
         >
         <NavLinkSidebar
           :navIcon="'fa-solid fa-k'"
