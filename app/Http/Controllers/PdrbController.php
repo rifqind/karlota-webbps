@@ -196,15 +196,15 @@ class PdrbController extends Controller
             ]);
             foreach ($data['dataContents'] as $key => $value) {
                 # code...
-                Pdrb::where('id', $value['id'])
-                    ->update([
-                        'dataset_id' => $value['dataset_id'],
-                        'year' => $value['year'],
-                        'quarter' => $value['quarter'],
-                        'subsector_id' => $value['subsector_id'],
-                        'adhb' => $value['adhb'],
-                        'adhk' => $value['adhk'],
-                    ]);
+                $pdrb = Pdrb::find($value['id']);
+                if ($pdrb) $pdrb->update([
+                    'dataset_id' => $value['dataset_id'],
+                    'year' => $value['year'],
+                    'quarter' => $value['quarter'],
+                    'subsector_id' => $value['subsector_id'],
+                    'adhb' => $value['adhb'],
+                    'adhk' => $value['adhk'],
+                ]);
             }
             $message = [
                 'type' => 'success',
@@ -305,19 +305,19 @@ class PdrbController extends Controller
                 'dataContents.*.adhb' => ['sometimes', 'numeric', 'nullable'],
                 'dataContents.*.adhk' => ['sometimes', 'numeric', 'nullable'],
             ]);
-            $dataset = Dataset::where('id', $request->id)
-                ->update(['status' => 'Submitted', 'edited_by' => Auth::id()]);
+            $dataset = Dataset::find($request->id);
+            if ($dataset) $dataset->update(['status' => 'Submitted', 'edited_by' => Auth::id()]);
             foreach ($request->dataContents as $key => $value) {
                 # code...
-                Pdrb::where('id', $value['id'])
-                    ->update([
-                        'dataset_id' => $value['dataset_id'],
-                        'year' => $value['year'],
-                        'quarter' => $value['quarter'],
-                        'subsector_id' => $value['subsector_id'],
-                        'adhb' => $value['adhb'],
-                        'adhk' => $value['adhk'],
-                    ]);
+                $pdrb = Pdrb::find($value['id']);
+                if ($pdrb) $pdrb->update([
+                    'dataset_id' => $value['dataset_id'],
+                    'year' => $value['year'],
+                    'quarter' => $value['quarter'],
+                    'subsector_id' => $value['subsector_id'],
+                    'adhb' => $value['adhb'],
+                    'adhk' => $value['adhk'],
+                ]);
             }
             $message = [
                 'type' => 'success',
@@ -353,8 +353,8 @@ class PdrbController extends Controller
             $request->validate([
                 'id' => ['required', 'integer']
             ]);
-            $dataset = Dataset::where('id', $request->id)
-                ->update(['status' => 'Entry', 'edited_by' => Auth::id()]);
+            $dataset = Dataset::find($request->id);
+            if ($dataset) $dataset->update(['status' => 'Entry', 'edited_by' => Auth::id()]);
             $message = [
                 'type' => 'success',
                 'message' => 'Data kembali ke status Entry'

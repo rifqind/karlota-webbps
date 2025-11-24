@@ -102,44 +102,31 @@ class FenomenaController extends Controller
             foreach ($data['dataContents'] as $key => $value) {
                 # code...
                 if ($value['id']) {
-                    Fenomena::where('id', $value['id'])
-                        ->update([
-                            'fenomena_sets' => $value['fenomena_sets'],
-                            'category_id' => $value['category_id'],
-                            'sector_id' => $value['sector_id'],
-                            'subsector_id' => $value['subsector_id'],
-                            'qtoq' => $value['qtoq'] ?? null,
-                            'yony' => $value['yony'] ?? null,
-                            'implisit' => $value['implisit'] ?? null,
-                        ]);
+                    $fenomena = Fenomena::where('id', $value['id']);
+                    if ($fenomena) $fenomena->update([
+                        'fenomena_sets' => $value['fenomena_sets'],
+                        'category_id' => $value['category_id'],
+                        'sector_id' => $value['sector_id'],
+                        'subsector_id' => $value['subsector_id'],
+                        'qtoq' => $value['qtoq'] ?? null,
+                        'yony' => $value['yony'] ?? null,
+                        'implisit' => $value['implisit'] ?? null,
+                    ]);
                 } else {
                     if ($value['qtoq'] || $value['yony'] || $value['implisit']) {
-                        $this_fenomena = Fenomena::where('fenomena_sets', $request->fenomena_sets)
-                            ->where('category_id', $value['category_id'])
-                            ->where('sector_id', $value['sector_id'])
-                            ->where('subsector_id', $value['subsector_id'])
-                            ->first();
-                        if ($this_fenomena) {
-                            Fenomena::where('fenomena_sets', $request->id)
-                                ->where('category_id', $value['category_id'])
-                                ->where('sector_id', $value['sector_id'])
-                                ->where('subsector_id', $value['subsector_id'])
-                                ->update([
-                                    'qtoq' => $value['qtoq'] ?? null,
-                                    'yony' => $value['yony'] ?? null,
-                                    'implisit' => $value['implisit'] ?? null,
-                                ]);
-                        } else {
-                            Fenomena::create([
+                        Fenomena::updateOrCreate(
+                            [
                                 'fenomena_sets' => $request->fenomena_sets,
-                                'category_id' => $value['category_id'],
-                                'sector_id' => $value['sector_id'],
-                                'subsector_id' => $value['subsector_id'],
-                                'qtoq' => $value['qtoq'] ?? null,
-                                'yony' => $value['yony'] ?? null,
-                                'implisit' => $value['implisit'] ?? null,
-                            ]);
-                        }
+                                'category_id'   => $value['category_id'],
+                                'sector_id'     => $value['sector_id'],
+                                'subsector_id'  => $value['subsector_id'],
+                            ],
+                            [
+                                'qtoq'      => $value['qtoq'] ?? null,
+                                'yony'      => $value['yony'] ?? null,
+                                'implisit'  => $value['implisit'] ?? null,
+                            ]
+                        );
                     }
                 }
             }
@@ -188,44 +175,31 @@ class FenomenaController extends Controller
             foreach ($data['dataContents'] as $key => $value) {
                 # code...
                 if ($value['id']) {
-                    Fenomena::where('id', $value['id'])
-                        ->update([
-                            'fenomena_sets' => $value['fenomena_sets'],
-                            'category_id' => $value['category_id'],
-                            'sector_id' => $value['sector_id'],
-                            'subsector_id' => $value['subsector_id'],
-                            'qtoq' => $value['qtoq'] ?? null,
-                            'yony' => $value['yony'] ?? null,
-                            'implisit' => $value['implisit'] ?? null,
-                        ]);
+                    $fenomena = Fenomena::where('id', $value['id']);
+                    if ($fenomena) $fenomena->update([
+                        'fenomena_sets' => $value['fenomena_sets'],
+                        'category_id' => $value['category_id'],
+                        'sector_id' => $value['sector_id'],
+                        'subsector_id' => $value['subsector_id'],
+                        'qtoq' => $value['qtoq'] ?? null,
+                        'yony' => $value['yony'] ?? null,
+                        'implisit' => $value['implisit'] ?? null,
+                    ]);
                 } else {
                     if ($value['qtoq'] || $value['yony'] || $value['implisit']) {
-                        $this_fenomena = Fenomena::where('fenomena_sets', $request->id)
-                            ->where('category_id', $value['category_id'])
-                            ->where('sector_id', $value['sector_id'])
-                            ->where('subsector_id', $value['subsector_id'])
-                            ->first();
-                        if ($this_fenomena) {
-                            Fenomena::where('fenomena_sets', $request->id)
-                                ->where('category_id', $value['category_id'])
-                                ->where('sector_id', $value['sector_id'])
-                                ->where('subsector_id', $value['subsector_id'])
-                                ->update([
-                                    'qtoq' => $value['qtoq'] ?? null,
-                                    'yony' => $value['yony'] ?? null,
-                                    'implisit' => $value['implisit'] ?? null,
-                                ]);
-                        } else {
-                            Fenomena::create([
+                        Fenomena::updateOrCreate(
+                            [
                                 'fenomena_sets' => $request->id,
-                                'category_id' => $value['category_id'],
-                                'sector_id' => $value['sector_id'],
-                                'subsector_id' => $value['subsector_id'],
-                                'qtoq' => $value['qtoq'] ?? null,
-                                'yony' => $value['yony'] ?? null,
-                                'implisit' => $value['implisit'] ?? null,
-                            ]);
-                        }
+                                'category_id'   => $value['category_id'],
+                                'sector_id'     => $value['sector_id'],
+                                'subsector_id'  => $value['subsector_id'],
+                            ],
+                            [
+                                'qtoq'      => $value['qtoq'] ?? null,
+                                'yony'      => $value['yony'] ?? null,
+                                'implisit'  => $value['implisit'] ?? null,
+                            ]
+                        );
                     }
                 }
             }
