@@ -2,12 +2,13 @@
 
 namespace App\Models;
 
+use App\HasJobLogs;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class Period extends Model
 {
-    use HasFactory;
+    use HasFactory, HasJobLogs;
 
     protected $guarded = ['id'];
 
