@@ -27,8 +27,8 @@
         >
         <NavLinkSidebar
           :nav-icon="'fa-solid fa-money-bill-transfer'"
-          :href="route('ih.dasar.index')"
-          :current-route="currentRoute == 'ih.dasar.index'"
+          :href="route('ih.index')"
+          :current-route="currentRoute == 'ih.index'"
           >Indeks Harga</NavLinkSidebar
         >
         <NavLinkSidebar

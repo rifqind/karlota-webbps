@@ -23,6 +23,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::delete('/destroy/{id}', [KomoditasController::class, 'destroy'])->name('destroy');
     });
     Route::prefix('ih')->name('ih.')->group(function () {
+        Route::get('/index', [IndeksHargaController::class, 'index'])->name('index');
         Route::get('/dasar', [IndeksHargaController::class, 'idxdasar'])->name('dasar.index');
     });
 });

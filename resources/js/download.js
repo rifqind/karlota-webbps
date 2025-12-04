@@ -1,5 +1,5 @@
 import * as XLSX from "xlsx";
-const tableToJson = (idTabel, type = 'number', diskrepansi = false, title_name = 'Hasil Download') => {
+const tableToJson = (idTabel, type = 'number', diskrepansi = false, title_name = 'Hasil Download', maxColumns = null) => {
     const table = document.getElementById(idTabel);
     if (!table) {
         console.error(`Table with id "${idTabel}" not found.`);
@@ -27,14 +27,16 @@ const tableToJson = (idTabel, type = 'number', diskrepansi = false, title_name =
             bodyRows.forEach((row) => {
                 const rowData = {};
                 const cells = row.querySelectorAll('td');
-
+                
                 // Map cell data to headers
                 cells.forEach((cell, index) => {
+                    if (Number.isInteger(maxColumns) && index >= maxColumns) return;
+
                     const header = headers[index] || `column_${index}`; // Fallback for missing headers
                     // let input = cell.querySelector('input')
                     let textarea = cell.querySelector('textarea')
                     // let val = input | textarea ? input.value : cell.textContent.trim(); // Trim whitespace
-                    let val =  textarea ? textarea.value : cell.textContent.trim(); // Trim whitespace
+                    let val = textarea ? textarea.value : cell.textContent.trim(); // Trim whitespace
 
                     if (index != 0) { // Skip the first column
                         if (type == 'number') {
@@ -55,8 +57,8 @@ const tableToJson = (idTabel, type = 'number', diskrepansi = false, title_name =
             });
         }
     });
-    const title = [title_name, , , , , , ]
-    const space = [ , , , , , , ]
+    const title = [title_name, , , , , ,]
+    const space = [, , , , , ,]
     const aoa = [
         title, space, headers, ...rows.map(row => headers.map(header => row[header] ?? ''))
     ]
@@ -69,7 +71,7 @@ const tableToJson = (idTabel, type = 'number', diskrepansi = false, title_name =
 };
 const theDownload = (setdata, title = 'Hasil Download') => {
     var workbook = XLSX.utils.book_new();
-    Object.keys(setdata).forEach((sheetName)=>{
+    Object.keys(setdata).forEach((sheetName) => {
         const data = setdata[sheetName]
         const worksheet = XLSX.utils.aoa_to_sheet(data)
         XLSX.utils.book_append_sheet(workbook, worksheet, sheetName)
