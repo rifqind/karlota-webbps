@@ -15,7 +15,7 @@
         >
           <font-awesome-icon icon="fa-solid fa-circle-down" />
         </button>
-        <button @click="thisDownload" class="btn-info-fordone mb-2 lg:mb-0">
+        <button @click="createModalStatus = true" class="btn-info-fordone mb-2 lg:mb-0">
           <font-awesome-icon icon="fa-solid fa-plus" /> Update Indeks Harga
         </button>
       </div>
@@ -49,7 +49,7 @@
             </td>
             <td class="search-header">
               <Multiselect
-                v-model="searchTahun"
+                v-model="searchYear"
                 :options="props.tahun"
                 :searchable="true"
                 mode="tags"
@@ -65,17 +65,17 @@
         </thead>
         <tbody>
           <tr
-            v-if="komoditas.length > 0"
+            v-if="komoditas_data.length > 0"
             v-for="(data, dataIndex) in paginatedData"
             :key="data.id"
           >
             <td class="align-middle">{{ data.number }}</td>
             <td class="align-middle">{{ data.label }}</td>
-            <td class="align-middle">{{ data.tahun }}</td>
-            <td class="align-middle">{{ data.tw_1 }}</td>
-            <td class="align-middle">{{ data.tw_2 }}</td>
-            <td class="align-middle">{{ data.tw_3 }}</td>
-            <td class="align-middle">{{ data.tw_4 }}</td>
+            <td class="align-middle text-right">{{ data.tahun }}</td>
+            <td class="align-middle text-right">{{ formatNumberGerman(data.tw1) }}</td>
+            <td class="align-middle text-right">{{ formatNumberGerman(data.tw2) }}</td>
+            <td class="align-middle text-right">{{ formatNumberGerman(data.tw3) }}</td>
+            <td class="align-middle text-right">{{ formatNumberGerman(data.tw4) }}</td>
             <td class="text-center align-middle deleted space-x-2">
               <a @click="updateData(data.id)"
                 ><font-awesome-icon icon="fa-solid fa-pen" title="Edit" class="edit-pen"
@@ -96,20 +96,55 @@
       :current-page="currentPage"
       :current-show-items="paginatedData.length"
     />
+    <ModalBs
+      :-modal-status="createModalStatus"
+      @close="createModalStatus = false"
+      :title="'Isi Indeks Harga'"
+      :modal-size="'min-w-[20vw]'"
+    >
+      <template #modalBody>
+        <div class="form-group">
+          <div class="mb-3 space-y-2">
+            <div>Download Template di sini</div>
+            <button
+              @click="thisDownload"
+              type="button"
+              class="btn-success-fordone btn-sm text-sm"
+            >
+              Download
+            </button>
+          </div>
+          <div class="space-y-2">
+            <div><label>Upload File :</label></div>
+            <input type="file" @change="handleUpload" class="form-control w-full" />
+          </div>
+          <div class="text-danger mt-2 text-sm font-vold">
+            {{ form.errors.fileUpload }}
+          </div>
+        </div>
+      </template>
+      <template #modalFunction
+        ><button type="button" @click="submit" class="btn-sm text-sm btn-success-fordone">
+          Kirim
+        </button>
+      </template>
+    </ModalBs>
   </LKLayout>
 </template>
 
 <script setup>
 import { triggerSpinner } from "@/axiosSetup";
 import FlashFetch from "@/Components/FlashFetch.vue";
+import ModalBs from "@/Components/ModalBs.vue";
 import Pagination from "@/Components/Pagination.vue";
 import SpinnerBorder from "@/Components/SpinnerBorder.vue";
 import { debounce } from "@/debounce";
-import { tableToJson } from "@/download";
+import { tableToJson, theDownload } from "@/download";
 import LKLayout from "@/Layouts/LKLayout.vue";
-import { Head } from "@inertiajs/vue3";
+import { Head, useForm } from "@inertiajs/vue3";
 import Multiselect from "@vueform/multiselect";
 import { computed, ref, watch } from "vue";
+import * as XLSX from "xlsx";
 
 const props = defineProps({
   komoditas: {
@@ -125,7 +160,10 @@ const props = defineProps({
     required: true,
   },
 });
-const komoditas = ref(props.komoditas.data);
+const form = useForm({
+  fileUpload: null,
+});
+const komoditas_data = ref(props.komoditas.data);
 const notifications = ref([]);
 const showNotification = (notification) => {
   notifications.value = notification;
@@ -135,11 +173,21 @@ const showNotification = (notification) => {
     }, (index + 1) * 1200); // Delay based on index
   });
 };
+const formatNumberGerman = (num, min = 2, max = 3) => {
+  if (num) {
+    return new Intl.NumberFormat("de-DE", {
+      minimumFractionDigits: min,
+      maximumFractionDigits: max,
+    }).format(num);
+  } else return;
+};
 const searchLabel = ref(null);
 const searchTahun = ref(null);
 const searchUpdatedAt = ref(null);
+const searchYear = ref(null);
 const ArrayBigObjects = [
   { key: "label", valueFilter: searchLabel },
+  { key: "year", valueFilter: searchYear },
   { key: "subsektor_updatedAt", valueFilter: searchUpdatedAt },
 ];
 const currentPage = ref(1);
@@ -170,12 +218,12 @@ watch(
   }
 );
 const paginatedData = computed(() => {
-  return komoditas.value;
+  return komoditas_data.value;
 });
 watch(
   () => props.komoditas,
   (value) => {
-    komoditas.value = value;
+    komoditas_data.value = value;
   }
 );
 const fetchData = async () => {
@@ -186,12 +234,12 @@ const fetchData = async () => {
         paginated: showItems.value,
         ArrayFilter: {
           label: searchLabel.value,
-          subsector_updatedAt: searchUpdatedAt.value,
+          year: searchYear.value,
         },
         orderAttribute: orderAttribute.value,
       },
     });
-    komoditas.value = response.data.komoditas.data;
+    komoditas_data.value = response.data.komoditas.data;
     totalItems.value = response.data.countData;
   } catch (error) {
     console.error("Error fetching data:", error);
@@ -213,8 +261,65 @@ const clickToOrder = (value) => {
   fetchData();
 };
 const thisDownload = () => {
-  let result = tableToJson("this-table", "not-number");
-  console.log(result);
+  // let result = tableToJson("this-table", "not-number", false, undefined, 7);
+  // let list = {};
+  // list["template-indeks-harga"] = result;
+  // theDownload(list);
+  try {
+    window.location.href = route("ih.template");
+  } catch (error) {
+    alert("Gagal Download Data");
+  }
+};
+const createModalStatus = ref(false);
+const handleUpload = (e) => {
+  const pickedFile = e.target.files?.[0];
+  if (!pickedFile) return;
+  const reader = new FileReader();
+
+  reader.onload = (evt) => {
+    const binaryStr = evt.target.result;
+
+    // Baca workbook dari hasil FileReader
+    const workbook = XLSX.read(binaryStr, { type: "binary" });
+
+    // Ambil sheet pertama
+    const firstSheetName = workbook.SheetNames[0];
+    const worksheet = workbook.Sheets[firstSheetName];
+
+    // Ubah isi sheet menjadi array of arrays
+    const data = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+    const rowsAsObjects = XLSX.utils.sheet_to_json(worksheet, {
+      defval: null,
+      raw: true,
+    });
+    // Simpan ke variabel reactive / state form
+    // form.fileUpload = data;
+    // dataPreview.value = data;
+    form.fileUpload = rowsAsObjects;
+  };
+  // baca file
+  reader.readAsBinaryString(pickedFile);
+};
+const submit = () => {
+  try {
+    form.post(route("ih.store"), {
+      onSuccess: (response) => {
+        showNotification(response.props.notification);
+        form.reset();
+        fetchData();
+        createModalStatus.value = false;
+      },
+      onError: (error) => {
+        let errorList = [];
+        if (error?.notification) {
+          errorList.push(error.notification);
+          showNotification(errorList);
+        }
+        fetchData();
+      },
+    });
+  } catch (error) {}
 };
 </script>
 

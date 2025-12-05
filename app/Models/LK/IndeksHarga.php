@@ -16,5 +16,5 @@ class IndeksHarga extends Model
         'triwulan'
     ];
     public $table = 'indeks_harga';
-    // public $timestamps = true;
+    public $timestamps = true;
 }

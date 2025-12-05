@@ -21,7 +21,11 @@ const emit = defineEmits(["remove"]);
             ? 'bg-red-700'
             : notif.type == 'success'
             ? 'bg-green-700'
-            : 'bg-blue-700'
+            : notif.type == 'info'
+            ? 'bg-blue-700'
+            : notif.type == 'warning'
+            ? 'bg-amber-600'
+            : ''
         "
       >
         {{ notif.message }}

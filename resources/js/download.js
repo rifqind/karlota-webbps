@@ -12,7 +12,10 @@ const tableToJson = (idTabel, type = 'number', diskrepansi = false, title_name =
     // Extract headers from thead
     const headerRows = table.querySelector('thead tr');
     if (headerRows) {
-        const headersTh = headerRows.querySelectorAll('th');
+        let headersTh = headerRows.querySelectorAll('th');
+        if (maxColumns && Number.isInteger(maxColumns)) {
+            headersTh = Array.from(headersTh).slice(0, maxColumns);
+        }
         headersTh.forEach((th) => {
             headers.push(th.textContent.trim()); // Trim whitespace
         });
@@ -27,7 +30,7 @@ const tableToJson = (idTabel, type = 'number', diskrepansi = false, title_name =
             bodyRows.forEach((row) => {
                 const rowData = {};
                 const cells = row.querySelectorAll('td');
-                
+
                 // Map cell data to headers
                 cells.forEach((cell, index) => {
                     if (Number.isInteger(maxColumns) && index >= maxColumns) return;
@@ -57,8 +60,9 @@ const tableToJson = (idTabel, type = 'number', diskrepansi = false, title_name =
             });
         }
     });
-    const title = [title_name, , , , , ,]
-    const space = [, , , , , ,]
+    let rowLength = headers.length
+    const title = [title_name, ...Array(rowLength - 1).fill('')]
+    const space = Array(rowLength).fill('')
     const aoa = [
         title, space, headers, ...rows.map(row => headers.map(header => row[header] ?? ''))
     ]

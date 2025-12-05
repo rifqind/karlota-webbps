@@ -1,10 +1,12 @@
 <?php
 
+use App\Exports\IndeksHargaExport;
 use App\Http\Controllers\Lk\IndeksHargaController;
 use App\Http\Controllers\LK\KomoditasController;
 use App\Http\Controllers\LK\LkController;
 use Illuminate\Support\Facades\Response;
 use Illuminate\Support\Facades\Route;
+use Maatwebsite\Excel\Facades\Excel;
 
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::prefix('lk')->name('lk.')->group(function () {
@@ -24,6 +26,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
     });
     Route::prefix('ih')->name('ih.')->group(function () {
         Route::get('/index', [IndeksHargaController::class, 'index'])->name('index');
+        Route::post('/store', [IndeksHargaController::class, 'store'])->name('store');
         Route::get('/dasar', [IndeksHargaController::class, 'idxdasar'])->name('dasar.index');
+        Route::get('/template', function () {
+            return Excel::download(new IndeksHargaExport(), 'template-indeks-harga.xlsx');
+        })->name('template');
     });
 });

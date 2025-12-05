@@ -581,8 +581,10 @@ const submit = async () => {
       },
       onError: (errors) => {
         let errorList = [];
-        errorList.push(errors.notifications);
-        showNotification(errorList);
+        if (errors?.notification) {
+          errorList.push(errors?.notification);
+          showNotification(errorList);
+        }
       },
     });
   } catch (error) {
