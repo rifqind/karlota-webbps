@@ -307,4 +307,108 @@ class IndeksHargaController extends Controller
             return back()->withErrors(['notification' => $notifications]);
         }
     }
+
+    public function fetch($label, $tahun)
+    {
+        $komoditas_id = Komoditas::where('label', $label)->value('id');
+        $query = Komoditas::query();
+        $query->join('indeks_harga as ih', 'ih.komoditas_id', '=', 'master_komoditas.id')
+            ->where('master_komoditas.id', $komoditas_id)
+            ->where('ih.tahun', $tahun)
+            ->selectRaw("
+                master_komoditas.id,
+                master_komoditas.label,
+                ih.tahun,
+                MAX(CASE WHEN ih.triwulan = 1 THEN ih.indeks_harga END) AS tw1,
+                MAX(CASE WHEN ih.triwulan = 2 THEN ih.indeks_harga END) AS tw2,
+                MAX(CASE WHEN ih.triwulan = 3 THEN ih.indeks_harga END) AS tw3,
+                MAX(CASE WHEN ih.triwulan = 4 THEN ih.indeks_harga END) AS tw4
+            ")
+            ->groupBy(
+                'master_komoditas.id',
+                'master_komoditas.label',
+                'master_komoditas.category_id',
+                'master_komoditas.sector_id',
+                'master_komoditas.subsector_id',
+                'ih.tahun'
+            );
+        $ih = $query->first();
+        return response()->json($ih);
+    }
+
+    public function update(Request $request)
+    {
+        $notifications = [];
+        $validated = $request->validate([
+            'komoditas_id' => ['required'],
+            'tahun' => ['integer', 'required', 'digits:4'],
+            'tw1' => ['sometimes', 'nullable', 'numeric'],
+            'tw2' => ['sometimes', 'nullable', 'numeric'],
+            'tw3' => ['sometimes', 'nullable', 'numeric'],
+            'tw4' => ['sometimes', 'nullable', 'numeric']
+        ], [
+            'komoditas_id.required' => 'Komoditas tidak boleh kosong',
+            'tahun.digits' => 'Tahun harus berupa 4 digit angka',
+            'tahun.integer' => 'Tahun harus berupa angka',
+            'tw1.numeric' => 'TW1 harus berupa angka',
+            'tw2.numeric' => 'TW2 harus berupa angka',
+            'tw3.numeric' => 'TW3 harus berupa angka',
+            'tw4.numeric' => 'TW4 harus berupa angka',
+        ]);
+        try {
+            //code...
+            DB::beginTransaction();
+            $tw = [1, 2, 3, 4];
+            foreach ($tw as $triwulan) {
+                $indeks_harga = null;
+                switch ($triwulan) {
+                    case 1:
+                        $indeks_harga = $validated['tw1'] ?? null;
+                        break;
+                    case 2:
+                        $indeks_harga = $validated['tw2'] ?? null;
+                        break;
+                    case 3:
+                        $indeks_harga = $validated['tw3'] ?? null;
+                        break;
+                    case 4:
+                        $indeks_harga = $validated['tw4'] ?? null;
+                        break;
+                }
+                // update atau insert
+                if ($indeks_harga === null) {
+                    // kalau null, hapus data yg ada
+                    $ih = IndeksHarga::where('komoditas_id', $validated['komoditas_id'])
+                        ->where('tahun', $validated['tahun'])
+                        ->where('triwulan', $triwulan);
+                    $ih->delete();
+                    continue;
+                }
+                IndeksHarga::updateOrCreate(
+                    [
+                        'komoditas_id' => $validated['komoditas_id'],
+                        'tahun' => $validated['tahun'],
+                        'triwulan' => $triwulan,
+                    ],
+                    [
+                        'indeks_harga' => $indeks_harga,
+                    ]
+                );
+            }
+            DB::commit();
+            $notifications[] = [
+                'type' => 'success',
+                'message' => 'Berhasil update data',
+            ];
+            return back()->with(['notification' => $notifications]);
+        } catch (\Throwable $th) {
+            //throw $th;
+            DB::rollBack();
+            $notifications[] = [
+                'type' => 'error',
+                'message' => 'Error : ' . $th->getMessage(),
+            ];
+            return back()->withErrors(['notification' => $notifications]);
+        }
+    }
 }

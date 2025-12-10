@@ -77,7 +77,7 @@
             <td class="align-middle text-right">{{ formatNumberGerman(data.tw3) }}</td>
             <td class="align-middle text-right">{{ formatNumberGerman(data.tw4) }}</td>
             <td class="text-center align-middle deleted space-x-2">
-              <a @click="updateData(data.id)"
+              <a @click="updateData(data.label, data.tahun)" v-if="checkRow(data)"
                 ><font-awesome-icon icon="fa-solid fa-pen" title="Edit" class="edit-pen"
               /></a>
             </td>
@@ -129,6 +129,54 @@
         </button>
       </template>
     </ModalBs>
+    <ModalBs
+      :-modal-status="updateModalStatus"
+      @close="updateModalStatus = false"
+      :title="'Update Data'"
+      :modal-size="'min-w-[900px]'"
+    >
+      <template #modalBody>
+        <div class="form-group table-responsive-mobile overflow-x-auto">
+          <table class="table border-2 mb-2 w-full">
+            <thead>
+              <tr>
+                <th>Nama Komoditas</th>
+                <th>Triwulan I</th>
+                <th>Triwulan II</th>
+                <th>Triwulan III</th>
+                <th>Triwulan IV</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-if="targetUpdatedData">
+                <td>{{ targetUpdatedData.label }}</td>
+                <td v-for="(node, index) in ['tw1', 'tw2', 'tw3', 'tw4']" :key="index">
+                  <input
+                    @input="
+                      (event) => {
+                        debounceHandleInput(event, node);
+                      }
+                    "
+                    type="text"
+                    class="text-right w-full p-1 border-gray-300 rounded"
+                    :value="getData(node)"
+                  />
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </template>
+      <template #modalFunction>
+        <button
+          type="button"
+          @click="updateIndeks"
+          class="btn-sm text-sm btn-success-fordone"
+        >
+          Update
+        </button>
+      </template>
+    </ModalBs>
   </LKLayout>
 </template>
 
@@ -139,7 +187,6 @@ import ModalBs from "@/Components/ModalBs.vue";
 import Pagination from "@/Components/Pagination.vue";
 import SpinnerBorder from "@/Components/SpinnerBorder.vue";
 import { debounce } from "@/debounce";
-import { tableToJson, theDownload } from "@/download";
 import LKLayout from "@/Layouts/LKLayout.vue";
 import { Head, useForm } from "@inertiajs/vue3";
 import Multiselect from "@vueform/multiselect";
@@ -161,6 +208,12 @@ const props = defineProps({
   },
 });
 const form = useForm({
+  komoditas_id: null,
+  tahun: null,
+  tw1: null,
+  tw2: null,
+  tw3: null,
+  tw4: null,
   fileUpload: null,
 });
 const komoditas_data = ref(props.komoditas.data);
@@ -261,10 +314,6 @@ const clickToOrder = (value) => {
   fetchData();
 };
 const thisDownload = () => {
-  // let result = tableToJson("this-table", "not-number", false, undefined, 7);
-  // let list = {};
-  // list["template-indeks-harga"] = result;
-  // theDownload(list);
   try {
     window.location.href = route("ih.template");
   } catch (error) {
@@ -294,8 +343,6 @@ const handleUpload = (e) => {
       raw: true,
     });
     // Simpan ke variabel reactive / state form
-    // form.fileUpload = data;
-    // dataPreview.value = data;
     form.fileUpload = rowsAsObjects;
   };
   // baca file
@@ -320,6 +367,70 @@ const submit = () => {
       },
     });
   } catch (error) {}
+};
+//row
+const checkRow = (data) => {
+  if (data.tw1 == null && data.tw2 == null && data.tw3 == null && data.tw4 == null) {
+    return false;
+  } else {
+    return true;
+  }
+};
+//update
+const updateModalStatus = ref(false);
+const targetUpdatedData = ref([]);
+const updateData = async (l, t) => {
+  updateModalStatus.value = true;
+  const { data } = await axios.get(route("ih.fetch", { label: l, tahun: t }));
+  console.log(data);
+  targetUpdatedData.value = data;
+};
+const getData = (node) => {
+  let formattedResult = null;
+  formattedResult =
+    targetUpdatedData.value[node] == "" || targetUpdatedData.value[node] == null
+      ? null
+      : formatNumberGerman(Number(targetUpdatedData.value[node]), 2, 2);
+  return formattedResult;
+};
+const handleInput = (event, node) => {
+  let value = event.target.value;
+  value = String(value).replaceAll(".", "").replace(",", ".");
+  targetUpdatedData.value[node] = Number(value);
+};
+const debounceHandleInput = debounce((event, node) => {
+  handleInput(event, node);
+}, 350);
+const updateIndeks = () => {
+  try {
+    form.komoditas_id = targetUpdatedData.value.id;
+    form.tahun = targetUpdatedData.value.tahun;
+    form.tw1 = targetUpdatedData.value.tw1;
+    form.tw2 = targetUpdatedData.value.tw2;
+    form.tw3 = targetUpdatedData.value.tw3;
+    form.tw4 = targetUpdatedData.value.tw4;
+    form.patch(route("ih.update"), {
+      onBefore: () => {
+        updateModalStatus.value = false;
+      },
+      onSuccess: (response) => {
+        showNotification(response.props.notification);
+        form.reset();
+        fetchData();
+      },
+      onError: (error) => {
+        let errorList = [];
+        if (error?.notification) {
+          errorList.push(error.notification);
+          showNotification(errorList);
+        }
+        fetchData();
+        updateModalStatus.value = true;
+      },
+    });
+  } catch (error) {
+    console.error("Error updating indeks: ", error);
+  }
 };
 </script>
 

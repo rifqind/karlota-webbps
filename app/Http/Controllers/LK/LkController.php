@@ -13,4 +13,9 @@ class LkController extends Controller
     {
         return Inertia::render('LK/Home/Dashboard');
     }
+
+    public function index(Request $request)
+    {
+        return Inertia::render('LK/Home/Index');
+    }
 }

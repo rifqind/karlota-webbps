@@ -12,6 +12,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::prefix('lk')->name('lk.')->group(function () {
         Route::get('/dashboard', [LkController::class, 'dashboard'])
             ->name('dashboard');
+        Route::get('/index', [LkController::class, 'index'])->name('index');
     });
     Route::prefix('komoditas')->name('komoditas.')->group(function () {
         Route::get('/index', [KomoditasController::class, 'index'])->name('index');
@@ -31,5 +32,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/template', function () {
             return Excel::download(new IndeksHargaExport(), 'template-indeks-harga.xlsx');
         })->name('template');
+        Route::get('/fetch/{label}/{tahun}', [IndeksHargaController::class, 'fetch'])->name('fetch');
+        Route::patch('/update', [IndeksHargaController::class, 'update'])->name('update');
     });
 });

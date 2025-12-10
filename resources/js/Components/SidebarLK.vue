@@ -32,6 +32,12 @@
           >Indeks Harga</NavLinkSidebar
         >
         <NavLinkSidebar
+          :nav-icon="'fa-solid fa-file-circle-check'"
+          :href="route('lk.index')"
+          :current-route="currentRoute == 'lk.index'"
+          >Lembar Kerja</NavLinkSidebar
+        >
+        <NavLinkSidebar
           :navIcon="'fa-solid fa-k'"
           :href="route('dashboard')"
           :currentRoute="currentRoute == 'dashboard'"
