@@ -13,6 +13,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/dashboard', [LkController::class, 'dashboard'])
             ->name('dashboard');
         Route::get('/index', [LkController::class, 'index'])->name('index');
+        Route::get('/get-data', [LkController::class, 'getData'])->name('getData');
     });
     Route::prefix('komoditas')->name('komoditas.')->group(function () {
         Route::get('/index', [KomoditasController::class, 'index'])->name('index');
@@ -35,4 +36,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/fetch/{label}/{tahun}', [IndeksHargaController::class, 'fetch'])->name('fetch');
         Route::patch('/update', [IndeksHargaController::class, 'update'])->name('update');
     });
+
+    Route::get('/fetch-sector/{category_id}', [LkController::class, 'fetchSector'])->name('fetchSector');
+    Route::get('/fetch-subsector/{sector_id}', [LkController::class, 'fetchSubsector'])->name('fetchSubsector');
 });
