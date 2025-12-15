@@ -61,7 +61,6 @@
       <thead>
         <tr>
           <th rowspan="2">Periode</th>
-          <th rowspan="2">No</th>
           <th rowspan="2">Komoditas</th>
           <th rowspan="2">Produksi</th>
           <th rowspan="2">Indeks Harga</th>
@@ -83,10 +82,25 @@
         </tr>
       </thead>
       <tbody>
-        <template v-for="item in lengthSpan" :key="item">
+        <!-- <template v-for="item in lengthSpan" :key="item">
           <tr>
             <td v-if="item == 0" :rowspan="props.test.length"></td>
+            <td>{{ props.test[item].label }}</td>
+            <td><input class="w-full" /></td>
+            <td>{{ props.test[item].indeks_harga }}</td>
           </tr>
+        </template> -->
+        <template v-for="(y, iy) in props.mapped" :key="iy">
+          <template v-for="(t, it) in y" :key="`${iy}-${it}`">
+            <tr v-for="(n, i) in props.test">
+              <td v-if="i === 0" :rowspan="props.test.length">
+                {{ iy }}
+              </td>
+              <td>{{ n.label }}</td>
+              <td><input class="w-full py-0 px-1 text-xs text-right" /></td>
+              <td>{{ t }}</td>
+            </tr>
+          </template>
         </template>
       </tbody>
     </table>
@@ -102,6 +116,7 @@ import { ref } from "vue";
 const props = defineProps({
   category: Array,
   test: Array,
+  mapped: Object,
 });
 const lengthSpan = ref(Array.from({ length: props.test.length }, (_, index) => index));
 const form = useForm({

@@ -105,8 +105,8 @@
             <td class="align-middle">
               {{ data.subsector_label }}
             </td>
-            <td class="align-middle">
-              Rp {{ formatNumberGerman(data.harga_konstan, 2, 5) }}
+            <td class="align-middle text-right">
+              {{ formatNumberGerman(data.harga_konstan, 2, 5) }}
             </td>
             <td class="align-middle text-center">
               <span class="badge badge-info">{{ data.username }}</span>

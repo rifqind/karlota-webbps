@@ -21,12 +21,30 @@ class LkController extends Controller
     public function index()
     {
         $category = Category::select(['id as value', 'name as label'])->get();
-        $test_data = Komoditas::where('category_id', 1)->get();
+        $komoditas = Komoditas::where('subsector_id', 1)->get();
+        $test_data = Komoditas::leftJoin('master_harga as mh', 'mh.komoditas_id', '=', 'master_komoditas.id')
+            ->join('indeks_harga as ih', 'ih.komoditas_id', '=', 'master_komoditas.id')
+            ->where('subsector_id', 1)
+            ->select([
+                'ih.indeks_harga',
+                'ih.triwulan',
+                'ih.tahun',
+                'mh.harga_konstan',
+                'master_komoditas.*'
+            ])
+            ->get();
+        $mapped = $test_data->groupBy('tahun')
+            ->map(function ($by) {
+                return $by->groupBy('triwulan')->map(function ($item) {
+                    return $item;
+                });
+            });
         return Inertia::render(
             'LK/Home/Index',
             [
                 'category' => $category,
-                'test' => $test_data
+                'test' => $komoditas,
+                'mapped' => $mapped
             ]
         );
     }
