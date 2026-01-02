@@ -57,7 +57,7 @@
         </div>
       </div>
     </div>
-    <table class="table text-xs w-full">
+    <table v-if="loaddata" class="table text-xs w-full">
       <thead>
         <tr>
           <th rowspan="2">Periode</th>
@@ -71,7 +71,6 @@
           <th colspan="2">NTB</th>
         </tr>
         <tr>
-          <th>ADHB</th>
           <th>ADHK</th>
           <th>ADHB</th>
           <th>ADHK</th>
@@ -79,26 +78,35 @@
           <th>ADHK</th>
           <th>ADHB</th>
           <th>ADHK</th>
+          <th>ADHB</th>
         </tr>
       </thead>
       <tbody>
-        <!-- <template v-for="item in lengthSpan" :key="item">
-          <tr>
-            <td v-if="item == 0" :rowspan="props.test.length"></td>
-            <td>{{ props.test[item].label }}</td>
-            <td><input class="w-full" /></td>
-            <td>{{ props.test[item].indeks_harga }}</td>
-          </tr>
-        </template> -->
-        <template v-for="(y, iy) in props.mapped" :key="iy">
+        <template v-for="(y, iy) in datacontents" :key="iy">
           <template v-for="(t, it) in y" :key="`${iy}-${it}`">
             <tr v-for="(n, i) in props.test">
               <td v-if="i === 0" :rowspan="props.test.length">
                 {{ iy }}
               </td>
               <td>{{ n.label }}</td>
-              <td><input class="w-full py-0 px-1 text-xs text-right" /></td>
-              <td>{{ t }}</td>
+              <td>
+                <input
+                  v-if="checkData(t, n.label, it)"
+                  :id="`produksi-${iy}-${it}-${n.label}`"
+                  class="w-full py-0 px-1 text-xs text-right"
+                  @input="
+                    (event) => {
+                      debounceHandleInput(event, t, n.label, it);
+                    }
+                  "
+                  :value="getData(t, n.label, it)"
+                />
+              </td>
+              <td class="text-right">{{ getValue("indeks_harga", t, n.label, it) }}</td>
+              <td class="text-right">{{ getValue("harga_konstan", t, n.label, it) }}</td>
+              <td class="text-right">{{ getValue("harga_berlaku", t, n.label, it) }}</td>
+              <td class="text-right">{{ getOutput("adhk", t, n.label, it) }}</td>
+              <td class="text-right">{{ getOutput("adhb", t, n.label, it) }}</td>
             </tr>
           </template>
         </template>
@@ -108,17 +116,18 @@
 </template>
 
 <script setup>
+import { debounce } from "@/debounce";
 import LKLayout from "@/Layouts/LKLayout.vue";
 import { Head, useForm } from "@inertiajs/vue3";
 import Multiselect from "@vueform/multiselect";
-import { ref } from "vue";
+import { ref, watch } from "vue";
 
 const props = defineProps({
   category: Array,
   test: Array,
-  mapped: Object,
 });
-const lengthSpan = ref(Array.from({ length: props.test.length }, (_, index) => index));
+const datacontents = ref({});
+const loaddata = ref(false);
 const form = useForm({
   category: null,
   sector: null,
@@ -151,13 +160,96 @@ const yearDrop = ref({
     })
   ),
 });
+const handleInput = (event, arr, label, t) => {
+  let value = event.target.value;
+  if (value == "-") value = String(0);
+  value = String(value).replaceAll(".", "").replace(",", ".");
+  const num = Number(value) || 0;
+  const arrResult = arr.find((item) => item.label === label && item.triwulan == t);
+  if (!arrResult) return;
+  const tahun = arrResult.tahun;
+  const homes = datacontents.value?.[tahun]?.[t];
+  if (!Array.isArray(homes)) return;
+  const target = homes.find((item) => item.label == label);
+  if (!target) return;
+  target.produksi = num;
+};
+const debounceHandleInput = debounce((event, arr, label, t) => {
+  handleInput(event, arr, label, t);
+}, 300);
+const getData = (arr, label, t) => {
+  const arrResult = arr.find((item) => item.label === label && item.triwulan == t);
+  if (!arrResult) return;
+  const tahun = arrResult.tahun;
+  const homes = datacontents.value?.[tahun]?.[t];
+  if (!Array.isArray(homes)) return;
+  const target = homes.find((item) => item.label == label);
+  if (!target) return;
+  let result = target.produksi ? formatNumberGerman(target.produksi, 2, 2) : null;
+  return result;
+};
+const checkData = (arr, label, t) => {
+  const arrResult = arr.find((item) => item.label === label && item.triwulan == t);
+  return arrResult ? true : false;
+};
+const getValue = (type, arr, label, t) => {
+  const arrResult = arr.find((item) => item.label === label && item.triwulan == t);
+  let result = "-";
+  switch (type) {
+    case "indeks_harga":
+      result = arrResult ? arrResult.indeks_harga : "-";
+      break;
+    case "harga_konstan":
+      result = arrResult ? arrResult.harga_konstan : "-";
+      break;
+    case "harga_berlaku":
+      result = arrResult ? arrResult.harga_konstan * (arrResult.indeks_harga / 100) : "-";
+      break;
+    default:
+      break;
+  }
+  let formatted = formatNumberGerman(result, 2, 2);
+  return formatted;
+};
+const getOutput = (type, arr, label, t) => {
+  const arrResult = arr.find((item) => item.label === label && item.triwulan == t);
+  let result = "-";
+  switch (type) {
+    case "adhk":
+      result = arrResult ? arrResult.produksi * arrResult.harga_konstan : "-";
+      break;
+    case "adhb":
+      result = arrResult
+        ? arrResult.produksi * arrResult.harga_konstan * (arrResult.indeks_harga / 100)
+        : "-";
+      break;
+    default:
+      break;
+  }
+  let formatted = formatNumberGerman(result, 2, 2);
+  return formatted;
+};
+const formatNumberGerman = (num, min = 2, max = 5) => {
+  let result = new Intl.NumberFormat("de-DE", {
+    minimumFractionDigits: min,
+    maximumFractionDigits: max,
+  }).format(num);
+  let formatted = num == 0 || num == "-" ? "-" : result;
+  return formatted;
+};
 //submit
 const submit = async () => {
-  form.get(route("lk.getData"), {
-    onSuccess: (response) => {
-      console.log(response);
+  loaddata.value = false;
+  const { data } = await axios.get(route("lk.getData"), {
+    params: {
+      category: form.category,
+      sector: form.sector,
+      subsector: form.subsector,
+      years: yearDrop.value.value,
     },
   });
+  datacontents.value = data;
+  loaddata.value = true;
 };
 </script>
 

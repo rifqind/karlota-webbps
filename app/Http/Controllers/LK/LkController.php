@@ -5,6 +5,7 @@ namespace App\Http\Controllers\LK;
 use App\Http\Controllers\Controller;
 use App\Models\Category;
 use App\Models\LK\Komoditas;
+use App\Models\LK\LKDataDasar;
 use App\Models\Sector;
 use App\Models\Subsector;
 use Illuminate\Http\Request;
@@ -32,7 +33,11 @@ class LkController extends Controller
                 'mh.harga_konstan',
                 'master_komoditas.*'
             ])
-            ->get();
+            ->get()
+            ->map(function ($item) {
+                $item->produksi = null;
+                return $item;
+            });
         $mapped = $test_data->groupBy('tahun')
             ->map(function ($by) {
                 return $by->groupBy('triwulan')->map(function ($item) {
@@ -44,7 +49,7 @@ class LkController extends Controller
             [
                 'category' => $category,
                 'test' => $komoditas,
-                'mapped' => $mapped
+                // 'mapped' => $mapped
             ]
         );
     }
@@ -54,6 +59,37 @@ class LkController extends Controller
         $cat = $request->category ?? null;
         $sec = $request->sector ?? null;
         $sub = $request->subsector ?? null;
+        $data = Komoditas::leftJoin('master_harga as mh', 'mh.komoditas_id', '=', 'master_komoditas.id')
+            ->join('indeks_harga as ih', 'ih.komoditas_id', '=', 'master_komoditas.id')
+            ->whereIn('ih.tahun', $request->years)
+            ->where(function ($q) use ($cat, $sec, $sub) {
+                $q->where('category_id', $cat)
+                    ->orWhere('sector_id', $sec)
+                    ->orWhere('subsector_id', $sub);
+            })
+            ->select([
+                'ih.indeks_harga',
+                'ih.triwulan',
+                'ih.tahun',
+                'mh.harga_konstan',
+                'master_komoditas.*'
+            ])
+            ->get()
+            ->map(function ($item) {
+                $komoditas = LKDataDasar::where('id', $item->id)
+                    ->where('tahun', $item->tahun)
+                    ->where('triwulan', $item->triwulan)
+                    ->first();
+                $item->produksi = $komoditas ? $komoditas->produksi : null;
+                return $item;
+            });
+        $mapped = $data->groupBy('tahun')
+            ->map(function ($by) {
+                return $by->groupBy('triwulan')->map(function ($item) {
+                    return $item;
+                });
+            });
+        return response()->json($mapped);
     }
 
     public function fetchSector($category_id)

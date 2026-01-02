@@ -37,6 +37,12 @@
           :current-route="currentRoute == 'lk.index'"
           >Lembar Kerja</NavLinkSidebar
         >
+        <NavLinkParentSidebar
+          :nav-icon="'fa-solid fa-money-bills'"
+          :menu-open="currentRoute == 'lk.index'"
+          :toggle-menu-open="toggleMenuOpen"
+          :params="'rasio'"
+        ></NavLinkParentSidebar>
         <NavLinkSidebar
           :navIcon="'fa-solid fa-k'"
           :href="route('dashboard')"
@@ -78,6 +84,7 @@ const toggleMenuOpen = (x) => {
   if (x == "peng") menuOpenPeng.value = !menuOpenPeng.value;
   if (x == "fenom") menuOpenFenom.value = !menuOpenFenom.value;
   if (x == "sekunder") menuOpenSekunder.value = !menuOpenSekunder.value;
+  if (x == "rasio") menuOpenSekunder.value = !menuOpenSekunder.value;
 };
 
 const emit = defineEmits(["update:updateSidebarValue"]);
