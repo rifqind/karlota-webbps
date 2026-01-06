@@ -61,6 +61,7 @@
                 :options="page.props.rows"
                 v-model="form.rows.selected"
                 mode="tags"
+                @paste="handlePaste"
                 placeholder="-- Pilih Baris --"
                 :searchable="true"
               />
@@ -128,6 +129,7 @@ import { Head, Link, useForm, usePage } from "@inertiajs/vue3";
 import { computed, ref, watch } from "vue";
 import TablePreview from "@/Components/TablePreview.vue";
 import SpinnerBorder from "@/Components/SpinnerBorder.vue";
+import { parseTSVWithQuotes } from "@/handleCopy";
 
 const page = usePage();
 const createModalStatus = ref(false);
@@ -210,6 +212,26 @@ const submit = async () => {
     });
   } catch (error) {
     console.error(error);
+  }
+};
+
+//paste
+const handlePaste = (event) => {
+  const items = event.clipboardData.items;
+  for (let i = 0; i < items.length; i++) {
+    if (items[i].type == "text/plain") {
+      items[i].getAsString((text) => {
+        const parsedRows = parseTSVWithQuotes(text);
+        let data = [];
+        parsedRows.forEach((row) => {
+          let theIndex = page.props.rows.find((item) => item.label == row[0].trim());
+          if (theIndex) {
+            data.push(theIndex.value);
+          }
+        });
+        form.rows.selected = data;
+      });
+    }
   }
 };
 </script>
