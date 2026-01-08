@@ -39,10 +39,26 @@
         >
         <NavLinkParentSidebar
           :nav-icon="'fa-solid fa-money-bills'"
-          :menu-open="currentRoute == 'lk.index'"
+          :menu-open="menuOpenSekunder || currentRoute == 'rba.master-sut'"
           :toggle-menu-open="toggleMenuOpen"
           :params="'rasio'"
-        ></NavLinkParentSidebar>
+        >
+          <template #label>Biaya Antara</template>
+          <template #content>
+            <NavLinkSidebar
+              :nav-icon="'fa-solid fa-tower-cell'"
+              :href="route('rba.master-sut')"
+              :current-route="currentRoute == 'rba.master-sut'"
+              >SUT</NavLinkSidebar
+            >
+            <NavLinkSidebar
+              :nav-icon="'fa-solid fa-tower-broadcast'"
+              :href="route('lk.index')"
+              :current-route="currentRoute == 'lk.index'"
+              >Rasio Biaya Antara
+            </NavLinkSidebar>
+          </template>
+        </NavLinkParentSidebar>
         <NavLinkSidebar
           :navIcon="'fa-solid fa-k'"
           :href="route('dashboard')"

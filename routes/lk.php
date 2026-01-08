@@ -1,6 +1,7 @@
 <?php
 
 use App\Exports\IndeksHargaExport;
+use App\Http\Controllers\LK\BiayaAntaraController;
 use App\Http\Controllers\Lk\IndeksHargaController;
 use App\Http\Controllers\LK\KomoditasController;
 use App\Http\Controllers\LK\LkController;
@@ -35,6 +36,15 @@ Route::middleware(['auth', 'verified'])->group(function () {
         })->name('template');
         Route::get('/fetch/{label}/{tahun}', [IndeksHargaController::class, 'fetch'])->name('fetch');
         Route::patch('/update', [IndeksHargaController::class, 'update'])->name('update');
+    });
+
+    Route::prefix('rba')->name('rba.')->group(function () {
+        Route::get('/master-sut', [BiayaAntaraController::class, 'masterSut'])->name('master-sut');
+        Route::post('/master-sut/store', [BiayaAntaraController::class, 'storeMasterSut'])->name('master-sut.store');
+        Route::patch('/master-sut/update', [BiayaAntaraController::class, 'updateMasterSut'])->name('master-sut.update');
+        Route::delete('/master-sut/destroy/{id}', [BiayaAntaraController::class, 'destroyMasterSut'])->name('master-sut.destroy');
+
+        
     });
 
     Route::get('/fetch-sector/{category_id}', [LkController::class, 'fetchSector'])->name('fetchSector');
