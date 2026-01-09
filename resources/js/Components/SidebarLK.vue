@@ -39,7 +39,11 @@
         >
         <NavLinkParentSidebar
           :nav-icon="'fa-solid fa-money-bills'"
-          :menu-open="menuOpenSekunder || currentRoute == 'rba.master-sut'"
+          :menu-open="
+            menuOpenSekunder ||
+            currentRoute == 'rba.master-sut' ||
+            currentRoute == 'rba.index'
+          "
           :toggle-menu-open="toggleMenuOpen"
           :params="'rasio'"
         >
@@ -53,8 +57,8 @@
             >
             <NavLinkSidebar
               :nav-icon="'fa-solid fa-tower-broadcast'"
-              :href="route('lk.index')"
-              :current-route="currentRoute == 'lk.index'"
+              :href="route('rba.index')"
+              :current-route="currentRoute == 'rba.index'"
               >Rasio Biaya Antara
             </NavLinkSidebar>
           </template>
@@ -146,6 +150,7 @@ const downloadGuide = () => {
 .nav-link {
   padding: 0.5rem 1rem;
 }
+
 .maintenance {
   background-color: #a80606;
   color: whitesmoke;

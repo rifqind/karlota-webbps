@@ -44,7 +44,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::patch('/master-sut/update', [BiayaAntaraController::class, 'updateMasterSut'])->name('master-sut.update');
         Route::delete('/master-sut/destroy/{id}', [BiayaAntaraController::class, 'destroyMasterSut'])->name('master-sut.destroy');
 
-        
+        Route::get('/index', [BiayaAntaraController::class, 'index'])->name('index');
+        Route::post('/store', [BiayaAntaraController::class, 'store'])->name('store');
+        Route::get('/fetch/{id}', [BiayaAntaraController::class, 'fetch'])->name('fetch');
+        Route::patch('/update', [BiayaAntaraController::class, 'update'])->name('update');
+        Route::delete('/destroy/{id}', [BiayaAntaraController::class, 'destroy'])->name('destroy');
     });
 
     Route::get('/fetch-sector/{category_id}', [LkController::class, 'fetchSector'])->name('fetchSector');

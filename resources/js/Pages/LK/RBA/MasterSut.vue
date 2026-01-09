@@ -18,7 +18,7 @@
         <thead>
           <tr class="bg-info-fordone">
             <th class="first-column tabel-width-5">No.</th>
-            <th class="text-center th-order" @click="clickToOrder('label')">Rows</th>
+            <th class="text-center th-order" @click="clickToOrder('label')">SUT</th>
             <th class="text-center th-order tabel-width-8 deleted">Edit/Hapus</th>
           </tr>
           <tr>
@@ -38,7 +38,7 @@
             <td>{{ data.number }}</td>
             <td>{{ data.label }}</td>
             <td class="text-center">
-              <a @click="toggleUpdateModal(data.id)">
+              <a @click="toggleUpdateModal(data.id, data.label)">
                 <font-awesome-icon
                   icon="fa-solid fa-pencil"
                   class="edit-pen mx-2"
@@ -60,18 +60,81 @@
         </tbody>
       </table>
     </div>
+    <Pagination
+      @update:currentPage="updateCurrentPage"
+      @update:showItems="updateShowItems"
+      :show-items="showItems"
+      :total-items="totalItems"
+      :current-page="currentPage"
+      :current-show-items="paginatedData.length"
+    />
+    <ModalBs
+      :-modal-status="createModalStatus"
+      @close="
+        () => {
+          createModalStatus = false;
+          form.reset();
+        }
+      "
+      :modal-size="'min-w-[30vw]'"
+      :title="'Master SUT'"
+    >
+      <template #modalBody>
+        <div class="form-group">
+          <label>Nama SUT</label>
+          <input type="text" class="input-fordone w-full" v-model="form.label" />
+          <div class="mt-2 text-danger">{{ page.props.errors?.label }}</div>
+        </div>
+      </template>
+      <template #modalFunction>
+        <button class="btn btn-sm btn-success-fordone" @click="submit">Simpan</button>
+      </template>
+    </ModalBs>
+    <ModalBs
+      :-modal-status="deleteModalStatus"
+      @close="
+        () => {
+          deleteModalStatus = false;
+          form.reset();
+        }
+      "
+      :title="'Hapus Data'"
+    >
+      <template #modalBody>
+        <div class="form-group">
+          <div>
+            <label
+              >Apakah Anda yakin ingin menghapus data ini? Data akan terhapus
+              selamanya</label
+            >
+          </div>
+        </div>
+      </template>
+      <template #modalFunction>
+        <button
+          type="button"
+          class="btn-red-fordone btn-sm"
+          @click.prevent="deleteSubmit"
+        >
+          Hapus
+        </button>
+      </template>
+    </ModalBs>
   </LKLayout>
 </template>
 
 <script setup>
 import { triggerSpinner } from "@/axiosSetup";
 import FlashFetch from "@/Components/FlashFetch.vue";
+import ModalBs from "@/Components/ModalBs.vue";
+import Pagination from "@/Components/Pagination.vue";
 import SpinnerBorder from "@/Components/SpinnerBorder.vue";
 import { debounce } from "@/debounce";
 import LKLayout from "@/Layouts/LKLayout.vue";
-import { Head } from "@inertiajs/vue3";
+import { Head, useForm, usePage } from "@inertiajs/vue3";
 import { computed, ref, watch } from "vue";
 
+const page = usePage();
 const notifications = ref([]);
 const showNotification = (notification) => {
   notifications.value = notification;
@@ -82,6 +145,11 @@ const showNotification = (notification) => {
   });
 };
 const createModalStatus = ref(false);
+const form = useForm({
+  id: null,
+  _token: null,
+  label: null,
+});
 const props = defineProps({
   sut: Object,
   countData: Number,
@@ -134,7 +202,7 @@ const fetchData = async () => {
         orderAttribute: orderAttribute.value,
       },
     });
-    rows.value = response.data.row.data;
+    sut.value = response.data.sut.data;
     totalItems.value = response.data.countData;
   } catch (error) {
     console.error("Error fetching data: ", error);
@@ -154,6 +222,83 @@ const clickToOrder = (value) => {
   } else orderAttribute.value.value = "asc";
   orderAttribute.value.before = value;
   fetchData();
+};
+
+const submit = async () => {
+  try {
+    const token = await axios.get(route("token"));
+    form._token = token.data;
+    if (form.id == null) {
+      form.post(route("rba.master-sut.store"), {
+        onSuccess: (response) => {
+          showNotification(response.props.notification);
+          form.reset();
+          fetchData();
+          createModalStatus.value = false;
+        },
+        onError: (errors) => {
+          let errorList = [];
+          if (errors?.notification) {
+            errorList.push(errors?.notification);
+            showNotification(errorList);
+          }
+        },
+      });
+    } else {
+      form.patch(route("rba.master-sut.update"), {
+        onSuccess: (response) => {
+          showNotification(response.props.notification);
+          form.reset();
+          fetchData();
+          createModalStatus.value = false;
+        },
+        onError: (errors) => {
+          let errorList = [];
+          if (errors?.notification) {
+            errorList.push(errors?.notification);
+            showNotification(errorList);
+          }
+        },
+      });
+    }
+  } catch (error) {
+    console.error(error);
+  }
+};
+
+//update and delete
+const toggleUpdateModal = (id, label) => {
+  form.id = id;
+  form.label = label;
+  createModalStatus.value = true;
+};
+const deleteModalStatus = ref(false);
+const deleteUpdateModal = (id) => {
+  form.id = id;
+  deleteModalStatus.value = true;
+};
+const deleteSubmit = async () => {
+  try {
+    const token = await axios.get(route("token"));
+    form._token = token.data;
+    form.delete(route("rba.master-sut.destroy", { id: form.id }), {
+      onSuccess: (response) => {
+        form.reset();
+        fetchData();
+        showNotification(response.props.notification);
+        deleteModalStatus.value = false;
+      },
+      onError: (error) => {
+        let errorList = [];
+        if (errors?.notification) {
+          errorList.push(errors?.notification);
+          showNotification(errorList);
+        }
+      },
+    });
+  } catch (error) {
+    console.error("Error Fetching Data : ", error);
+  }
 };
 </script>
 
