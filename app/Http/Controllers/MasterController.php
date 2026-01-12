@@ -380,7 +380,19 @@ class MasterController extends Controller
     {
         $validated = $request->validate([
             'id' => ['required'],
-            'tahun.*' => ['required', 'date_format:Y', Rule::unique('status_sekunder', 'tahun')]
+            'produsen_id' => ['required', 'exists:produsen,id'],
+            'label' => ['required'],
+            'tahun.*' => [
+                'required',
+                'date_format:Y',
+                Rule::unique('status_sekunder', 'tahun')
+                    ->where(fn($q) => $q->whereIn('sekunder_id', function ($sub) use ($request) {
+                        $sub->select('id')
+                            ->from('sekunder')
+                            ->where('produsen_id', $request->produsen_id)
+                            ->where('label', $request->label);
+                    })),
+            ],
         ], ['tahun.*.unique' => 'Tahun tersebut sudah ada']);
         $notification = [];
         try {

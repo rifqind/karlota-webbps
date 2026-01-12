@@ -33,6 +33,7 @@ class SekunderController extends Controller
                 'status_sekunder.id as id',
                 'sekunder_id',
                 's.label as label_data',
+                'p.id as produsen_id',
                 'p.nama as nama_dinas',
                 'status_sekunder.tahun',
                 'st.label as label_status',
@@ -99,6 +100,7 @@ class SekunderController extends Controller
                 'id' => $s->id,
                 'label_data' => $s->label_data,
                 'nama_dinas' => $s->nama_dinas,
+                'produsen_id' => $s->produsen_id,
                 'tahun' => $s->tahun,
                 'label_status' => $s->label_status,
                 'status_id' => $s->status_id,
@@ -143,9 +145,20 @@ class SekunderController extends Controller
             'rows.selected.*' => ['required', 'integer'],
             'order.*' => ['sometimes', 'nullable']
         ]);
+        //cek dengan data
+        $cek_data = Sekunder::where('label', $validated['datas']['label'])
+            ->where('produsen_id', $validated['datas']['produsen_id'])
+            ->first();
+        $notification = [];
+        if ($cek_data) {
+            $notification[] = [
+                'type' => 'error',
+                'message' => 'Data dengan label tersebut sudah ada di dinas yang dipilih',
+            ];
+            return redirect()->route('sekunder.create')->with('notification', $notification);
+        }
         // dd($validated);
         // $orderSame = $validated['rows']['selected'] === $validated['order'];
-        $notification = [];
         try {
             //code...
             DB::beginTransaction();
