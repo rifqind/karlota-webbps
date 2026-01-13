@@ -168,15 +168,7 @@
               >
                 <font-awesome-icon icon="fa-solid fa-pen" title="Cek/Edit" />
               </Link>
-              <a
-                class="edit-pen mx-1"
-                @click="
-                  () => {
-                    createModalStatus = true;
-                    form.id = data.sekunder_id;
-                  }
-                "
-              >
+              <a class="edit-pen mx-1" @click="toggleAddYear(data)">
                 <font-awesome-icon icon="fa-solid fa-plus-circle" title="Tambah Tahun" />
               </a>
               <a @click="deleteUpdateModal(data.id)" class="mx-1"
@@ -391,6 +383,8 @@ const clickToOrder = (value) => {
 const form = useForm({
   _token: null,
   id: null,
+  label: null,
+  produsen_id: null,
   tahun: [],
 });
 const currentYear = new Date().getFullYear();
@@ -420,6 +414,12 @@ const deleteSubmit = async () => {
   } catch (error) {
     console.error(error);
   }
+};
+const toggleAddYear = (data) => {
+  createModalStatus.value = true;
+  form.id = data.sekunder_id;
+  form.label = data.label_data;
+  form.produsen_id = data.produsen_id;
 };
 const addYear = async () => {
   try {
