@@ -209,10 +209,18 @@ class MasterController extends Controller
             }
             //row_label
             if (!empty($filter['row_label'])) {
-                $status_target = Datacontent::join('rows as r', 'r.id', '=', 'datacontent.row_id')
-                    ->where('r.label', 'like', '%' . $filter['row_label'] . '%')->pluck('datacontent.status_id')->unique();
-                $target = StatusSekunder::whereIn('sekunder_id', $status_target)->pluck('sekunder.id')->unique();
-                $query->whereIn('sekunder.id', $target);
+                if (trim(strtolower($filter['row_label'])) == 'tidak ada data') {
+                    $status_sekunder_list = StatusSekunder::pluck('sekunder_id')->unique()->toArray();
+                    $status_sekunder_list = array_values($status_sekunder_list);
+                    $sekunder_list = Sekunder::pluck('id')->toArray();
+                    $status_sekunder_list = array_values(array_diff($sekunder_list, $status_sekunder_list));
+                    $query->whereIn('sekunder.id', $status_sekunder_list);
+                } else {
+                    $status_target = Datacontent::join('rows as r', 'r.id', '=', 'datacontent.row_id')
+                        ->where('r.label', 'like', '%' . $filter['row_label'] . '%')->pluck('datacontent.status_id')->unique();
+                    $target = StatusSekunder::whereIn('sekunder_id', $status_target)->pluck('sekunder_id')->unique();
+                    $query->whereIn('sekunder.id', $target);
+                }
             }
         }
         $countData = $dataToCounted->count();
