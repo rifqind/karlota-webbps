@@ -339,6 +339,7 @@ import ModalBs from "@/Components/ModalBs.vue";
 import SpinnerBorder from "@/Components/SpinnerBorder.vue";
 import { tableToJson, theDownload } from "@/download";
 import GeneralLayout from "@/Layouts/GeneralLayout.vue";
+import { formatNumberGerman } from "@/numberFormat";
 import { Head, useForm, usePage } from "@inertiajs/vue3";
 import Multiselect from "@vueform/multiselect";
 import { nextTick, onMounted, ref } from "vue";
@@ -1012,12 +1013,6 @@ const removeSpaceOnKomponen = (object) => {
 };
 const isObjectEmpty = (obj) => {
   return !obj || Object.keys(obj).length == 0;
-};
-const formatNumberGerman = (num, min = 2, max = 5) => {
-  return new Intl.NumberFormat("de-DE", {
-    minimumFractionDigits: min,
-    maximumFractionDigits: max,
-  }).format(num);
 };
 const downloadModalStatus = ref(false);
 const downloadTitle = ref("Download");

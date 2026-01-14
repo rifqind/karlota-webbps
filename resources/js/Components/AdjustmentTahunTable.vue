@@ -27,6 +27,7 @@
 </template>
 
 <script setup>
+import { formatNumberGerman } from "@/numberFormat";
 import { onMounted, ref, watch } from "vue";
 
 const props = defineProps({
@@ -250,12 +251,6 @@ const setAdjustmentVal = (region, type, result) => {
   }
 };
 // #endregion
-const formatNumberGerman = (num, min = 2, max = 5) => {
-  return new Intl.NumberFormat("de-DE", {
-    minimumFractionDigits: min,
-    maximumFractionDigits: max,
-  }).format(num);
-};
 // #region Section: Calculate
 const gYonY = (region, type, typeAdjust) => {
   let current = null,

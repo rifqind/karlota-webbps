@@ -118,6 +118,7 @@
 <script setup>
 import { debounce } from "@/debounce";
 import LKLayout from "@/Layouts/LKLayout.vue";
+import { formatNumberGerman } from "@/numberFormat";
 import { Head, useForm } from "@inertiajs/vue3";
 import Multiselect from "@vueform/multiselect";
 import { ref, watch } from "vue";
@@ -185,7 +186,7 @@ const getData = (arr, label, t) => {
   if (!Array.isArray(homes)) return;
   const target = homes.find((item) => item.label == label);
   if (!target) return;
-  let result = target.produksi ? formatNumberGerman(target.produksi, 2, 2) : null;
+  let result = target.produksi ? formatNGrev(target.produksi, 2, 2) : null;
   return result;
 };
 const checkData = (arr, label, t) => {
@@ -208,7 +209,7 @@ const getValue = (type, arr, label, t) => {
     default:
       break;
   }
-  let formatted = formatNumberGerman(result, 2, 2);
+  let formatted = formatNGrev(result, 2, 2);
   return formatted;
 };
 const getOutput = (type, arr, label, t) => {
@@ -226,14 +227,11 @@ const getOutput = (type, arr, label, t) => {
     default:
       break;
   }
-  let formatted = formatNumberGerman(result, 2, 2);
+  let formatted = formatNGrev(result, 2, 2);
   return formatted;
 };
-const formatNumberGerman = (num, min = 2, max = 5) => {
-  let result = new Intl.NumberFormat("de-DE", {
-    minimumFractionDigits: min,
-    maximumFractionDigits: max,
-  }).format(num);
+const formatNGrev = (num, min = 2, max = 5) => {
+  let num = formatNumberGerman(num, min, max);
   let formatted = num == 0 || num == "-" ? "-" : result;
   return formatted;
 };

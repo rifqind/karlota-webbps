@@ -99,6 +99,7 @@
 </template>
 
 <script setup>
+import { formatNumberGerman } from "@/numberFormat";
 import { ref } from "vue";
 
 const props = defineProps({
@@ -185,12 +186,6 @@ const getPDRBNonMigas = (category_id, sector_id, subsector_id, region) => {
   let subFifteen = getData(3, 8, 15, region, false);
   let nonmigas = total - subTen - subFifteen;
   return formatNumberGerman(nonmigas, 2, 4);
-};
-const formatNumberGerman = (num, min = 2, max = 5) => {
-  return new Intl.NumberFormat("de-DE", {
-    minimumFractionDigits: min,
-    maximumFractionDigits: max,
-  }).format(num);
 };
 const changeColor = () => {
   const rows = tableRef.value.querySelectorAll("tr");

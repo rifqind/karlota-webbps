@@ -13,7 +13,7 @@ return new class extends Migration
     {
         //
         Schema::table('master_rasio_ntb', function (Blueprint $table) {
-            
+            $table->decimal('rasio_ntb', 8, 4)->nullable()->change();
         });
     }
 
@@ -23,5 +23,8 @@ return new class extends Migration
     public function down(): void
     {
         //
+        Schema::table('master_rasio_ntb', function (Blueprint $table) {
+            $table->decimal('rasio_ntb', 5, 4)->change();
+        });
     }
 };

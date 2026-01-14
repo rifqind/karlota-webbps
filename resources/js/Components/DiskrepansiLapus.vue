@@ -213,6 +213,7 @@
 </template>
 
 <script setup>
+import { formatNumberGerman } from "@/numberFormat";
 import { onMounted, ref, watch } from "vue";
 
 const props = defineProps({
@@ -481,12 +482,6 @@ const classCalculate = (keys) => {
       }
     }
   }
-};
-const formatNumberGerman = (num, min = 2, max = 5) => {
-  return new Intl.NumberFormat("de-DE", {
-    minimumFractionDigits: min,
-    maximumFractionDigits: max,
-  }).format(num);
 };
 const captureTableData = (type) => {
   //   const tbody = tableRef.value.querySelector("tbody");

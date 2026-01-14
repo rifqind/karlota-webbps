@@ -382,6 +382,7 @@ import { Head, Link, useForm } from "@inertiajs/vue3";
 import ModalBs from "@/Components/ModalBs.vue";
 import Multiselect from "@vueform/multiselect";
 import * as XLSX from "xlsx";
+import { formatNumberGerman } from "@/numberFormat";
 
 const createModalStatus = ref(false);
 const updateModalStatus = ref(false);
@@ -407,12 +408,6 @@ const props = defineProps({
     required: true,
   },
 });
-const formatNumberGerman = (num, min = 2, max = 5) => {
-  return new Intl.NumberFormat("de-DE", {
-    minimumFractionDigits: min,
-    maximumFractionDigits: max,
-  }).format(num);
-};
 const komoditas = ref(props.komoditas.data);
 const notifications = ref([]);
 const showNotification = (notification) => {

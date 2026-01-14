@@ -137,6 +137,7 @@ import FloatScrollDown from "@/Components/FloatScrollDown.vue";
 import SpinnerBorder from "@/Components/SpinnerBorder.vue";
 import { debounce } from "@/debounce";
 import GeneralLayout from "@/Layouts/GeneralLayout.vue";
+import { formatNumberGerman } from "@/numberFormat";
 import { Head, Link, useForm, usePage } from "@inertiajs/vue3";
 import { onMounted, onUpdated, ref } from "vue";
 
@@ -161,12 +162,6 @@ const form = useForm({
 });
 
 //tablehandle
-const formatNumberGerman = (num, min = 2, max = 5) => {
-  return new Intl.NumberFormat("de-DE", {
-    minimumFractionDigits: min,
-    maximumFractionDigits: max,
-  }).format(num);
-};
 const getData = (r, tw) => {
   const datas = form.datacontent.find((x) => {
     return x.row_id == r && x.triwulan == tw;

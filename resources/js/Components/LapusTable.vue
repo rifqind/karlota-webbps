@@ -198,6 +198,7 @@
 
 <script setup>
 import { debounce } from "@/debounce";
+import { formatNumberGerman } from "@/numberFormat";
 import { onMounted, ref, watch } from "vue";
 
 const props = defineProps({
@@ -380,13 +381,6 @@ const getSumPDRB = (pdrb) => {
   );
   let formattedResult = formatNumberGerman(totalSum);
   return formattedResult;
-};
-
-const formatNumberGerman = (num, min = 2, max = 5) => {
-  return new Intl.NumberFormat("de-DE", {
-    minimumFractionDigits: min,
-    maximumFractionDigits: max,
-  }).format(num);
 };
 
 // #endregion

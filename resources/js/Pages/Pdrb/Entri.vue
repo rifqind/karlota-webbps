@@ -520,6 +520,7 @@ import PengWatchedTable from "@/Components/PengWatchedTable.vue";
 import ReportList from "@/Components/ReportList.vue";
 import SpinnerBorder from "@/Components/SpinnerBorder.vue";
 import GeneralLayout from "@/Layouts/GeneralLayout.vue";
+import { formatNumberGerman } from "@/numberFormat";
 import { Head, useForm, usePage } from "@inertiajs/vue3";
 import Multiselect from "@vueform/multiselect";
 import { nextTick, onMounted, ref, watch } from "vue";
@@ -1391,12 +1392,6 @@ const removeSpaceOnKomponen = (object) => {
     Object.entries(object).map(([key, value]) => [key.trim().replace(/\s+/g, ""), value])
   );
   return result;
-};
-const formatNumberGerman = (num, min = 2, max = 5) => {
-  return new Intl.NumberFormat("de-DE", {
-    minimumFractionDigits: min,
-    maximumFractionDigits: max,
-  }).format(num);
 };
 const isObjectEmpty = (obj) => {
   return !obj || Object.keys(obj).length == 0;

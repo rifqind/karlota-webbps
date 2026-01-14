@@ -66,6 +66,7 @@
   </tbody>
 </template>
 <script setup>
+import { formatNumberGerman } from "@/numberFormat";
 import { ref, watch } from "vue";
 
 const props = defineProps({
@@ -133,12 +134,6 @@ watch(
     }
   }
 );
-const formatNumberGerman = (num, min = 2, max = 5) => {
-  return new Intl.NumberFormat("de-DE", {
-    minimumFractionDigits: min,
-    maximumFractionDigits: max,
-  }).format(num);
-};
 </script>
 
 <style scoped>

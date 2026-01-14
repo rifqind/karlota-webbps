@@ -303,6 +303,7 @@ import ModalBs from "@/Components/ModalBs.vue";
 import SpinnerBorder from "@/Components/SpinnerBorder.vue";
 import { triggerSpinner } from "@/axiosSetup";
 import BarChart from "@/Components/BarChart.vue";
+import { formatNumberGerman } from "@/numberFormat";
 const page = usePage();
 const props = defineProps({
   lapus: {
@@ -455,7 +456,9 @@ const getSummary = async (region_id, quarter, type) => {
         if (summaryData.value.lapus[key]) {
           summaryData.value.lapus[key].value = response.data.data[key];
           summaryData.value.lapus[key].transformed = formatNumberGerman(
-            response.data.data[key]
+            response.data.data[key],
+            2,
+            2
           );
         }
       });
@@ -464,7 +467,9 @@ const getSummary = async (region_id, quarter, type) => {
         if (summaryData.value.peng[key]) {
           summaryData.value.peng[key].value = response.data.data[key];
           summaryData.value.peng[key].transformed = formatNumberGerman(
-            response.data.data[key]
+            response.data.data[key],
+            2,
+            2
           );
         }
       });
@@ -472,12 +477,6 @@ const getSummary = async (region_id, quarter, type) => {
   } catch (error) {
     console.error(error);
   }
-};
-const formatNumberGerman = (num, min = 2, max = 2) => {
-  return new Intl.NumberFormat("de-DE", {
-    minimumFractionDigits: min,
-    maximumFractionDigits: max,
-  }).format(num);
 };
 const getGraph = async (type, quarter, attribute) => {
   let result;

@@ -50,6 +50,7 @@
   </tbody>
 </template>
 <script setup>
+import { formatNumberGerman } from "@/numberFormat";
 import { onMounted, ref, watch } from "vue";
 const props = defineProps({
   dataContents: {
@@ -155,12 +156,6 @@ const captureTableData = (type) => {
   });
   //   dataOnDemand.value = tempData;
   emits("update:updateDOD", { data: tempData, type: type });
-};
-const formatNumberGerman = (num, min = 2, max = 5) => {
-  return new Intl.NumberFormat("de-DE", {
-    minimumFractionDigits: min,
-    maximumFractionDigits: max,
-  }).format(num);
 };
 </script>
 
