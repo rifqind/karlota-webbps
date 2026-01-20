@@ -184,7 +184,7 @@ const handleInput = (e, r, tw) => {
   const dataIndex = form.datacontent.findIndex((x) => {
     return x.row_id == r && x.triwulan == tw;
   });
-  if (dataIndex != -1) form.datacontent[dataIndex].data = Number(value);
+  if (dataIndex != -1) form.datacontent[dataIndex].data = value;
 };
 const debounceHandleInput = debounce((e, r, tw) => {
   handleInput(e, r, tw);
@@ -217,8 +217,7 @@ const handlePaste = (e) => {
                   const dataIndex = form.datacontent.findIndex((x) => {
                     return x.row_id == r && x.triwulan == tw;
                   });
-                  if (dataIndex != -1)
-                    form.datacontent[dataIndex].data = Number(formatCell);
+                  if (dataIndex != -1) form.datacontent[dataIndex].data = formatCell;
                 }
               }
             }
