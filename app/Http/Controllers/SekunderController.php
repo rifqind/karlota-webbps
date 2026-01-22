@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Datacontent;
 use App\Models\Produsen;
+use App\Models\Region;
 use App\Models\Row;
 use App\Models\RowOrder;
 use App\Models\Sekunder;
@@ -275,6 +276,73 @@ class SekunderController extends Controller
             return redirect()->route('sekunder.entri', ['id' => $request->status_id])->with('notification', $notification);
         }
     }
+
+    public function dataByDinas(Request $request)
+    {
+        if ($request->paginated) $paginated = $request->paginated;
+        else $paginated = 10;
+        if ($request->currentPage) $currentPage = $request->currentPage;
+        else $currentPage = 1;
+        $query = Produsen::query();
+
+        $number = 1;
+        $wilayah = Region::getMyRegionId();
+        $dataToCounted = $query
+            ->leftJoin('regions as r', 'r.id', '=', 'produsen.region_id')
+            ->whereIn(
+                'r.id',
+                $wilayah
+            )->select(['produsen.*', 'r.name as region_name']);
+
+        if ($request->orderAttribute) {
+            $order = $request->orderAttribute;
+            if (sizeof($order) > 2) $query->orderBy($order['label'], $order['value']);
+            else $query->orderBy('region_id')->orderBy('nama');
+        } else $query->orderBy('region_id')->orderBy('nama');
+        if ($request->ArrayFilter) {
+            $filter = $request->ArrayFilter;
+            if (!empty($filter['nama'])) {
+                $query->where('nama', 'like', '%' .  $filter['nama'] . '%');
+            }
+            if (!empty($filter['region_name'])) {
+                $query->where('r.name', 'like', '%' . $filter['region_name'] . '%');
+            }
+            if (!empty($filter['sekunder_list'])) {
+                $sekunder_id = Sekunder::where('label', 'like', '%' . $filter['sekunder_list'] . '%')
+                    ->pluck('produsen_id')->toArray();
+                $query->whereIn('id', $sekunder_id);
+            }
+        }
+        $countData = $dataToCounted->count();
+        $produsen = $query->paginate($paginated, ['*'], 'page', $currentPage);
+        $produsen_object = [];
+        $sekunder_number = 0;
+        foreach ($produsen as $key => $p) {
+            # code...
+            $sekunders = Sekunder::where('produsen_id', $p->id)->pluck('label')->toArray();
+            $sekunder_number = sizeof($sekunders) + $sekunder_number;
+            $produsen_object[] = [
+                'number'=> $number++,
+                'id' => $p->id,
+                'produsen_label' => $p->nama,
+                'region_name' => $p->region_name,
+                'sekunder_list' => $sekunders
+            ];
+        }
+        if ($request->paginated) {
+            return response()->json([
+                'produsen' => $produsen_object,
+                'sekunder_number' => $sekunder_number,
+                'countData' => $countData
+            ]);
+        }
+        return Inertia::render('Sekunder/ByDinas', [
+            'produsen' => $produsen_object,
+            'sekunder_number' => $sekunder_number,
+            'countData' => $countData
+        ]);
+    }
+
 
     public function destroy(String $id)
     {

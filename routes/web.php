@@ -224,6 +224,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/sekunder/entri/{id}', [SekunderController::class, 'entri'])->name('entri');
         Route::post('/sekunder/update', [SekunderController::class, 'update'])->name('update');
         Route::delete('/sekunder/delete/{id}', [SekunderController::class, 'destroy'])->name('destroy');
+
+        Route::get('/sekunder/data-by-dinas', [SekunderController::class, 'dataByDinas'])->name('data-by-dinas');
     });
 });
 
