@@ -182,6 +182,7 @@
                 { label: 'User', value: 'user' },
                 { label: 'Admin', value: 'admin' },
                 { label: 'Supervisor', value: 'spv' },
+                { label: 'Viewer', value: 'viewer' },
               ]"
               :searchable="true"
               placeholder="-- Pilih Role --"
