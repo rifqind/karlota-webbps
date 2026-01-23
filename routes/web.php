@@ -197,14 +197,14 @@ Route::middleware(['auth', 'verified'])->group(function () {
         ]);
     });
     //produsen
-    Route::name('produsen.')->group(function () {
+    Route::middleware(['role:admin|user'])->name('produsen.')->group(function () {
         Route::get('/produsen/index', [ProdusenController::class, 'index'])->name('index');
         Route::post('/produsen/store', [ProdusenController::class, 'store'])->name('store');
         Route::get('/produsen/fetch/{id}', [ProdusenController::class, 'fetch'])->name('fetch');
         Route::delete('/produsen/delete/{id}', [ProdusenController::class, 'destroy'])->name('destroy');
     });
     //master
-    Route::prefix('master')->name('master.')->group(function () {
+    Route::prefix('master')->middleware(['role:admin|user'])->name('master.')->group(function () {
         Route::get('/rows/index', [MasterController::class, 'RowIndex'])->name('rows.index');
         Route::post('/rows/store', [MasterController::class, 'RowStore'])->name('rows.store');
         Route::get('/rows/fetch/{id}', [MasterController::class, 'RowFetch'])->name('rows.fetch');
@@ -217,13 +217,15 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::delete('/sekunder/delete/{id}', [MasterController::class, 'SekunderDestroy'])->name('sekunder.destroy');
     });
     //sekunder
-    Route::name('sekunder.')->group(function () {
-        Route::get('/sekunder/index', [SekunderController::class, 'index'])->name('index');
-        Route::get('/sekunder/create', [SekunderController::class, 'create'])->name('create');
-        Route::post('/sekunder/store', [SekunderController::class, 'store'])->name('store');
+    Route::middleware(['role:admin|user|viewer'])->name('sekunder.')->group(function () {
         Route::get('/sekunder/entri/{id}', [SekunderController::class, 'entri'])->name('entri');
-        Route::post('/sekunder/update', [SekunderController::class, 'update'])->name('update');
-        Route::delete('/sekunder/delete/{id}', [SekunderController::class, 'destroy'])->name('destroy');
+        Route::middleware(['role:admin|user'])->group(function () {
+            Route::get('/sekunder/index', [SekunderController::class, 'index'])->name('index');
+            Route::get('/sekunder/create', [SekunderController::class, 'create'])->name('create');
+            Route::post('/sekunder/store', [SekunderController::class, 'store'])->name('store');
+            Route::post('/sekunder/update', [SekunderController::class, 'update'])->name('update');
+            Route::delete('/sekunder/delete/{id}', [SekunderController::class, 'destroy'])->name('destroy');
+        });
     });
 });
 
