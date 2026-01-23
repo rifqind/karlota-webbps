@@ -223,13 +223,6 @@
                 Daftar Data
               </NavLinkSidebar>
               <NavLinkSidebar
-                :nav-icon="'fa-solid fa-arrows-to-dot'"
-                :href="route('sekunder.data-by-dinas')"
-                :current-route="currentRoute == 'sekunder.data-by-dinas'"
-              >
-                Data By Dinas
-              </NavLinkSidebar>
-              <NavLinkSidebar
                 :nav-icon="'fa-solid fa-diagram-successor'"
                 :href="route('master.rows.index')"
                 :current-route="currentRoute == 'master.rows.index'"
