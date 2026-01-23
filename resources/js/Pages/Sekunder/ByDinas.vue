@@ -62,13 +62,13 @@
               >
             </td>
             <td class="text-center">
-              <a @click="toggleUpdateModal(data.id)">
+              <Link :href="route('sekunder.by-dinas-view', { id: data.id })">
                 <font-awesome-icon
-                  icon="fa-solid fa-pencil"
+                  icon="fa-solid fa-eye"
                   class="edit-pen mx-2"
-                  title="Cek/Edit"
+                  title="Liat"
                 />
-              </a>
+              </Link>
             </td>
           </tr>
           <tr v-else>
@@ -143,7 +143,7 @@ import Pagination from "@/Components/Pagination.vue";
 import SpinnerBorder from "@/Components/SpinnerBorder.vue";
 import { debounce } from "@/debounce";
 import GeneralLayout from "@/Layouts/GeneralLayout.vue";
-import { Head, useForm, usePage } from "@inertiajs/vue3";
+import { Head, Link, useForm, usePage } from "@inertiajs/vue3";
 import Multiselect from "@vueform/multiselect";
 import { computed, ref, watch } from "vue";
 

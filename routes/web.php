@@ -226,6 +226,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::delete('/sekunder/delete/{id}', [SekunderController::class, 'destroy'])->name('destroy');
 
         Route::get('/sekunder/data-by-dinas', [SekunderController::class, 'dataByDinas'])->name('data-by-dinas');
+        Route::get('/sekunder/data-by-dinas/{id}', [SekunderController::class, 'byDinasView'])->name('by-dinas-view');
     });
 });
 

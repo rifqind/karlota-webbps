@@ -322,7 +322,7 @@ class SekunderController extends Controller
             $sekunders = Sekunder::where('produsen_id', $p->id)->pluck('label')->toArray();
             $sekunder_number = sizeof($sekunders) + $sekunder_number;
             $produsen_object[] = [
-                'number'=> $number++,
+                'number' => $number++,
                 'id' => $p->id,
                 'produsen_label' => $p->nama,
                 'region_name' => $p->region_name,
@@ -342,6 +342,64 @@ class SekunderController extends Controller
             'countData' => $countData
         ]);
     }
+
+    public function byDinasView($id)
+    {
+        $dinas = Produsen::findOrFail($id);
+
+        $sekunder_list = Sekunder::where('produsen_id', $id)
+            ->select(['id', 'label'])
+            ->get();
+
+        $sekunderIds = $sekunder_list->pluck('id');
+        $latestYear = StatusSekunder::whereIn('sekunder_id', $sekunderIds)->max('tahun');
+        $listOfYear = StatusSekunder::whereIn('sekunder_id', $sekunderIds)->distinct()->pluck('tahun');
+
+        // Jika belum ada status sama sekali, amanin
+        if (!$latestYear) {
+            return Inertia::render('Sekunder/ByDinasView', [
+                'status'   => collect([]),
+                'produsen' => $dinas,
+                'sekunder' => $sekunder_list,
+                'datas'    => [],
+                'latestYear' => null,
+            ]);
+        }
+
+        $status = StatusSekunder::whereIn('sekunder_id', $sekunderIds)
+            ->where('tahun', $latestYear)
+            ->get()
+            ->groupBy('sekunder_id');
+
+        $datas = [];
+
+        foreach ($status as $sekunderId => $statusList) {
+            $sekunder = $sekunder_list->firstWhere('id', $sekunderId);
+            $statusIds = $statusList->pluck('id');
+
+            $datacontent = Datacontent::whereIn('status_id', $statusIds)->get();
+            $rows = Row::whereIn('id', $datacontent->pluck('row_id'))->get();
+
+            $datas[] = [
+                'sekunder_id' => $sekunderId,
+                'label'       => $sekunder?->label,
+                'tahun'       => $latestYear,
+                'status'      => $statusList,     // list status tahun terbaru
+                'data'        => $datacontent,
+                'row'         => $rows,
+            ];
+        }
+
+        return Inertia::render('Sekunder/ByDinasView', [
+            'status'     => $status,
+            'produsen'   => $dinas,
+            'sekunder'   => $sekunder_list,
+            'data'      => $datas,
+            'latestYear' => $latestYear,
+            'listOfYear' => $listOfYear
+        ]);
+    }
+
 
 
     public function destroy(String $id)

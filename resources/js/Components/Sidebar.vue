@@ -194,6 +194,7 @@
             :params="'sekunder'"
             :menu-open="
               menuOpenSekunder ||
+              currentRoute == 'sekunder.data-by-dinas' ||
               currentRoute == 'produsen.index' ||
               currentRoute == 'sekunder.index' ||
               currentRoute == 'master.rows.index' ||
