@@ -384,7 +384,7 @@ class SekunderController extends Controller
                 'sekunder_id' => $sekunderId,
                 'label'       => $sekunder?->label,
                 'tahun'       => $latestYear,
-                'status'      => $statusList,     // list status tahun terbaru
+                'status'      => $statusList[0],     // list status tahun terbaru
                 'data'        => $datacontent,
                 'row'         => $rows,
             ];

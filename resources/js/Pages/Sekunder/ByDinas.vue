@@ -211,7 +211,7 @@ watch(
 );
 const fetchData = async () => {
   try {
-    const { data } = await axios.get(route("produsen.index"), {
+    const { data } = await axios.get(route("sekunder.data-by-dinas"), {
       params: {
         currentPage: currentPage.value,
         paginated: showItems.value,
