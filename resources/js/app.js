@@ -18,7 +18,6 @@ import {
     faAngleUp,
     faAngleDown,
     faArrowTrendUp,
-    faArrowsToDot,
     faArrowTrendDown,
     faBan,
     faBars,
@@ -96,7 +95,6 @@ library.add(
     faAngleUp,
     faAngleDown,
     faArrowTrendUp,
-    faArrowsToDot,
     faArrowTrendDown,
     faBan,
     faBars,
@@ -167,7 +165,7 @@ library.add(
     faTrashCan,
     faUser,
     faUserTie,
-    faUsers,
+    faUsers, 
     faXmark
 );
 config.autoAddCss = false;

@@ -68,7 +68,10 @@
         </table>
       </div>
       <div v-if="errorNaN" class="text-danger">Masih ada NaN di data ini</div>
-      <div class="bg-white shadow-md mb-2 rounded-md border border-gray-200">
+      <div
+        v-if="isNeraca"
+        class="bg-white shadow-md mb-2 rounded-md border border-gray-200"
+      >
         <div class="py-3 px-2">
           <div class="flex items-center justify-center">
             <Link :href="route('sekunder.index')" class="btn btn-light-fordone border"
@@ -350,6 +353,8 @@ const submit = async () => {
     console.error(error);
   }
 };
+const isNeraca =
+  page.props.auth.user.role == "admin" || page.props.auth.user.role == "user";
 </script>
 
 <style scoped>

@@ -73,17 +73,19 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/entri-fenomena', [FenomenaController::class, 'entri'])
             ->name('entri-fenomena');
     });
-    Route::middleware(['role:admin|user'])->prefix('peng')->name('peng.')->group(function () {
-        Route::get('/entri', [PdrbController::class, 'entri'])
-            ->name('entri');
-        Route::get('/adjustment', [PdrbController::class, 'adjustment'])
-            ->name('adjustment');
+    Route::middleware(['role:admin|user|viewer'])->prefix('peng')->name('peng.')->group(function () {
+        Route::middleware(['role:admin|user'])->group(function () {
+            Route::get('/entri', [PdrbController::class, 'entri'])
+                ->name('entri');
+            Route::get('/adjustment', [PdrbController::class, 'adjustment'])
+                ->name('adjustment');
+            Route::get('/entri-fenomena', [FenomenaController::class, 'entri'])
+                ->name('entri-fenomena');
+        });
         Route::get('/hasil', [PdrbController::class, 'hasil'])
             ->name('hasil');
         Route::get('/diskrepansi', [PdrbController::class, 'diskrepansi'])
             ->name('diskrepansi');
-        Route::get('/entri-fenomena', [FenomenaController::class, 'entri'])
-            ->name('entri-fenomena');
     });
 
     //Entri
@@ -130,19 +132,21 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     //Fenomena
     Route::prefix('fenomena')->name('fenomena.')->group(function () {
-        Route::middleware(['role:admin|user'])->group(function () {
+        Route::middleware(['role:admin|user|viewer'])->group(function () {
             Route::get('/show', [FenomenaController::class, 'show'])
                 ->name('show');
             Route::get('/index', [FenomenaController::class, 'index'])
                 ->name('index');
             Route::get('/get-index', [FenomenaController::class, 'getIndex'])
                 ->name('get-index');
-            Route::post('/save-fenomena', [FenomenaController::class, 'saveFenomena'])
-                ->name('save-fenomena');
-            Route::post('/submit-fenomena', [FenomenaController::class, 'submitFenomena'])
-                ->name('submit-fenomena');
-            Route::post('/unsubmit-fenomena', [FenomenaController::class, 'unsubmitFenomena'])
-                ->name('unsubmit-fenomena');
+            Route::middleware(['role:admin|user'])->group(function () {
+                Route::post('/save-fenomena', [FenomenaController::class, 'saveFenomena'])
+                    ->name('save-fenomena');
+                Route::post('/submit-fenomena', [FenomenaController::class, 'submitFenomena'])
+                    ->name('submit-fenomena');
+                Route::post('/unsubmit-fenomena', [FenomenaController::class, 'unsubmitFenomena'])
+                    ->name('unsubmit-fenomena');
+            });
         });
         Route::middleware(['role:admin'])->group(function () {
             Route::get('/monitoring', [FenomenaController::class, 'monitoring'])
@@ -162,15 +166,15 @@ Route::middleware(['auth', 'verified'])->group(function () {
             Route::delete('/destroy/{id}', [UserController::class, 'destroy'])
                 ->name('destroy');
         });
-        Route::middleware(['role:admin|user'])->group(function () {
+        Route::middleware(['role:admin|user|viewer'])->group(function () {
             Route::get('/edit/{id}', [UserController::class, 'edit'])
                 ->name('edit');
             Route::post('/edit', [UserController::class, 'edit']);
-            Route::get('/question', [UserController::class, 'question'])->name('question');
-            Route::post('/question', [UserController::class, 'question']);
-            Route::delete('/delete-question/{id}', [UserController::class, 'question']);
-            Route::get('/fetch-question/{id}', [UserController::class, 'fetchQuestion'])->name('fetch-question');
         });
+        Route::get('/question', [UserController::class, 'question'])->name('question');
+        Route::post('/question', [UserController::class, 'question']);
+        Route::delete('/delete-question/{id}', [UserController::class, 'question']);
+        Route::get('/fetch-question/{id}', [UserController::class, 'fetchQuestion'])->name('fetch-question');
     });
     Route::get('/download-guide', function () {
         $filePath = public_path('document/Panduan Aplikasi Karlota.pdf');
@@ -197,14 +201,14 @@ Route::middleware(['auth', 'verified'])->group(function () {
         ]);
     });
     //produsen
-    Route::name('produsen.')->group(function () {
+    Route::middleware(['role:admin|user'])->name('produsen.')->group(function () {
         Route::get('/produsen/index', [ProdusenController::class, 'index'])->name('index');
         Route::post('/produsen/store', [ProdusenController::class, 'store'])->name('store');
         Route::get('/produsen/fetch/{id}', [ProdusenController::class, 'fetch'])->name('fetch');
         Route::delete('/produsen/delete/{id}', [ProdusenController::class, 'destroy'])->name('destroy');
     });
     //master
-    Route::prefix('master')->name('master.')->group(function () {
+    Route::prefix('master')->middleware(['role:admin|user'])->name('master.')->group(function () {
         Route::get('/rows/index', [MasterController::class, 'RowIndex'])->name('rows.index');
         Route::post('/rows/store', [MasterController::class, 'RowStore'])->name('rows.store');
         Route::get('/rows/fetch/{id}', [MasterController::class, 'RowFetch'])->name('rows.fetch');
@@ -217,10 +221,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::delete('/sekunder/delete/{id}', [MasterController::class, 'SekunderDestroy'])->name('sekunder.destroy');
     });
     //sekunder
-    Route::name('sekunder.')->group(function () {
-        Route::get('/sekunder/index', [SekunderController::class, 'index'])->name('index');
-        Route::get('/sekunder/create', [SekunderController::class, 'create'])->name('create');
-        Route::post('/sekunder/store', [SekunderController::class, 'store'])->name('store');
+    Route::middleware(['role:admin|user|viewer'])->name('sekunder.')->group(function () {
         Route::get('/sekunder/entri/{id}', [SekunderController::class, 'entri'])->name('entri');
         Route::post('/sekunder/update', [SekunderController::class, 'update'])->name('update');
         Route::delete('/sekunder/delete/{id}', [SekunderController::class, 'destroy'])->name('destroy');
@@ -228,6 +229,13 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/sekunder/data-by-dinas', [SekunderController::class, 'dataByDinas'])->name('data-by-dinas');
         Route::get('/sekunder/data-by-dinas/{id}', [SekunderController::class, 'byDinasView'])->name('by-dinas-view');
         Route::get('/data-by-dinas/changeYear', [SekunderController::class, 'byDinasChangeYear'])->name('by-dinas-change');
+        Route::get('/sekunder/index', [SekunderController::class, 'index'])->name('index');
+        Route::middleware(['role:admin|user'])->group(function () {
+            Route::get('/sekunder/create', [SekunderController::class, 'create'])->name('create');
+            Route::post('/sekunder/store', [SekunderController::class, 'store'])->name('store');
+            Route::post('/sekunder/update', [SekunderController::class, 'update'])->name('update');
+            Route::delete('/sekunder/delete/{id}', [SekunderController::class, 'destroy'])->name('destroy');
+        });
     });
 });
 

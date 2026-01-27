@@ -162,21 +162,26 @@
               >
                 <font-awesome-icon icon="fa-solid fa-eye" title="Entri Data" />
               </Link>
-              <Link
-                :href="route('master.sekunder.update', { id: data.sekunder_id })"
-                class="edit-pen mx-1"
-              >
-                <font-awesome-icon icon="fa-solid fa-pen" title="Cek/Edit" />
-              </Link>
-              <a class="edit-pen mx-1" @click="toggleAddYear(data)">
-                <font-awesome-icon icon="fa-solid fa-plus-circle" title="Tambah Tahun" />
-              </a>
-              <a @click="deleteUpdateModal(data.id)" class="mx-1"
-                ><font-awesome-icon
-                  icon="fa-solid fa-trash-can"
-                  class="icon-trash-color"
-                  title="Hapus"
-              /></a>
+              <template v-if="isNeraca">
+                <Link
+                  :href="route('master.sekunder.update', { id: data.sekunder_id })"
+                  class="edit-pen mx-1"
+                >
+                  <font-awesome-icon icon="fa-solid fa-pen" title="Cek/Edit" />
+                </Link>
+                <a class="edit-pen mx-1" @click="toggleAddYear(data)">
+                  <font-awesome-icon
+                    icon="fa-solid fa-plus-circle"
+                    title="Tambah Tahun"
+                  />
+                </a>
+                <a @click="deleteUpdateModal(data.id)" class="mx-1"
+                  ><font-awesome-icon
+                    icon="fa-solid fa-trash-can"
+                    class="icon-trash-color"
+                    title="Hapus"
+                /></a>
+              </template>
             </td>
           </tr>
           <tr v-else>
@@ -451,6 +456,8 @@ const hiddenText = (value) => {
     return value.substring(0, 50) + "...";
   } else return value;
 };
+const isNeraca =
+  page.props.auth.user.role == "admin" || page.props.auth.user.role == "user";
 </script>
 
 <style scoped>

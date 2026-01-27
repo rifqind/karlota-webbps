@@ -42,11 +42,7 @@
             >
           </template>
         </NavLinkParentSidebar>
-        <template
-          v-if="
-            page.props.auth.user.role == 'admin' || page.props.auth.user.role == 'user'
-          "
-        >
+        <template v-if="isNeraca || isViewer">
           <NavLinkParentSidebar
             :navIcon="'fa-solid fa-chart-pie'"
             :menuOpen="
@@ -62,6 +58,7 @@
             <template #label> Lapangan Usaha</template>
             <template #content>
               <NavLinkSidebar
+                v-if="isNeraca"
                 :navIcon="'fa-solid fa-list-ol'"
                 :href="route('lapus.entri')"
                 :currentRoute="currentRoute == 'lapus.entri'"
@@ -69,6 +66,7 @@
                 Entri PDRB
               </NavLinkSidebar>
               <NavLinkSidebar
+                v-if="isNeraca"
                 :navIcon="'fa-solid fa-list-ol'"
                 :href="route('lapus.adjustment')"
                 :currentRoute="currentRoute == 'lapus.adjustment'"
@@ -106,6 +104,7 @@
             <template #label> Pengeluaran </template>
             <template #content>
               <NavLinkSidebar
+                v-if="isNeraca"
                 :navIcon="'fa-solid fa-list-ol'"
                 :href="route('peng.entri')"
                 :currentRoute="currentRoute == 'peng.entri'"
@@ -113,6 +112,7 @@
                 Entri PDRB
               </NavLinkSidebar>
               <NavLinkSidebar
+                v-if="isNeraca"
                 :navIcon="'fa-solid fa-list-ol'"
                 :href="route('peng.adjustment')"
                 :currentRoute="currentRoute == 'peng.adjustment'"
@@ -158,6 +158,7 @@
             <template #label> Fenomena </template>
             <template #content>
               <NavLinkSidebar
+                v-if="isNeraca"
                 :navIcon="'fa-solid fa-list-ol'"
                 :href="route('lapus.entri-fenomena')"
                 :currentRoute="currentRoute == 'lapus.entri-fenomena'"
@@ -165,6 +166,7 @@
                 Lapangan Usaha
               </NavLinkSidebar>
               <NavLinkSidebar
+                v-if="isNeraca"
                 :navIcon="'fa-solid fa-list-ol'"
                 :href="route('peng.entri-fenomena')"
                 :currentRoute="currentRoute == 'peng.entri-fenomena'"
@@ -207,6 +209,7 @@
             <template #label>Data Sekunder</template>
             <template #content>
               <NavLinkSidebar
+                v-if="isNeraca"
                 :nav-icon="'fa-solid fa-building-circle-check'"
                 :href="route('produsen.index')"
                 :current-route="currentRoute == 'produsen.index'"
@@ -235,6 +238,7 @@
                 Data By Dinas
               </NavLinkSidebar>
               <NavLinkSidebar
+                v-if="isNeraca"
                 :nav-icon="'fa-solid fa-diagram-successor'"
                 :href="route('master.rows.index')"
                 :current-route="currentRoute == 'master.rows.index'"
@@ -242,6 +246,7 @@
                 Master Rows
               </NavLinkSidebar>
               <NavLinkSidebar
+                v-if="isNeraca"
                 :nav-icon="'fa-solid fa-meteor'"
                 :href="route('master.sekunder.index')"
                 :current-route="currentRoute == 'master.sekunder.index'"
@@ -376,6 +381,10 @@ onMounted(async () => {
 const downloadGuide = () => {
   window.location.href = "/download-guide";
 };
+const isNeraca =
+  page.props.auth.user.role == "admin" || page.props.auth.user.role == "user";
+const isSpv = page.props.auth.user.role == "supervisor";
+const isViewer = page.props.auth.user.role == "viewer";
 </script>
 
 <style scoped>
