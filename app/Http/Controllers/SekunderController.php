@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Datacontent;
 use App\Models\Produsen;
+use App\Models\Region;
 use App\Models\Row;
 use App\Models\RowOrder;
 use App\Models\Sekunder;
