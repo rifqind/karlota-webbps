@@ -227,6 +227,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
         Route::get('/sekunder/data-by-dinas', [SekunderController::class, 'dataByDinas'])->name('data-by-dinas');
         Route::get('/sekunder/data-by-dinas/{id}', [SekunderController::class, 'byDinasView'])->name('by-dinas-view');
+        Route::get('/data-by-dinas/changeYear', [SekunderController::class, 'byDinasChangeYear'])->name('by-dinas-change');
     });
 });
 

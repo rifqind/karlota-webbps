@@ -371,6 +371,43 @@ class SekunderController extends Controller
             ->get()
             ->groupBy('sekunder_id');
 
+        $dataObject = $this->buildData($sekunder_list, $latestYear, $latestYear - 1);
+
+        return Inertia::render('Sekunder/ByDinasView', [
+            'status'     => $status,
+            'produsen'   => $dinas,
+            'sekunder'   => $sekunder_list,
+            'data'      => $dataObject['data'],
+            'data_before' => $dataObject['data_before'],
+            'latestYear' => $latestYear,
+            'listOfYear' => $listOfYear
+        ]);
+    }
+
+    public function byDinasChangeYear(Request $request)
+    {
+        $currentYear = $request->tahun;
+        $beforeYear = $currentYear - 1;
+        $sekunder_list = Sekunder::where('produsen_id', $request->id)
+            ->select(['id', 'label'])
+            ->get();
+
+        $sekunderIds = $sekunder_list->pluck('id');
+        $dataObject = $this->buildData($sekunder_list, $currentYear, $beforeYear);
+        return response()->json([
+            'data' => $dataObject['data'],
+            'data_before' => $dataObject['data_before']
+        ]);
+    }
+
+    private function buildData($sekunder_list, $currentYear, $beforeYear)
+    {
+        $sekunderIds = $sekunder_list->pluck('id');
+        $status = StatusSekunder::whereIn('sekunder_id', $sekunderIds)
+            ->where('tahun', $currentYear)
+            ->get()
+            ->groupBy('sekunder_id');
+
         $datas = [];
 
         foreach ($status as $sekunderId => $statusList) {
@@ -383,24 +420,42 @@ class SekunderController extends Controller
             $datas[] = [
                 'sekunder_id' => $sekunderId,
                 'label'       => $sekunder?->label,
-                'tahun'       => $latestYear,
+                'tahun'       => $currentYear,
                 'status'      => $statusList[0],     // list status tahun terbaru
                 'data'        => $datacontent,
                 'row'         => $rows,
             ];
         }
 
-        return Inertia::render('Sekunder/ByDinasView', [
-            'status'     => $status,
-            'produsen'   => $dinas,
-            'sekunder'   => $sekunder_list,
-            'data'      => $datas,
-            'latestYear' => $latestYear,
-            'listOfYear' => $listOfYear
-        ]);
+        //prepare data before
+        $status_before = StatusSekunder::whereIn('sekunder_id', $sekunderIds)
+            ->where('tahun', $beforeYear)
+            ->get()
+            ->groupBy('sekunder_id');
+
+        $data_before = [];
+        if ($status_before->isNotEmpty()) {
+            foreach ($status_before as $sekunderId => $statusList) {
+                # code...
+                $sekunder = $sekunder_list->firstWhere('id', $sekunderId);
+                $statusIds = $statusList->pluck('id');
+
+                $datacontent = Datacontent::whereIn('status_id', $statusIds)->get();
+                $rows = Row::whereIn('id', $datacontent->pluck('row_id'))->get();
+
+                $data_before[] = [
+                    'sekunder_id' => $sekunderId,
+                    'label'       => $sekunder?->label,
+                    'tahun'       => $beforeYear,
+                    'status'      => $statusList[0],     // list status tahun terbaru
+                    'data'        => $datacontent,
+                    'row'         => $rows,
+                ];
+            }
+        }
+        $result = ['data' => $datas, 'data_before' => $data_before];
+        return $result;
     }
-
-
 
     public function destroy(String $id)
     {
