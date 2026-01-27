@@ -223,6 +223,12 @@ Route::middleware(['auth', 'verified'])->group(function () {
     //sekunder
     Route::middleware(['role:admin|user|viewer'])->name('sekunder.')->group(function () {
         Route::get('/sekunder/entri/{id}', [SekunderController::class, 'entri'])->name('entri');
+        Route::post('/sekunder/update', [SekunderController::class, 'update'])->name('update');
+        Route::delete('/sekunder/delete/{id}', [SekunderController::class, 'destroy'])->name('destroy');
+
+        Route::get('/sekunder/data-by-dinas', [SekunderController::class, 'dataByDinas'])->name('data-by-dinas');
+        Route::get('/sekunder/data-by-dinas/{id}', [SekunderController::class, 'byDinasView'])->name('by-dinas-view');
+        Route::get('/data-by-dinas/changeYear', [SekunderController::class, 'byDinasChangeYear'])->name('by-dinas-change');
         Route::get('/sekunder/index', [SekunderController::class, 'index'])->name('index');
         Route::middleware(['role:admin|user'])->group(function () {
             Route::get('/sekunder/create', [SekunderController::class, 'create'])->name('create');

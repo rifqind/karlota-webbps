@@ -196,12 +196,14 @@
             :params="'sekunder'"
             :menu-open="
               menuOpenSekunder ||
+              currentRoute == 'sekunder.data-by-dinas' ||
               currentRoute == 'produsen.index' ||
               currentRoute == 'sekunder.index' ||
               currentRoute == 'master.rows.index' ||
               currentRoute == 'master.sekunder.index' ||
               currentRoute == 'sekunder.create' ||
-              currentRoute == 'sekunder.entri'
+              currentRoute == 'sekunder.entri' ||
+              currentRoute == 'sekunder.by-dinas-view'
             "
           >
             <template #label>Data Sekunder</template>
@@ -224,6 +226,16 @@
                 "
               >
                 Daftar Data
+              </NavLinkSidebar>
+              <NavLinkSidebar
+                :nav-icon="'fa-solid fa-arrows-to-dot'"
+                :href="route('sekunder.data-by-dinas')"
+                :current-route="
+                  currentRoute == 'sekunder.data-by-dinas' ||
+                  currentRoute == 'sekunder.by-dinas-view'
+                "
+              >
+                Data By Dinas
               </NavLinkSidebar>
               <NavLinkSidebar
                 v-if="isNeraca"
@@ -314,6 +326,7 @@ import { usePage } from "@inertiajs/vue3";
 import NavLinkSidebar from "./NavLinkSidebar.vue";
 import NavLinkParentSidebar from "./NavLinkParentSidebar.vue";
 import { onMounted, ref } from "vue";
+import { current } from "tailwindcss/colors";
 
 const page = usePage();
 const currentRoute = page.props.route;

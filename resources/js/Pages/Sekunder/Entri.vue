@@ -120,10 +120,14 @@
                 v-for="(item, idx) in [1, 2, 3, 4]"
                 :key="idx"
               >
-                {{ getGrowth(node.id, item) }}
+                <span :class="setClass(growthMap[`${node.id}-${item}`])" class="badge">{{
+                  growthMap[`${node.id}-${item}`]
+                }}</span>
               </td>
               <td class="text-right text-md font-bold">
-                {{ getGrowthTahunan(node.id) }}
+                <span :class="setClass(growthMap[`${node.id}-tahun`])" class="badge">
+                  {{ growthMap[`${node.id}-tahun`] }}</span
+                >
               </td>
             </tr>
           </tbody>
@@ -141,7 +145,7 @@ import SpinnerBorder from "@/Components/SpinnerBorder.vue";
 import { debounce } from "@/debounce";
 import GeneralLayout from "@/Layouts/GeneralLayout.vue";
 import { Head, Link, useForm, usePage } from "@inertiajs/vue3";
-import { onMounted, onUpdated, ref } from "vue";
+import { computed, onMounted, onUpdated, ref } from "vue";
 
 const page = usePage();
 const notifications = ref([]);
@@ -300,14 +304,30 @@ const getGrowthTahunan = (r) => {
     return formatNumberGerman(growth.toFixed(4), 2, 4);
   }
 };
+const growthMap = computed(() => {
+  let map = [];
+  page.props.rows.forEach((r) => {
+    [1, 2, 3, 4].forEach((tw) => {
+      const key = `${r.id}-${tw}`;
+      map[key] = getGrowth(r.id, tw);
+    });
+    const yearKey = `${r.id}-tahun`;
+    map[yearKey] = getGrowthTahunan(r.id);
+  });
+  return map;
+});
+const setClass = (number) => {
+  if (number) {
+    let converted = number.replaceAll(".", "").replace(",", ".");
+    if (Number(converted) > 0) return "badge-status-dua";
+    else if (Number(converted) < 0) return "badge-status-empat";
+    else if (Number(converted) == 0) return "badge-info";
+  }
+};
 // const inputDisabled = ref(false);
 onMounted(() => {
   showTab("g_qtoq");
 });
-// onUpdated(() => {
-//   if (page.props.status_sekunder.status == 2) inputDisabled.value = true;
-//   else inputDisabled.value = false;
-// });
 //form
 const validateContent = () => {
   return form.datacontent.some((e) => isNaN(e.data));
@@ -370,5 +390,8 @@ const isNeraca =
   padding: 5px 5px 5px 5px;
   text-align: right;
   /* font-size: smaller; */
+}
+.badge {
+  font-size: 100%;
 }
 </style>

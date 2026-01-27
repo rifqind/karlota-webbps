@@ -276,6 +276,186 @@ class SekunderController extends Controller
         }
     }
 
+    public function dataByDinas(Request $request)
+    {
+        if ($request->paginated) $paginated = $request->paginated;
+        else $paginated = 10;
+        if ($request->currentPage) $currentPage = $request->currentPage;
+        else $currentPage = 1;
+        $query = Produsen::query();
+
+        $number = 1;
+        $wilayah = Region::getMyRegionId();
+        $dataToCounted = $query
+            ->leftJoin('regions as r', 'r.id', '=', 'produsen.region_id')
+            ->whereIn(
+                'r.id',
+                $wilayah
+            )->select(['produsen.*', 'r.name as region_name']);
+
+        if ($request->orderAttribute) {
+            $order = $request->orderAttribute;
+            if (sizeof($order) > 2) $query->orderBy($order['label'], $order['value']);
+            else $query->orderBy('region_id')->orderBy('nama');
+        } else $query->orderBy('region_id')->orderBy('nama');
+        if ($request->ArrayFilter) {
+            $filter = $request->ArrayFilter;
+            if (!empty($filter['nama'])) {
+                $query->where('nama', 'like', '%' .  $filter['nama'] . '%');
+            }
+            if (!empty($filter['region_name'])) {
+                $query->where('r.name', 'like', '%' . $filter['region_name'] . '%');
+            }
+            if (!empty($filter['sekunder_list'])) {
+                $sekunder_id = Sekunder::where('label', 'like', '%' . $filter['sekunder_list'] . '%')
+                    ->pluck('produsen_id')->toArray();
+                $query->whereIn('id', $sekunder_id);
+            }
+        }
+        $countData = $dataToCounted->count();
+        $produsen = $query->paginate($paginated, ['*'], 'page', $currentPage);
+        $produsen_object = [];
+        $sekunder_number = 0;
+        foreach ($produsen as $key => $p) {
+            # code...
+            $sekunders = Sekunder::where('produsen_id', $p->id)->pluck('label')->toArray();
+            $sekunder_number = sizeof($sekunders) + $sekunder_number;
+            $produsen_object[] = [
+                'number' => $number++,
+                'id' => $p->id,
+                'produsen_label' => $p->nama,
+                'region_name' => $p->region_name,
+                'sekunder_list' => $sekunders
+            ];
+        }
+        if ($request->paginated) {
+            return response()->json([
+                'produsen' => $produsen_object,
+                'sekunder_number' => $sekunder_number,
+                'countData' => $countData
+            ]);
+        }
+        return Inertia::render('Sekunder/ByDinas', [
+            'produsen' => $produsen_object,
+            'sekunder_number' => $sekunder_number,
+            'countData' => $countData
+        ]);
+    }
+
+    public function byDinasView($id)
+    {
+        $dinas = Produsen::findOrFail($id);
+
+        $sekunder_list = Sekunder::where('produsen_id', $id)
+            ->select(['id', 'label'])
+            ->get();
+
+        $sekunderIds = $sekunder_list->pluck('id');
+        $latestYear = StatusSekunder::whereIn('sekunder_id', $sekunderIds)->max('tahun');
+        $listOfYear = StatusSekunder::whereIn('sekunder_id', $sekunderIds)->distinct()->pluck('tahun');
+
+        // Jika belum ada status sama sekali, amanin
+        if (!$latestYear) {
+            return Inertia::render('Sekunder/ByDinasView', [
+                'status'   => collect([]),
+                'produsen' => $dinas,
+                'sekunder' => $sekunder_list,
+                'datas'    => [],
+                'latestYear' => null,
+            ]);
+        }
+
+        $status = StatusSekunder::whereIn('sekunder_id', $sekunderIds)
+            ->where('tahun', $latestYear)
+            ->get()
+            ->groupBy('sekunder_id');
+
+        $dataObject = $this->buildData($sekunder_list, $latestYear, $latestYear - 1);
+
+        return Inertia::render('Sekunder/ByDinasView', [
+            'status'     => $status,
+            'produsen'   => $dinas,
+            'sekunder'   => $sekunder_list,
+            'data'      => $dataObject['data'],
+            'data_before' => $dataObject['data_before'],
+            'latestYear' => $latestYear,
+            'listOfYear' => $listOfYear
+        ]);
+    }
+
+    public function byDinasChangeYear(Request $request)
+    {
+        $currentYear = $request->tahun;
+        $beforeYear = $currentYear - 1;
+        $sekunder_list = Sekunder::where('produsen_id', $request->id)
+            ->select(['id', 'label'])
+            ->get();
+
+        $sekunderIds = $sekunder_list->pluck('id');
+        $dataObject = $this->buildData($sekunder_list, $currentYear, $beforeYear);
+        return response()->json([
+            'data' => $dataObject['data'],
+            'data_before' => $dataObject['data_before']
+        ]);
+    }
+
+    private function buildData($sekunder_list, $currentYear, $beforeYear)
+    {
+        $sekunderIds = $sekunder_list->pluck('id');
+        $status = StatusSekunder::whereIn('sekunder_id', $sekunderIds)
+            ->where('tahun', $currentYear)
+            ->get()
+            ->groupBy('sekunder_id');
+
+        $datas = [];
+
+        foreach ($status as $sekunderId => $statusList) {
+            $sekunder = $sekunder_list->firstWhere('id', $sekunderId);
+            $statusIds = $statusList->pluck('id');
+
+            $datacontent = Datacontent::whereIn('status_id', $statusIds)->get();
+            $rows = Row::whereIn('id', $datacontent->pluck('row_id'))->get();
+
+            $datas[] = [
+                'sekunder_id' => $sekunderId,
+                'label'       => $sekunder?->label,
+                'tahun'       => $currentYear,
+                'status'      => $statusList[0],     // list status tahun terbaru
+                'data'        => $datacontent,
+                'row'         => $rows,
+            ];
+        }
+
+        //prepare data before
+        $status_before = StatusSekunder::whereIn('sekunder_id', $sekunderIds)
+            ->where('tahun', $beforeYear)
+            ->get()
+            ->groupBy('sekunder_id');
+
+        $data_before = [];
+        if ($status_before->isNotEmpty()) {
+            foreach ($status_before as $sekunderId => $statusList) {
+                # code...
+                $sekunder = $sekunder_list->firstWhere('id', $sekunderId);
+                $statusIds = $statusList->pluck('id');
+
+                $datacontent = Datacontent::whereIn('status_id', $statusIds)->get();
+                $rows = Row::whereIn('id', $datacontent->pluck('row_id'))->get();
+
+                $data_before[] = [
+                    'sekunder_id' => $sekunderId,
+                    'label'       => $sekunder?->label,
+                    'tahun'       => $beforeYear,
+                    'status'      => $statusList[0],     // list status tahun terbaru
+                    'data'        => $datacontent,
+                    'row'         => $rows,
+                ];
+            }
+        }
+        $result = ['data' => $datas, 'data_before' => $data_before];
+        return $result;
+    }
+
     public function destroy(String $id)
     {
         $notification = [];
