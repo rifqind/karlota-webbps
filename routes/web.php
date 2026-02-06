@@ -118,6 +118,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
             ->name('pdrb.get-monitoring');
         Route::get('/monitoring', [PdrbController::class, 'monitoring'])
             ->name('pdrb.monitoring');
+        Route::get('/cek-tahunan', [PdrbController::class, 'cekTahunan'])
+            ->name('pdrb.cek-tahunan');
     });
 
     Route::middleware(['role:admin|user'])->group(function () {

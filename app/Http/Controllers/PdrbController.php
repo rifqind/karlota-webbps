@@ -1554,4 +1554,107 @@ class PdrbController extends Controller
             return response()->json(['notification' => $notification], 500);
         }
     }
+
+    public function cekTahunan(Request $request)
+    {
+        $regions = Region::getMyRegion();
+        $regionList = Region::select(['id', 'name'])->get();
+        if ($request->compare) {
+            try {
+                //code...
+                $current_periode = Period::find($request->description);
+                $comparison_periode = Period::find($request->comparison);
+                $current_dataset = Dataset::where('period_id', $current_periode->id)
+                    ->get();
+                $comparison_dataset = Dataset::where('period_id', $comparison_periode->id)
+                    ->get();
+                $super_result = [];
+                $total_result = [];
+                foreach ($regionList as $key => $value) {
+                    # code...
+                    $dataset = $current_dataset->where('region_id', $value->id)->value('id');
+                    $comparison = $comparison_dataset->where('region_id', $value->id)->value('id');
+                    $pdrb_current = Pdrb::where('dataset_id', $dataset)
+                        ->orderBy('subsector_id')
+                        ->get();
+                    $pdrb_comparison = Pdrb::where('dataset_id', $comparison)
+                        ->orderBy('subsector_id')
+                        ->get();
+                    //can i compare between collection pdrb current and comparison on attribute adhb and adhk
+                    $keyFn = fn($r) => $r->subsector_id . '_' . $r->year . '_' . $r->quarter;
+                    $curMap = $pdrb_current->keyBy($keyFn);
+                    $compMap = $pdrb_comparison->keyBy($keyFn);
+                    $allKeys = $curMap->keys()->merge($compMap->keys())->unique();
+
+                    //perubahan per item
+                    $perubahan = $allKeys->map(function ($key) use ($curMap, $compMap) {
+                        $cur = $curMap->get($key);
+                        $comp = $compMap->get($key);
+                        $adhb_change = !($cur->adhb == $comp->adhb);
+                        $adhk_change = !($cur->adhk == $comp->adhk);
+                        $subs = Subsector::find($cur->subsector_id);
+                        if (!$adhb_change || !$adhk_change) return null;
+                        return [
+                            'subsector' => $subs->name,
+                            'year' => $cur->year,
+                            'quarter' => $cur->quarter,
+                            'adhb_current' => $adhb_change ? $cur->adhb : false,
+                            'adhb_comparison' => $adhb_change ?  $comp->adhb : false,
+                            'adhk_current' => $adhk_change ? $cur->adhk : false,
+                            'adhk_comparison' => $adhk_change ? $comp->adhk : false,
+                        ];
+                    });
+                    $filtered = $perubahan->filter(fn($item) => !is_null($item))->values();
+                    $super_result[$value->name] = $filtered;
+
+                    //pdrb
+                    $total_current = Pdrb::where('dataset_id', $dataset)
+                        ->selectRaw('year, quarter, SUM(adhb) as adhb, SUM(adhk) as adhk')
+                        ->groupBy('year', 'quarter')
+                        ->get();
+                    $total_comparison = Pdrb::where('dataset_id', $comparison)
+                        ->selectRaw('year, quarter, SUM(adhb) as adhb, SUM(adhk) as adhk')
+                        ->groupBy('year', 'quarter')
+                        ->get();
+                    $keyTotal = fn($r) => $r->year . '_' . $r->quarter;
+                    $curTotalMap = $total_current->keyBy($keyTotal);
+                    $compTotalMap = $total_comparison->keyBy($keyTotal);
+
+                    $allTotalKeys = $curTotalMap->keys()->merge($compTotalMap->keys())->unique();
+                    $perubahan_total = $allTotalKeys->map(function ($key) use ($curTotalMap, $compTotalMap) {
+                        $cur = $curTotalMap->get($key);
+                        $comp = $compTotalMap->get($key);
+                        if (!$cur || !$comp) return null;
+                        $adhb_change = !($cur->adhb == $comp->adhb);
+                        $adhk_change = !($cur->adhk == $comp->adhk);
+                        if (!$adhb_change && !$adhk_change) return null;
+                        return [
+                            'year' => $cur->year,
+                            'quarter' => $cur->quarter,
+                            'adhb_current' => $adhb_change ? $cur->adhb : false,
+                            'adhb_comparison' => $adhb_change ?  $comp->adhb : false,
+                            'adhk_current' => $adhk_change ? $cur->adhk : false,
+                            'adhk_comparison' => $adhk_change ? $comp->adhk : false,
+                        ];
+                    });
+                    $filtered_total = $perubahan_total->filter(fn($item) => !is_null($item))->values();
+                    $total_result[$value->name] = $filtered_total;
+                }
+                $notification[] = ['message' => 'Berhasil membandingkan', 'type' => 'success'];
+                return response()->json([
+                    'single' => $super_result,
+                    'total' => $total_result,
+                    'notification' => $notification
+                ]);
+            } catch (\Throwable $th) {
+                //throw $th;
+                return response()->json([
+                    'notification' => ['message' => 'Gagal membandingkan: ' . $th->getMessage(), 'type' => 'error']
+                ]);
+            }
+        }
+        return Inertia::render('Pdrb/Cek', [
+            'region' => $regionList
+        ]);
+    }
 }

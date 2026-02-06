@@ -506,10 +506,11 @@ const setClass = (region, type) => {
     });
     const selisih = String(getSelisih(type)).replaceAll(".", "").replaceAll(",", ".");
     let diskrepansi = (Number(selisih) / provVal.adjVal[type]) * 100;
-    if (diskrepansi > 5) {
+
+    if (diskrepansi > 5 || diskrepansi < -5) {
       return "text-red-500";
     }
-    if (diskrepansi > 2) {
+    if (diskrepansi > 2 || diskrepansi < -2) {
       return "text-yellow-500";
     }
     if (diskrepansi) {

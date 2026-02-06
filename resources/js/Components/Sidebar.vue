@@ -143,6 +143,14 @@
           >
             Monitoring PDRB
           </NavLinkSidebar>
+          <NavLinkSidebar
+            v-if="page.props.auth.user.role == 'admin'"
+            :navIcon="'fa-solid fa-list-ol'"
+            :href="route('pdrb.cek-tahunan')"
+            :currentRoute="currentRoute == 'pdrb.cek-tahunan'"
+          >
+            Cek Tahunan
+          </NavLinkSidebar>
           <NavLinkParentSidebar
             :navIcon="'fa-solid fa-sun-plant-wilt'"
             :menuOpen="
