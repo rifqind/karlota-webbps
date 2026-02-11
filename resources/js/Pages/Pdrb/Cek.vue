@@ -337,8 +337,12 @@ const groupedTotalByDaerah = computed(() => {
 });
 const getValue = (current, comparison) => {
   let result = current - comparison;
-  if (result < 0.00001) return "~0";
-  return new Intl.NumberFormat("de-DE").format(result);
+  // if (result < 0.00001) return "~0";
+  return new Intl.NumberFormat("de-DE", {
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 13,
+  }).format(result);
+  // return result.toFixed(11);
 };
 const currentShow = ref({ single: false, total: false });
 const showResult = (type) => {
