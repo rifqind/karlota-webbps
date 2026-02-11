@@ -80,6 +80,13 @@
           </div>
           <div class="flex items-center space-x-2 justify-end">
             <div
+              class="btn-warning-fordone ml-auto w-[220px] text-center"
+              @click.prevent="confirmAddYear"
+            >
+              <font-awesome-icon icon="fa-solid fa-plus" />
+              Tambah Periode Lain
+            </div>
+            <div
               class="btn-info-fordone ml-auto w-[130px] text-center"
               @click.prevent="submit"
             >
@@ -382,6 +389,65 @@
         >
           Download
         </button>
+      </template>
+    </ModalBs>
+    <ModalBs
+      :-modal-status="addYearModalStatus"
+      @close="addYearModalStatus = false"
+      :title="'Tambah Periode lain'"
+      :modal-size="'min-w-[30vw]'"
+    >
+      <template #modalBody>
+        <div class="mb-3 space-y-2">
+          <label for="year">Pilih Tahun<span class="text-danger">*</span></label>
+          <Multiselect
+            v-model="yearExt.year"
+            :options="yearDrop"
+            :searchable="true"
+            placeholder="-- Pilih Tahun --"
+            @change="quarterExt"
+          />
+        </div>
+        <div class="mb-3 space-y-2">
+          <label for="year">Pilih Triwulan<span class="text-danger">*</span></label>
+          <Multiselect
+            v-model="yearExt.quarter"
+            :options="quarterDropExt"
+            :searchable="true"
+            placeholder="-- Pilih Triwulan --"
+            @change="periodExt"
+          />
+        </div>
+        <div class="mb-3 space-y-2">
+          <label for="year"
+            >Pilih Periode Putaran<span class="text-danger">*</span></label
+          >
+          <div class="flex items-center gap-2">
+            <Multiselect
+              v-model="yearExt.description"
+              :options="descDropExt"
+              :searchable="true"
+              placeholder="-- Pilih Periode Putaran --"
+            />
+            <button @click="addList" class="btn btn-success-fordone whitespace-nowrap">
+              Tambah
+            </button>
+          </div>
+        </div>
+        <div class="mb-3 space-y-2">
+          <label for="year"
+            >Pilih Periode Putaran<span class="text-danger">*</span></label
+          >
+          <Multiselect
+            v-model="yearExt.real"
+            mode="tags"
+            :options="yearListExt"
+            :searchable="true"
+          />
+        </div>
+      </template>
+      <template #modalFunction>
+        <button class="btn btn-success-fordone">Cari</button>
       </template>
     </ModalBs>
   </GeneralLayout>
@@ -1005,6 +1071,67 @@ const downloadHasil = async (id, title, type) => {
   }
 };
 // #endregion
+
+//
+const addYearModalStatus = ref(false);
+const yearExt = ref({
+  year: null,
+  quarter: null,
+  description: null,
+  real: [],
+});
+const quarterDropExt = ref(null);
+const quarterExt = async (value) => {
+  yearExt.value.quarter = null;
+  yearExt.value.description = null;
+  if (value) {
+    try {
+      const response = await axios.get(route("period.fetchQuarter"), {
+        params: {
+          type: page.props.type,
+          year: value,
+        },
+      });
+      let result = response.data;
+      quarterDropExt.value = result;
+    } catch (error) {
+      console.error(error);
+    }
+  }
+};
+const descDropExt = ref(null);
+const periodExt = async (value) => {
+  yearExt.value.description = null;
+  if (value) {
+    try {
+      const response = await axios.get(route("period.fetchPeriod"), {
+        params: {
+          type: page.props.type,
+          year: yearExt.value.year,
+          quarter: value,
+        },
+      });
+      let result = response.data;
+      descDropExt.value = result;
+    } catch (error) {
+      console.error(error);
+    }
+  }
+};
+const confirmAddYear = () => {
+  addYearModalStatus.value = true;
+};
+const yearListExt = ref([]);
+const addList = () => {
+  if (yearExt.value.description) {
+    const theData = descDropExt.value.find((x) => {
+      return x.value == yearExt.value.description;
+    });
+    yearListExt.value.push(theData);
+    yearExt.value.real.push(theData.value);
+    yearExt.value.description = null;
+  }
+};
 </script>
 <style scoped>
 .fixed-thead {
