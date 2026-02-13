@@ -153,12 +153,19 @@
         <table class="table shadow-md w-full mb-2" id="tabel-entry">
           <thead>
             <tr>
-              <th class="fixed-thead">Komponen</th>
-              <th>Triwulan I</th>
-              <th>Triwulan II</th>
-              <th>Triwulan III</th>
-              <th>Triwulan IV</th>
-              <th>Total</th>
+              <th class="fixed-thead" rowspan="2">Komponen</th>
+              <th v-for="yr in yearToRender" :key="yr" :colspan="5" class="text-center">
+                {{ yr }}
+              </th>
+            </tr>
+            <tr>
+              <template v-for="yr in yearToRender" :key="'q-' + yr">
+                <th>Triwulan I</th>
+                <th>Triwulan II</th>
+                <th>Triwulan III</th>
+                <th>Triwulan IV</th>
+                <th>Total</th>
+              </template>
             </tr>
           </thead>
           <template v-if="page.props.type == 'Lapangan Usaha'">
@@ -395,7 +402,7 @@
       :-modal-status="addYearModalStatus"
       @close="addYearModalStatus = false"
       :title="'Tambah Periode lain'"
-      :modal-size="'min-w-[30vw]'"
+      :modal-size="'w-[30vw]'"
     >
       <template #modalBody>
         <div class="mb-3 space-y-2">
@@ -447,7 +454,7 @@
         </div>
       </template>
       <template #modalFunction>
-        <button class="btn btn-success-fordone">Cari</button>
+        <button class="btn btn-success-fordone" @click="addYearFetch">Cari</button>
       </template>
     </ModalBs>
   </GeneralLayout>
@@ -471,7 +478,7 @@ import { tableToJson, theDownload } from "@/download";
 import GeneralLayout from "@/Layouts/GeneralLayout.vue";
 import { Head, useForm, usePage } from "@inertiajs/vue3";
 import Multiselect from "@vueform/multiselect";
-import { nextTick, onMounted, ref } from "vue";
+import { computed, nextTick, onMounted, ref } from "vue";
 
 const page = usePage();
 const form = useForm({
@@ -1124,14 +1131,42 @@ const confirmAddYear = () => {
 const yearListExt = ref([]);
 const addList = () => {
   if (yearExt.value.description) {
-    const theData = descDropExt.value.find((x) => {
+    const found = descDropExt.value.find((x) => {
       return x.value == yearExt.value.description;
     });
+    if (!found) return;
+    const theData = {
+      ...found,
+      label: `[${yearExt.value.year}] ${found.label}`,
+    };
+    //how to do this
     yearListExt.value.push(theData);
     yearExt.value.real.push(theData.value);
     yearExt.value.description = null;
   }
 };
+const addYearFetch = async () => {
+  try {
+    const response = await axios.get(route("pdrb.add-year-fetch"), {
+      params: {
+        type: page.props.type,
+        year: yearExt.value.year,
+        description: yearExt.value.real,
+        regions: form.regions,
+      },
+    });
+    const result = response.data.results;
+    Object.keys(result).forEach((key) => {
+      extraYears.value.push(key);
+    });
+  } catch (error) {}
+};
+const baseYear = computed(() => form.year);
+const extraYears = ref([]);
+const yearToRender = computed(() => {
+  const y = [baseYear.value, ...extraYears.value].filter(Boolean);
+  return [...new Set(y)].sort((a, b) => a - b);
+});
 </script>
 <style scoped>
 .fixed-thead {

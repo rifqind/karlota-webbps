@@ -1285,7 +1285,7 @@ class PdrbController extends Controller
         $validated = $request->validate([
             'type' => ['required', 'string'],
             'year' => ['required', 'integer'],
-            'quarter' => ['required', 'integer'],
+            // 'quarter' => ['required', 'integer'],
             'description' => ['required', 'integer'],
             'dataBefore' => ['sometimes', 'integer', 'nullable'],
             'regions' => ['required', 'integer'],
@@ -1656,5 +1656,34 @@ class PdrbController extends Controller
         return Inertia::render('Pdrb/Cek', [
             'region' => $regionList
         ]);
+    }
+
+    public function addYearFetch(Request $request)
+    {
+        $results = [];
+        try {
+            //code...
+            foreach ($request->description as $desc) {
+                $current_period = Period::findOrFail($desc);
+                $new_request = new Request([
+                    'year' => $request->year,
+                    'type' => $request->type,
+                    'description' => $desc,
+                    'regions' => $request->regions
+                ]);
+                $results[$current_period->year] = $this->fetchHasil($new_request);
+            }
+            if (in_array(500, array_column($results, 'status'))) {
+                $notifications = [];
+                foreach ($results as $year => $res) {
+                    $notifications = array_merge($notifications, $res['notification']);
+                }
+                return response()->json(['notification' => $notifications], 500);
+            } else {
+                return response()->json(['results' => $results]);
+            }
+        } catch (\Throwable $th) {
+            //throw $th;
+        }
     }
 }
