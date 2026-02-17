@@ -181,6 +181,8 @@
             <LapusHasil
               v-show="showPdrbAndResult['adhb'] && isFull"
               :data-contents="dataContents"
+              :data-by-years="dataByYear"
+              :years-to-render="yearToRender"
               :subsectors="subsectors"
               :type="'adhb'"
               :onDemandType="'adhb_now'"
@@ -201,6 +203,8 @@
               v-show="showPdrbAndResult['adhk'] && isFull"
               :data-contents="dataContents"
               :subsectors="subsectors"
+              :data-by-years="dataByYear"
+              :years-to-render="yearToRender"
               :type="'adhk'"
               :onDemandType="'adhk_now'"
               :quarter-cap="quarterCap"
@@ -237,6 +241,8 @@
               v-show="false"
               :data-contents="dataBefore"
               :subsectors="subsectors"
+              :data-by-years="dataByYear"
+              :years-to-render="yearToRender"
               :type="'adhb'"
               :onDemandType="'adhb_prev'"
               :quarter-cap="quarterCap"
@@ -257,6 +263,8 @@
               v-show="false"
               :data-contents="dataBefore"
               :subsectors="subsectors"
+              :data-by-years="dataByYear"
+              :years-to-render="yearToRender"
               :type="'adhk'"
               :onDemandType="'adhk_prev'"
               :quarter-cap="quarterCap"
@@ -608,6 +616,7 @@ const showPdrbAndResult = ref({
 });
 const isFull = ref(true);
 const submit = async () => {
+  const y = baseYear.value;
   try {
     const response = await axios.get(route("pdrb.get-hasil"), {
       params: {
@@ -626,6 +635,12 @@ const submit = async () => {
       regions: null,
     };
     quarterCap.value = form.quarter;
+    dataByYear.value[y] = {
+      dataContents: response.data.current_data,
+      dataBefore: response.data.previous_data,
+      dataContentsSummary: response.data.current_summary_set,
+      dataBeforeSummary: response.data.previous_summary_set,
+    };
     dataContents.value = response.data.current_data;
     dataBefore.value = response.data.previous_data;
     dataContentsSummary.value = response.data.current_summary_set;
@@ -1158,6 +1173,12 @@ const addYearFetch = async () => {
     const result = response.data.results;
     Object.keys(result).forEach((key) => {
       extraYears.value.push(key);
+      dataByYear.value[key] = {
+        dataContents: result[key].current_data,
+        dataBefore: result[key].previous_data,
+        dataContentsSummary: result[key].current_summary_set,
+        dataBeforeSummary: result[key].previous_summary_set,
+      };
     });
   } catch (error) {}
 };
@@ -1167,11 +1188,12 @@ const yearToRender = computed(() => {
   const y = [baseYear.value, ...extraYears.value].filter(Boolean);
   return [...new Set(y)].sort((a, b) => a - b);
 });
+const dataByYear = ref({});
 </script>
 <style scoped>
 .fixed-thead {
   position: sticky;
-  width: 400px;
+  width: 250px;
   left: 0;
   background-color: #175676;
   color: whitesmoke;
@@ -1182,10 +1204,11 @@ const yearToRender = computed(() => {
 }
 
 .table {
-  table-layout: fixed;
+  /* table-layout: fixed; */
   /* Ensures consistent column width */
   width: 100%;
   border-collapse: collapse;
   /* Avoid extra spacing */
+  font-size: 13px;
 }
 </style>

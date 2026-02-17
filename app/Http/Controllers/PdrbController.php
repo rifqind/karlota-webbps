@@ -1684,6 +1684,7 @@ class PdrbController extends Controller
             }
         } catch (\Throwable $th) {
             //throw $th;
+            return response()->json(['notification' => ['message' => 'Gagal menambahkan tahun: ' . $th->getMessage(), 'type' => 'error']], 500);
         }
     }
 }
