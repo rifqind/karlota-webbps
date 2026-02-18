@@ -32,7 +32,7 @@
                       String(yr)
                     ]?.q?.[node - 1] ?? 0,
                     0,
-                    9
+                    props.toFixed
                   )
                 }}
               </td>
@@ -45,7 +45,7 @@
                     String(yr)
                   ]?.total ?? 0,
                   0,
-                  9
+                  props.toFixed
                 )
               }}
             </td>
@@ -78,7 +78,7 @@
                       node - 1
                     ] ?? 0,
                     0,
-                    9
+                    props.toFixed
                   )
                 }}
               </td>
@@ -90,7 +90,7 @@
                   tableModel.rows["sec-" + nodeSubsectors.sector_id]?.[String(yr)]
                     ?.total ?? 0,
                   0,
-                  9
+                  props.toFixed
                 )
               }}
             </td>
@@ -122,7 +122,7 @@
                       node - 1
                     ] ?? 0,
                     0,
-                    9
+                    props.toFixed
                   )
                 }}
               </td>
@@ -132,7 +132,7 @@
                 formatNumberGerman(
                   tableModel.rows["sub-" + nodeSubsectors.id]?.[String(yr)]?.total ?? 0,
                   0,
-                  9
+                  props.toFixed
                 )
               }}
             </td>
@@ -168,7 +168,7 @@
                       node - 1
                     ] ?? 0,
                     0,
-                    9
+                    props.toFixed
                   )
                 }}
                 <!-- {{ getData(nodeSubsectors.id, node.label, yr) }} -->
@@ -179,7 +179,7 @@
                 formatNumberGerman(
                   tableModel.rows["sub-" + nodeSubsectors.id]?.[String(yr)]?.total ?? 0,
                   0,
-                  9
+                  props.toFixed
                 )
               }}
             </td>
@@ -216,7 +216,7 @@
                       node - 1
                     ] ?? 0,
                     0,
-                    9
+                    props.toFixed
                   )
                 }}
               </td>
@@ -226,7 +226,7 @@
                 formatNumberGerman(
                   tableModel.rows["sub-" + nodeSubsectors.id]?.[String(yr)]?.total ?? 0,
                   0,
-                  9
+                  props.toFixed
                 )
               }}
               <!-- {{ getSumTotalFromVal(nodeSubsectors.id, yr) }} -->
@@ -247,7 +247,7 @@
               formatNumberGerman(
                 tableModel.footer["PDRB"]?.[String(yr)]?.q?.[node - 1] ?? 0,
                 0,
-                9
+                props.toFixed
               )
             }}
           </td>
@@ -255,7 +255,11 @@
         <!-- <td class="total-cell">{{ getSumPDRB("PDRB", yr) }}</td> -->
         <td class="total-cell">
           {{
-            formatNumberGerman(tableModel.footer["PDRB"]?.[String(yr)]?.total ?? 0, 0, 9)
+            formatNumberGerman(
+              tableModel.footer["PDRB"]?.[String(yr)]?.total ?? 0,
+              0,
+              props.toFixed
+            )
           }}
         </td>
       </template>
@@ -272,7 +276,7 @@
               formatNumberGerman(
                 tableModel.footer["PDRB-NonMigas"]?.[String(yr)]?.q?.[node - 1] ?? 0,
                 0,
-                9
+                props.toFixed
               )
             }}
           </td>
@@ -283,7 +287,7 @@
             formatNumberGerman(
               tableModel.footer["PDRB-NonMigas"]?.[String(yr)]?.total ?? 0,
               0,
-              9
+              props.toFixed
             )
           }}
         </td>
@@ -324,7 +328,12 @@ const props = defineProps({
   yearsToRender: {
     type: Array,
     required: true,
-    default: new Date().getFullYear(),
+    default: () => [new Date().getFullYear()],
+  },
+  toFixed: {
+    type: Number,
+    required: false,
+    default: 4,
   },
 });
 // const dataHere = ref(props.dataContents);
@@ -336,164 +345,14 @@ const seriesOfData = (yr) => {
   return isNow.value ? p.dataContents ?? [] : p.dataBefore ?? [];
 };
 const tableRef = ref(null);
-// watch(
-//   () => props.dataContents,
-//   (value) => {
-//     dataHere.value = value;
-//   }
-// );
 watch(
   () => props.dataByYears,
   (value) => {
     dataHere.value = value;
   }
 );
-var observer = null;
-onMounted(() => {
-  setTimeout(() => {
-    if (tableRef.value) {
-      observer = new MutationObserver((mutations) => {
-        captureTableData(props.onDemandType);
-      });
-    }
-    observer.observe(tableRef.value, {
-      childList: true,
-      subtree: true,
-      characterData: true,
-    });
-  }, 100);
-});
 const emits = defineEmits(["update:updateDOD"]);
-// const quarters = [{ label: "1" }, { label: "2" }, { label: "3" }, { label: "4" }];
 // #region Section: GET_DATA
-const getData = (subsectors, quarter, yr) => {
-  // const theData = dataHere.value.find((x) => {
-  //   return x.quarter == quarter && x.subsector_id == subsectors;
-  // });
-  const theData = seriesOfData(yr).find((x) => {
-    return x.quarter == quarter && x.subsector_id == subsectors;
-  });
-  if (theData) {
-    let formattedResult;
-    formattedResult =
-      theData[props.type] == "" || theData[props.type] == null
-        ? null
-        : formatNumberGerman(Number(theData[props.type]), 0, 9);
-    return formattedResult;
-  }
-};
-const lvlOne = ref({});
-const getSumLvlOne = (value, quarter, yr) => {
-  // Get all subsector IDs related to the given sector_id (value)
-  let subsectorIds = props.subsectors
-    .filter((x) => x.sector_id == value)
-    .map((x) => x.id);
-  // Get all matching data where quarter matches and subsector_id is in the subsector list
-
-  // const filteredData = dataHere.value.filter(
-  //   (x) => x.quarter == quarter && subsectorIds.includes(Number(x.subsector_id))
-  // );
-  const filteredData = seriesOfData(yr).filter(
-    (x) => x.quarter == quarter && subsectorIds.includes(Number(x.subsector_id))
-  );
-  // Sum the values from the filtered data
-  const result = filteredData.reduce((sum, item) => sum + Number(item[props.type]), 0);
-  if (!lvlOne.value[value]) lvlOne.value[value] = {};
-  lvlOne.value[value][quarter] = result;
-
-  let formattedResult = formatNumberGerman(result);
-  return formattedResult;
-};
-const lvlTwo = ref({});
-const getSumLvlTwo = (value, quarter, yr) => {
-  let subsectorIds = props.subsectors
-    .filter((x) => x.sector.category_id == value)
-    .map((x) => x.id);
-  // const filteredData = dataHere.value.filter(
-  //   (x) => x.quarter == quarter && subsectorIds.includes(Number(x.subsector_id))
-  // );
-  const filteredData = seriesOfData(yr).filter(
-    (x) => x.quarter == quarter && subsectorIds.includes(Number(x.subsector_id))
-  );
-  // Sum the values from the filtered data
-  const result = filteredData.reduce((sum, item) => sum + Number(item[props.type]), 0);
-  if (!lvlTwo.value[value]) lvlTwo.value[value] = {};
-  lvlTwo.value[value][quarter] = result;
-  let formattedResult = formatNumberGerman(result);
-  return formattedResult;
-};
-
-const getSumTotalFromVal = (value, yr) => {
-  // const filteredData = dataHere.value.filter((x) => x.subsector_id == value);
-  const filteredData = seriesOfData(yr).filter((x) => x.subsector_id == value);
-  // Sum the values from the filtered data
-  const result = filteredData.reduce((sum, item) => sum + Number(item[props.type]), 0);
-  // console.log(result);
-  let formattedResult = formatNumberGerman(result);
-  return formattedResult;
-};
-
-const getSumRowCat = (value, yr) => {
-  if (!lvlTwo.value[value]) return 0; // If no data, return 0
-
-  // Get all quarter sums for this category
-  let totalSum = Object.values(lvlTwo.value[value]).reduce(
-    (sum, quarterSum) => sum + quarterSum,
-    0
-  );
-
-  let formattedResult = formatNumberGerman(totalSum);
-  return formattedResult;
-};
-
-const getSumRowSector = (value, yr) => {
-  if (!lvlOne.value[value]) return 0; // If no data, return 0
-
-  // Get all quarter sums for this category
-  let totalSum = Object.values(lvlOne.value[value]).reduce(
-    (sum, quarterSum) => sum + quarterSum,
-    0
-  );
-
-  let formattedResult = formatNumberGerman(totalSum);
-  return formattedResult;
-};
-
-const lvlPDRB = ref({});
-const getPDRB = (quarter, yr) => {
-  // const filteredData = dataHere.value.filter((x) => x.quarter == quarter);
-  const filteredData = seriesOfData(yr).filter((x) => x.quarter == quarter);
-  const result = filteredData.reduce((sum, item) => sum + Number(item[props.type]), 0);
-  if (!lvlPDRB.value["PDRB"]) lvlPDRB.value["PDRB"] = {};
-  lvlPDRB.value["PDRB"][quarter] = result;
-  let formattedResult = formatNumberGerman(result);
-  return formattedResult;
-};
-
-const getPDRBNonMigas = (quarter, yr) => {
-  // const filteredData = dataHere.value.filter(
-  //   (x) => x.quarter == quarter && ![10, 15].includes(Number(x.subsector_id))
-  // );
-  const filteredData = seriesOfData(yr).filter(
-    (x) => x.quarter == quarter && ![10, 15].includes(Number(x.subsector_id))
-  );
-  const result = filteredData.reduce((sum, item) => sum + Number(item[props.type]), 0);
-  if (!lvlPDRB.value["PDRB-NonMigas"]) lvlPDRB.value["PDRB-NonMigas"] = {};
-  lvlPDRB.value["PDRB-NonMigas"][quarter] = result;
-  let formattedResult = formatNumberGerman(result);
-  return formattedResult;
-};
-
-const getSumPDRB = (pdrb, yr) => {
-  if (!lvlPDRB.value[pdrb]) return 0;
-
-  let totalSum = Object.values(lvlPDRB.value[pdrb]).reduce(
-    (sum, pdrbSum) => sum + pdrbSum,
-    0
-  );
-  let formattedResult = formatNumberGerman(totalSum);
-  return formattedResult;
-};
 
 const formatNumberGerman = (num, min = 2, max = 5) => {
   return new Intl.NumberFormat("de-DE", {
@@ -502,36 +361,6 @@ const formatNumberGerman = (num, min = 2, max = 5) => {
   }).format(num);
 };
 // #endregion
-
-// #region Section: CAPTURE_DATA
-const captureTableData = (type) => {
-  //   const tbody = tableRef.value.querySelector("tbody");
-  const rows = tableRef.value.querySelectorAll("tr");
-  let tempData = {};
-  rows.forEach((row) => {
-    const cells = row.querySelectorAll("td");
-    let rowData = [];
-    cells.forEach((cell, index) => {
-      const input = cell.querySelector("input");
-      if (input) {
-        rowData[index] = input.value.trim(); // Get input value
-      } else {
-        rowData[index] = cell.innerText.trim(); // Get text content
-      }
-    });
-    if (rowData.length > 1) tempData[rowData[0]] = rowData.slice(1);
-  });
-  //   dataOnDemand.value = tempData;
-  emits("update:updateDOD", { data: tempData, type: type });
-};
-// #endregion
-
-//dogger
-// const toNum = (v) => {
-//   if (v == null || v === "") return 0;
-//   return Number(String(v).replaceAll(".", "").replaceAll(",", ".")) || 0;
-// };
-
 const idx = computed(() => {
   const out = {};
   for (const yr of props.yearsToRender) {
@@ -619,6 +448,13 @@ const tableModel = computed(() => {
 
   return model;
 });
+watch(
+  () => tableModel.value,
+  (value) => {
+    emits("update:updateDOD", { data: value, type: props.onDemandType });
+  },
+  { immediate: true }
+);
 </script>
 
 <style scoped>

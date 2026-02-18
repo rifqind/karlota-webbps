@@ -141,9 +141,15 @@
               Tabel Summary
             </button>
             <button
-              @click="downloadModalStatus = true"
-              class="btn btn-warning-fordone ml-auto"
+              class="btn btn-success-fordone ml-auto"
+              @click="addToFixedValue(true)"
             >
+              0,00 ->>
+            </button>
+            <button class="btn btn-red-fordone" @click="addToFixedValue(false)">
+              <<- 0,00
+            </button>
+            <button @click="downloadModalStatus = true" class="btn btn-warning-fordone">
               Download
             </button>
           </div>
@@ -173,8 +179,11 @@
             <LapusHasilSummary
               v-show="showPdrbAndResult['adhb'] && !isFull"
               :data-contents="dataContentsSummary"
+              :data-by-years="dataByYear"
+              :years-to-render="yearToRender"
               :type="'adhb'"
               :onDemandType="'adhb_summary_now'"
+              :to-fixed="toFixed"
               :quarter-cap="quarterCap"
               @update:update-d-o-d="updateDOD"
             />
@@ -187,6 +196,7 @@
               :type="'adhb'"
               :onDemandType="'adhb_now'"
               :quarter-cap="quarterCap"
+              :to-fixed="toFixed"
               @update:update-d-o-d="updateDOD"
             />
             <!-- #endregion -->
@@ -196,6 +206,9 @@
               :data-contents="dataContentsSummary"
               :type="'adhk'"
               :onDemandType="'adhk_summary_now'"
+              :data-by-years="dataByYear"
+              :years-to-render="yearToRender"
+              :to-fixed="toFixed"
               :quarter-cap="quarterCap"
               @update:update-d-o-d="updateDOD"
             />
@@ -208,6 +221,7 @@
               :type="'adhk'"
               :onDemandType="'adhk_now'"
               :quarter-cap="quarterCap"
+              :to-fixed="toFixed"
               @update:update-d-o-d="updateDOD"
             />
             <!-- #endregion -->
@@ -234,6 +248,9 @@
               :data-contents="dataBeforeSummary"
               :type="'adhb'"
               :onDemandType="'adhb_summary_prev'"
+              :data-by-years="dataByYear"
+              :to-fixed="toFixed"
+              :years-to-render="yearToRender"
               :quarter-cap="quarterCap"
               @update:update-d-o-d="updateDOD"
             />
@@ -246,6 +263,7 @@
               :type="'adhb'"
               :onDemandType="'adhb_prev'"
               :quarter-cap="quarterCap"
+              :to-fixed="toFixed"
               @update:update-d-o-d="updateDOD"
             />
             <!-- #endregion -->
@@ -256,6 +274,9 @@
               :data-contents="dataBeforeSummary"
               :type="'adhk'"
               :onDemandType="'adhk_summary_prev'"
+              :to-fixed="toFixed"
+              :data-by-years="dataByYear"
+              :years-to-render="yearToRender"
               :quarter-cap="quarterCap"
               @update:update-d-o-d="updateDOD"
             />
@@ -268,6 +289,7 @@
               :type="'adhk'"
               :onDemandType="'adhk_prev'"
               :quarter-cap="quarterCap"
+              :to-fixed="toFixed"
               @update:update-d-o-d="updateDOD"
             />
             <!-- #endregion -->
@@ -769,26 +791,33 @@ const showSummary = (tab) => {
 };
 const enabletoFixed = ref(true);
 const showDist = (data) => {
+  const years = yearToRender.value.map(String);
+  let stake = Number(quarterCap.value);
   let dataset = dataOnDemand.value[data];
-  let arrayPDRB = dataset["PDRB"];
-  let stake = Number(quarterCap.value); // Current quarter
-  // Helper function to parse numbers safely
-  const parseNumber = (value) =>
-    value ? Number(value.replaceAll(".", "").replaceAll(",", ".")) : 0;
+
+  const rows = dataset?.rows ?? {};
+  const pdrb = dataset?.footer?.["PDRB"] ?? {};
+
   let result = {};
-  Object.keys(dataset).forEach((key) => {
-    result[key] = dataset[key].map((value, index) => {
-      // Include index 0 to (stake - 1) and always include index 4
-      if (index < stake || index == 4) {
-        let divisor = parseNumber(arrayPDRB[index]); // Get corresponding PDRB value
-        let dividend = parseNumber(value); // Convert current value to number
-        let dist = divisor != 0 ? (dividend / divisor) * 100 : 0; // Avoid division by zero
-        return formatNumberGerman(enabletoFixed.value ? dist.toFixed(4) : dist, 2);
-      }
-    });
-  });
-  //   computedData.value = removeSpaceOnKomponen(result);
-  return removeSpaceOnKomponen(result);
+  for (const rowKey of Object.keys(rows)) {
+    result[rowKey] = {};
+    for (const y of years) {
+      const row = rows[rowKey]?.[y];
+      const base = pdrb?.[y];
+      const q = Array.from({ length: stake }, (_, i) => {
+        let dividend = Number(row?.q?.[i] ?? 0);
+        let divisor = Number(base?.q?.[i] ?? 0);
+        const growth = divisor !== 0 ? (dividend / divisor) * 100 : 0;
+        return growth;
+      });
+      const totalDividend = Number(row?.total ?? 0);
+      const totalDivisor = Number(base?.total ?? 0);
+      const total = totalDivisor !== 0 ? (totalDividend / totalDivisor) * 100 : 0;
+      result[rowKey][y] = { q, total };
+    }
+  }
+  console.log(result);
+  return result;
 };
 
 const showGQtoQ = (now, prev) => {
@@ -1189,6 +1218,16 @@ const yearToRender = computed(() => {
   return [...new Set(y)].sort((a, b) => a - b);
 });
 const dataByYear = ref({});
+const toFixed = ref(4);
+const addToFixedValue = (up) => {
+  if (up) {
+    if (toFixed.value == 8) return;
+    else toFixed.value = toFixed.value + 1;
+  } else {
+    if (toFixed.value == 0) return;
+    else toFixed.value = toFixed.value - 1;
+  }
+};
 </script>
 <style scoped>
 .fixed-thead {
