@@ -80,11 +80,12 @@
           </div>
           <div class="flex items-center space-x-2 justify-end">
             <div
+              v-if="showTabPanel"
               class="btn-warning-fordone ml-auto w-[220px] text-center"
               @click.prevent="confirmAddYear"
             >
               <font-awesome-icon icon="fa-solid fa-plus" />
-              Tambah Periode Lain
+              Tambah Tahun Lain
             </div>
             <div
               class="btn-info-fordone ml-auto w-[130px] text-center"
@@ -231,6 +232,7 @@
               :type="'distribusi'"
               :quarter-cap="quarterCap"
               :computed-data="computedSummaryData"
+              :years-to-render="yearToRender"
             />
             <LapusHasilResult
               v-show="showPdrbAndResult['result'] && isFull"
@@ -238,6 +240,8 @@
               :type="'distribusi'"
               :quarter-cap="quarterCap"
               :computed-data="computedData"
+              :to-fixed="toFixed"
+              :years-to-render="yearToRender"
             />
             <!-- #endregion -->
 
@@ -431,7 +435,7 @@
     <ModalBs
       :-modal-status="addYearModalStatus"
       @close="addYearModalStatus = false"
-      :title="'Tambah Periode lain'"
+      :title="'Tambah tahun lain'"
       :modal-size="'w-[30vw]'"
     >
       <template #modalBody>
@@ -793,30 +797,45 @@ const enabletoFixed = ref(true);
 const showDist = (data) => {
   const years = yearToRender.value.map(String);
   let stake = Number(quarterCap.value);
-  let dataset = dataOnDemand.value[data];
-
+  let dataset = dataOnDemand.value?.[data] ?? {};
   const rows = dataset?.rows ?? {};
-  const pdrb = dataset?.footer?.["PDRB"] ?? {};
+  const footers = dataset?.footer ?? {};
+  const pdrb = footers["PDRB"] ?? {};
+  let result = {
+    rows: {},
+    footer: {},
+  };
+  const calculate = (item, base) => {
+    let outQ = new Array(stake);
+    const baseQ = base?.q ?? [];
+    const itemQ = item?.q ?? [];
+    for (let i = 0; i < stake; i++) {
+      const dividend = Number(itemQ[i] ?? 0);
+      const divisor = Number(baseQ[i] ?? 0);
+      outQ[i] = divisor !== 0 ? (dividend / divisor) * 100 : 0;
+    }
+    const totalDividend = Number(item?.total ?? 0);
+    const totalDivisor = Number(base?.total ?? 0);
+    const total = totalDivisor !== 0 ? (totalDividend / totalDivisor) * 100 : 0;
+    return { q: outQ, total };
+  };
 
-  let result = {};
   for (const rowKey of Object.keys(rows)) {
-    result[rowKey] = {};
+    result.rows[rowKey] = {};
     for (const y of years) {
       const row = rows[rowKey]?.[y];
       const base = pdrb?.[y];
-      const q = Array.from({ length: stake }, (_, i) => {
-        let dividend = Number(row?.q?.[i] ?? 0);
-        let divisor = Number(base?.q?.[i] ?? 0);
-        const growth = divisor !== 0 ? (dividend / divisor) * 100 : 0;
-        return growth;
-      });
-      const totalDividend = Number(row?.total ?? 0);
-      const totalDivisor = Number(base?.total ?? 0);
-      const total = totalDivisor !== 0 ? (totalDividend / totalDivisor) * 100 : 0;
-      result[rowKey][y] = { q, total };
+      result.rows[rowKey][y] = calculate(row, base);
     }
   }
-  console.log(result);
+  for (const footerKey of Object.keys(footers)) {
+    result.footer[footerKey] = {};
+    for (const y of years) {
+      const foot = footers[footerKey]?.[y];
+      const base = pdrb?.[y];
+      result.footer[footerKey][y] = calculate(foot, base);
+    }
+  }
   return result;
 };
 
@@ -1209,7 +1228,11 @@ const addYearFetch = async () => {
         dataBeforeSummary: result[key].previous_summary_set,
       };
     });
-  } catch (error) {}
+    addYearModalStatus.value = false;
+    showTab("adhb");
+  } catch (error) {
+    console.error(error);
+  }
 };
 const baseYear = computed(() => form.year);
 const extraYears = ref([]);

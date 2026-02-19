@@ -31,6 +31,7 @@ onUnmounted(() => {
 
 <template>
   <button
+    id="floatScroll"
     v-if="showScrollButton"
     @click="scrollToTarget"
     class="fixed bottom-5 right-5 bg-color text-white p-3 rounded-full shadow-lg transition-all"
@@ -44,6 +45,9 @@ onUnmounted(() => {
   </button>
 </template>
 <style scoped>
+#floatScroll {
+  z-index: 2;
+}
 .bg-color {
   background-color: #175676;
 }

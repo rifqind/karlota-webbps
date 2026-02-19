@@ -9,7 +9,7 @@
           <!-- {{ getData("primer", node.label) }} -->
           {{
             formatNumberGerman(
-              tableModel.rows["primer"]?.[String(yr)]?.q?.[node - 1] ?? 0,
+              tableModel.rows["primer"]?.[String(yr)]?.q?.[Number(node) - 1] ?? 0,
               0,
               props.toFixed
             )
@@ -36,7 +36,7 @@
           <!-- {{ getData("sekunder", node.label) }} -->
           {{
             formatNumberGerman(
-              tableModel.rows["sekunder"]?.[String(yr)]?.q?.[node - 1] ?? 0,
+              tableModel.rows["sekunder"]?.[String(yr)]?.q?.[Number(node) - 1] ?? 0,
               0,
               props.toFixed
             )
@@ -63,7 +63,7 @@
           <!-- {{ getData("tersier", node.label) }} -->
           {{
             formatNumberGerman(
-              tableModel.rows["tersier"]?.[String(yr)]?.q?.[node - 1] ?? 0,
+              tableModel.rows["tersier"]?.[String(yr)]?.q?.[Number(node) - 1] ?? 0,
               0,
               props.toFixed
             )
@@ -91,7 +91,7 @@
             <!-- {{ getPDRB(node.label) }} -->
             {{
               formatNumberGerman(
-                tableModel.footer["PDRB"]?.[String(yr)]?.q?.[node - 1] ?? 0,
+                tableModel.footer["PDRB"]?.[String(yr)]?.q?.[Number(node) - 1] ?? 0,
                 0,
                 props.toFixed
               )

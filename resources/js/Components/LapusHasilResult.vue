@@ -19,10 +19,35 @@
               {{ nodeSubsectors.sector.category.name }}</label
             >
           </td>
-          <template v-for="(node, index) in quarters">
-            <td class="text-right"></td>
-          </template>
-          <td class="text-right"></td>
+          <template
+            v-for="yr in props.yearsToRender"
+            :key="'cat-' + nodeSubsectors.sector.category_id + '-' + yr"
+          >
+            <template v-for="(node, index) in quarters">
+              <td class="text-right font-bold">
+                {{
+                  formatNumberGerman(
+                    tableModel.rows?.["cat-" + nodeSubsectors.sector.category_id]?.[
+                      String(yr)
+                    ]?.q?.[Number(node) - 1] ?? 0,
+                    0,
+                    props.toFixed
+                  )
+                }}
+              </td>
+            </template>
+            <td class="text-right font-bold">
+              {{
+                formatNumberGerman(
+                  tableModel.rows?.["cat-" + nodeSubsectors.sector.category_id]?.[
+                    String(yr)
+                  ]?.total ?? 0,
+                  0,
+                  props.toFixed
+                )
+              }}
+            </td></template
+          >
         </tr>
       </template>
       <template
@@ -38,10 +63,33 @@
               {{ nodeSubsectors.sector.code }}. {{ nodeSubsectors.sector.name }}
             </p>
           </td>
-          <template v-for="(node, index) in quarters">
-            <td class="text-right pr-2"></td>
+          <template
+            v-for="yr in props.yearsToRender"
+            :key="'sec-' + nodeSubsectors.sector_id + '-' + yr"
+          >
+            <template v-for="(node, index) in quarters">
+              <td class="text-right pr-2">
+                {{
+                  formatNumberGerman(
+                    tableModel.rows?.["sec-" + nodeSubsectors.sector_id]?.[String(yr)]
+                      ?.q?.[Number(node) - 1] ?? 0,
+                    0,
+                    props.toFixed
+                  )
+                }}
+              </td>
+            </template>
+            <td class="text-right">
+              {{
+                formatNumberGerman(
+                  tableModel.rows?.["sec-" + nodeSubsectors.sector_id]?.[String(yr)]
+                    ?.total ?? 0,
+                  0,
+                  props.toFixed
+                )
+              }}
+            </td>
           </template>
-          <td class="text-right"></td>
         </tr>
       </template>
       <template
@@ -56,10 +104,33 @@
               {{ nodeSubsectors.code + ". " + nodeSubsectors.name }}
             </p>
           </td>
-          <template v-for="(node, index) in quarters">
-            <td class="text-right"></td>
+          <template
+            v-for="yr in props.yearsToRender"
+            :key="'sub-' + nodeSubsectors.id + '-' + yr"
+          >
+            <template v-for="(node, index) in quarters">
+              <td class="text-right">
+                {{
+                  formatNumberGerman(
+                    tableModel.rows?.["sub-" + nodeSubsectors.id]?.[String(yr)]?.q?.[
+                      Number(node) - 1
+                    ] ?? 0,
+                    0,
+                    props.toFixed
+                  )
+                }}
+              </td>
+            </template>
+            <td class="text-right">
+              {{
+                formatNumberGerman(
+                  tableModel.rows?.["sub-" + nodeSubsectors.id]?.[String(yr)]?.total ?? 0,
+                  0,
+                  props.toFixed
+                )
+              }}
+            </td>
           </template>
-          <td class="text-right"></td>
         </tr>
       </template>
       <template
@@ -78,10 +149,33 @@
               {{ nodeSubsectors.sector.code + ". " + nodeSubsectors.sector.name }}
             </p>
           </td>
-          <template v-for="(node, index) in quarters">
-            <td class="text-right"></td>
+          <template
+            v-for="yr in props.yearsToRender"
+            :key="'sub-' + nodeSubsectors.id + '-' + yr"
+          >
+            <template v-for="(node, index) in quarters">
+              <td class="text-right">
+                {{
+                  formatNumberGerman(
+                    tableModel.rows?.["sub-" + nodeSubsectors.id]?.[String(yr)]?.q?.[
+                      Number(node) - 1
+                    ] ?? 0,
+                    0,
+                    props.toFixed
+                  )
+                }}
+              </td>
+            </template>
+            <td class="text-right">
+              {{
+                formatNumberGerman(
+                  tableModel.rows?.["sub-" + nodeSubsectors.id]?.[String(yr)]?.total ?? 0,
+                  0,
+                  props.toFixed
+                )
+              }}
+            </td>
           </template>
-          <td class="text-right"></td>
         </tr>
       </template>
       <template
@@ -100,10 +194,33 @@
               {{ nodeSubsectors.sector.category.code + ". " + nodeSubsectors.name }}
             </label>
           </td>
-          <template v-for="(node, index) in quarters">
-            <td class="text-right"></td>
+          <template
+            v-for="yr in props.yearsToRender"
+            :key="'sub-' + nodeSubsectors.id + '-' + yr"
+          >
+            <template v-for="(node, index) in quarters">
+              <td class="text-right font-bold">
+                {{
+                  formatNumberGerman(
+                    tableModel.rows?.["sub-" + nodeSubsectors.id]?.[String(yr)]?.q?.[
+                      Number(node) - 1
+                    ] ?? 0,
+                    0,
+                    props.toFixed
+                  )
+                }}
+              </td>
+            </template>
+            <td class="text-right font-bold">
+              {{
+                formatNumberGerman(
+                  tableModel.rows?.["sub-" + nodeSubsectors.id]?.[String(yr)]?.total ?? 0,
+                  0,
+                  props.toFixed
+                )
+              }}
+            </td>
           </template>
-          <td class="text-right"></td>
         </tr>
       </template>
     </template>
@@ -111,19 +228,57 @@
       <td class="desc-col footer-column">
         <p class="mt-1 mb-1">PDRB</p>
       </td>
-      <template v-for="(node, index) in quarters">
-        <td :id="'adhb_total-' + node.label" class="total-cell"></td>
+      <template v-for="yr in props.yearsToRender" :key="'q-' + yr">
+        <template v-for="(node, index) in quarters">
+          <td :id="'adhb_total-' + node.label" class="total-cell">
+            {{
+              formatNumberGerman(
+                tableModel.footer?.["PDRB"]?.[String(yr)]?.q?.[Number(node) - 1] ?? 0,
+                0,
+                props.toFixed
+              )
+            }}
+          </td>
+        </template>
+        <td class="total-cell">
+          {{
+            formatNumberGerman(
+              tableModel.footer?.["PDRB"]?.[String(yr)]?.total ?? 0,
+              0,
+              props.toFixed
+            )
+          }}
+        </td>
       </template>
-      <td class="total-cell"></td>
     </tr>
     <tr class="PDRB-footer text-center">
       <td class="desc-col footer-column">
         <p class="mt-1 mb-1">PDRB Nonmigas</p>
       </td>
-      <template v-for="(node, index) in quarters">
-        <td :id="'adhb_total-nonmigas-' + node.label" class="total-cell"></td>
+      <template v-for="yr in props.yearsToRender" :key="'q-' + yr">
+        <template v-for="(node, index) in quarters">
+          <td :id="'adhb_total-nonmigas-' + node.label" class="total-cell">
+            {{
+              formatNumberGerman(
+                tableModel.footer?.["PDRB-NonMigas"]?.[String(yr)]?.q?.[
+                  Number(node) - 1
+                ] ?? 0,
+                0,
+                props.toFixed
+              )
+            }}
+          </td>
+        </template>
+        <td class="total-cell">
+          {{
+            formatNumberGerman(
+              tableModel.footer?.["PDRB-NonMigas"]?.[String(yr)]?.total ?? 0,
+              0,
+              props.toFixed
+            )
+          }}
+        </td>
       </template>
-      <td class="total-cell"></td>
     </tr>
   </tbody>
 </template>
@@ -149,38 +304,39 @@ const props = defineProps({
     required: true,
     default: "distribusi",
   },
+  toFixed: {
+    type: Number,
+    requried: false,
+    default: 4,
+  },
+  yearsToRender: {
+    type: Array,
+    required: true,
+    default: () => [new Date().getFullYear()],
+  },
 });
-const quarters = [{ label: "1" }, { label: "2" }, { label: "3" }, { label: "4" }];
-const thisData = ref(props.computedData);
+// const quarters = [{ label: "1" }, { label: "2" }, { label: "3" }, { label: "4" }];
+const quarters = ["1", "2", "3", "4"];
+const tableModel = ref(props.computedData);
 const tableRef = ref(null);
 watch(
   () => props.computedData,
   (value) => {
-    thisData.value = value;
-    if (tableRef.value) {
-      const rows = tableRef.value.querySelectorAll("tr");
-
-      rows.forEach((row) => {
-        const firstCell = row.querySelector("td:first-child"); // Get the first column (key)
-        if (!firstCell) return;
-        const key = firstCell.textContent.trim().replace(/\s+/g, ""); // Key from first column
-        if (thisData.value[key]) {
-          const cells = row.querySelectorAll("td:not(:first-child)"); // Get other columns
-          // Update the row with the computed values
-          cells.forEach((cell, index) => {
-            cell.textContent = thisData.value[key][index]; // Format and insert value
-          });
-        }
-      });
-    }
+    tableModel.value = value;
   }
 );
+const formatNumberGerman = (num, min = 2, max = 5) => {
+  return new Intl.NumberFormat("de-DE", {
+    minimumFractionDigits: min,
+    maximumFractionDigits: max,
+  }).format(num);
+};
 </script>
 
 <style scoped>
 .fixed-column {
   position: sticky;
-  width: 400px;
+  min-width: 250px;
   left: 0;
   background-color: white;
   color: black;
@@ -198,7 +354,7 @@ watch(
 .footer-column {
   font-weight: bold;
   position: sticky;
-  width: 400px;
+  width: 250px;
   background-color: #175676;
   color: whitesmoke;
   left: 0;
@@ -220,7 +376,7 @@ tbody td {
   /* Adjust line height */
   overflow: hidden;
   text-overflow: ellipsis;
-  white-space: nowrap;
+  /* white-space: nowrap; */
 }
 
 tbody tr {

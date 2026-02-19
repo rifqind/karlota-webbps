@@ -30,7 +30,7 @@
                   formatNumberGerman(
                     tableModel.rows["cat-" + nodeSubsectors.sector.category_id]?.[
                       String(yr)
-                    ]?.q?.[node - 1] ?? 0,
+                    ]?.q?.[Number(node) - 1] ?? 0,
                     0,
                     props.toFixed
                   )
@@ -75,7 +75,7 @@
                 {{
                   formatNumberGerman(
                     tableModel.rows["sec-" + nodeSubsectors.sector_id]?.[String(yr)]?.q?.[
-                      node - 1
+                      Number(node) - 1
                     ] ?? 0,
                     0,
                     props.toFixed
@@ -119,7 +119,7 @@
                 {{
                   formatNumberGerman(
                     tableModel.rows["sub-" + nodeSubsectors.id]?.[String(yr)]?.q?.[
-                      node - 1
+                      Number(node) - 1
                     ] ?? 0,
                     0,
                     props.toFixed
@@ -165,7 +165,7 @@
                 {{
                   formatNumberGerman(
                     tableModel.rows["sub-" + nodeSubsectors.id]?.[String(yr)]?.q?.[
-                      node - 1
+                      Number(node) - 1
                     ] ?? 0,
                     0,
                     props.toFixed
@@ -213,7 +213,7 @@
                 {{
                   formatNumberGerman(
                     tableModel.rows["sub-" + nodeSubsectors.id]?.[String(yr)]?.q?.[
-                      node - 1
+                      Number(node) - 1
                     ] ?? 0,
                     0,
                     props.toFixed
@@ -245,7 +245,7 @@
             <!-- {{ getPDRB(node.label, yr) }} -->
             {{
               formatNumberGerman(
-                tableModel.footer["PDRB"]?.[String(yr)]?.q?.[node - 1] ?? 0,
+                tableModel.footer["PDRB"]?.[String(yr)]?.q?.[Number(node) - 1] ?? 0,
                 0,
                 props.toFixed
               )
@@ -274,7 +274,8 @@
             <!-- {{ getPDRBNonMigas(node.label, yr) }} -->
             {{
               formatNumberGerman(
-                tableModel.footer["PDRB-NonMigas"]?.[String(yr)]?.q?.[node - 1] ?? 0,
+                tableModel.footer["PDRB-NonMigas"]?.[String(yr)]?.q?.[Number(node) - 1] ??
+                  0,
                 0,
                 props.toFixed
               )
