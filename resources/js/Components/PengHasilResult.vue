@@ -14,10 +14,33 @@
               >{{ nodeSubsectors.sector.code }}. {{ nodeSubsectors.sector.name }}</label
             >
           </td>
-          <template v-for="(node, index) in quarters">
-            <td class="text-right"></td>
+          <template
+            v-for="yr in props.yearsToRender"
+            :key="'sec-' + nodeSubsectors.sector.id + '-' + yr"
+          >
+            <template v-for="(node, index) in quarters">
+              <td class="text-right">
+                {{
+                  formatNumberGerman(
+                    tableModel.rows?.["sec-" + nodeSubsectors.sector.id]?.[String(yr)]
+                      ?.q?.[Number(node - 1)] ?? 0,
+                    0,
+                    props.toFixed
+                  )
+                }}
+              </td>
+            </template>
+            <td class="text-right">
+              {{
+                formatNumberGerman(
+                  tableModel.rows?.["sec-" + nodeSubsectors.sector.id]?.[String(yr)]
+                    ?.total ?? 0,
+                  0,
+                  props.toFixed
+                )
+              }}
+            </td>
           </template>
-          <td class="text-right"></td>
         </tr>
       </template>
       <template
@@ -32,10 +55,33 @@
               {{ nodeSubsectors.code + ". " + nodeSubsectors.name }}
             </p>
           </td>
-          <template v-for="(node, index) in quarters">
-            <td class="text-right"></td>
+          <template
+            v-for="yr in props.yearsToRender"
+            :key="'sub-' + nodeSubsectors.id + '-' + yr"
+          >
+            <template v-for="(node, index) in quarters">
+              <td class="text-right">
+                {{
+                  formatNumberGerman(
+                    tableModel.rows["sub-" + nodeSubsectors.id]?.[String(yr)]?.q?.[
+                      Number(node) - 1
+                    ] ?? 0,
+                    0,
+                    props.toFixed
+                  )
+                }}
+              </td>
+            </template>
+            <td class="text-right">
+              {{
+                formatNumberGerman(
+                  tableModel.rows?.["sub-" + nodeSubsectors.id]?.[String(yr)]?.total ?? 0,
+                  0,
+                  props.toFixed
+                )
+              }}
+            </td>
           </template>
-          <td class="text-right"></td>
         </tr>
       </template>
       <template
@@ -51,10 +97,33 @@
               {{ nodeSubsectors.sector.code + ". " + nodeSubsectors.sector.name }}
             </label>
           </td>
-          <template v-for="(node, index) in quarters">
-            <td class="text-right"></td>
+          <template
+            v-for="yr in props.yearsToRender"
+            :key="'sub-' + nodeSubsectors.id + '-' + yr"
+          >
+            <template v-for="(node, index) in quarters">
+              <td class="text-right">
+                {{
+                  formatNumberGerman(
+                    tableModel.rows?.["sub-" + nodeSubsectors.id]?.[String(yr)]?.q?.[
+                      Number(node) - 1
+                    ] ?? 0,
+                    0,
+                    props.toFixed
+                  )
+                }}
+              </td>
+            </template>
+            <td class="text-right">
+              {{
+                formatNumberGerman(
+                  tableModel.rows?.["sub-" + nodeSubsectors.id]?.[String(yr)]?.total ?? 0,
+                  0,
+                  props.toFixed
+                )
+              }}
+            </td>
           </template>
-          <td class="text-right"></td>
         </tr>
       </template>
     </template>
@@ -62,10 +131,28 @@
       <td class="desc-col footer-column">
         <p class="mt-1 mb-1">PDRB</p>
       </td>
-      <template v-for="(node, index) in quarters">
-        <td :id="'adhb_total-' + node.label" class="total-cell"></td>
+      <template v-for="yr in props.yearsToRender" :key="'q-' + yr">
+        <template v-for="(node, index) in quarters">
+          <td :id="'adhb_total-' + node.label" class="total-cell">
+            {{
+              formatNumberGerman(
+                tableModel.footer["PDRB"]?.[String(yr)]?.q?.[Number(node) - 1] ?? 0,
+                0,
+                props.toFixed
+              )
+            }}
+          </td>
+        </template>
+        <td class="total-cell">
+          {{
+            formatNumberGerman(
+              tableModel.footer["PDRB"]?.[String(yr)]?.total ?? 0,
+              0,
+              props.toFixed
+            )
+          }}
+        </td>
       </template>
-      <td class="total-cell"></td>
     </tr>
   </tbody>
 </template>
@@ -91,32 +178,33 @@ const props = defineProps({
     required: true,
     default: "distribusi",
   },
+  toFixed: {
+    type: Number,
+    requried: false,
+    default: 4,
+  },
+  yearsToRender: {
+    type: Array,
+    required: true,
+    default: () => [new Date().getFullYear()],
+  },
 });
-const quarters = [{ label: "1" }, { label: "2" }, { label: "3" }, { label: "4" }];
-const thisData = ref(props.computedData);
+const quarters = ["1", "2", "3", "4"];
+const tableModel = ref(props.computedData);
 const tableRef = ref(null);
 watch(
   () => props.computedData,
   (value) => {
-    thisData.value = value;
-    if (tableRef.value) {
-      const rows = tableRef.value.querySelectorAll("tr");
-
-      rows.forEach((row) => {
-        const firstCell = row.querySelector("td:first-child"); // Get the first column (key)
-        if (!firstCell) return;
-        const key = firstCell.textContent.trim().replace(/\s+/g, ""); // Key from first column
-        if (thisData.value[key]) {
-          const cells = row.querySelectorAll("td:not(:first-child)"); // Get other columns
-          // Update the row with the computed values
-          cells.forEach((cell, index) => {
-            cell.textContent = thisData.value[key][index]; // Format and insert value
-          });
-        }
-      });
-    }
+    tableModel.value = value;
   }
 );
+const formatNumberGerman = (num, min = 2, max = 5) => {
+  if (num == "qtoq" || num == "ctoc") return "";
+  return new Intl.NumberFormat("de-DE", {
+    minimumFractionDigits: min,
+    maximumFractionDigits: max,
+  }).format(num);
+};
 </script>
 
 <style scoped>

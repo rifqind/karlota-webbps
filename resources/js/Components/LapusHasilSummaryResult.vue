@@ -143,6 +143,7 @@ watch(
   }
 );
 const formatNumberGerman = (num, min = 2, max = 5) => {
+  if (num == "qtoq" || num == "ctoc") return "";
   return new Intl.NumberFormat("de-DE", {
     minimumFractionDigits: min,
     maximumFractionDigits: max,

@@ -315,7 +315,6 @@ const props = defineProps({
     default: () => [new Date().getFullYear()],
   },
 });
-// const quarters = [{ label: "1" }, { label: "2" }, { label: "3" }, { label: "4" }];
 const quarters = ["1", "2", "3", "4"];
 const tableModel = ref(props.computedData);
 const tableRef = ref(null);
@@ -326,6 +325,7 @@ watch(
   }
 );
 const formatNumberGerman = (num, min = 2, max = 5) => {
+  if (num == "qtoq" || num == "ctoc") return "";
   return new Intl.NumberFormat("de-DE", {
     minimumFractionDigits: min,
     maximumFractionDigits: max,

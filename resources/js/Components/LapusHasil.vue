@@ -371,7 +371,7 @@ const idx = computed(() => {
       const sid = Number(row.subsector_id);
       const q = String(row.quarter);
       const val = row[props.type];
-      (out[y][sid] ||= {})[q] = val;
+      (out[y][sid] ||= {})[q] = Number(val);
     }
   }
   return out;
