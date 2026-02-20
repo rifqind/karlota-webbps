@@ -4,45 +4,117 @@
       <td class="fixed-column">
         <label>Primer</label>
       </td>
-      <td v-for="(node, index) in quarters" class="text-right">
-        {{ getData("primer", node.label) }}
-      </td>
-      <td class="text-right">{{ getSumTotalFromVal("primer") }}</td>
+      <template v-for="yr in props.yearsToRender" :key="'primer-' + yr">
+        <td v-for="(node, index) in quarters" class="text-right">
+          <!-- {{ getData("primer", node.label) }} -->
+          {{
+            formatNumberGerman(
+              tableModel.rows["primer"]?.[String(yr)]?.q?.[Number(node) - 1] ?? 0,
+              0,
+              props.toFixed
+            )
+          }}
+        </td>
+        <td class="text-right">
+          <!-- {{ getSumTotalFromVal("primer") }} -->
+          {{
+            formatNumberGerman(
+              tableModel.rows["primer"]?.[String(yr)]?.total ?? 0,
+              0,
+              props.toFixed
+            )
+          }}
+        </td>
+      </template>
     </tr>
     <tr>
       <td class="fixed-column">
         <label>Sekunder</label>
       </td>
-      <td v-for="(node, index) in quarters" class="text-right">
-        {{ getData("sekunder", node.label) }}
-      </td>
-      <td class="text-right">{{ getSumTotalFromVal("sekunder") }}</td>
+      <template v-for="yr in props.yearsToRender" :key="'sekunder-' + yr">
+        <td v-for="(node, index) in quarters" class="text-right">
+          <!-- {{ getData("sekunder", node.label) }} -->
+          {{
+            formatNumberGerman(
+              tableModel.rows["sekunder"]?.[String(yr)]?.q?.[Number(node) - 1] ?? 0,
+              0,
+              props.toFixed
+            )
+          }}
+        </td>
+        <td class="text-right">
+          <!-- {{ getSumTotalFromVal("sekunder") }} -->
+          {{
+            formatNumberGerman(
+              tableModel.rows["sekunder"]?.[String(yr)]?.total ?? 0,
+              0,
+              props.toFixed
+            )
+          }}
+        </td>
+      </template>
     </tr>
     <tr>
       <td class="fixed-column">
         <label>Tersier</label>
       </td>
-      <td v-for="(node, index) in quarters" class="text-right">
-        {{ getData("tersier", node.label) }}
-      </td>
-      <td class="text-right">{{ getSumTotalFromVal("tersier") }}</td>
+      <template v-for="yr in props.yearsToRender" :key="'tersier-' + yr">
+        <td v-for="(node, index) in quarters" class="text-right">
+          <!-- {{ getData("tersier", node.label) }} -->
+          {{
+            formatNumberGerman(
+              tableModel.rows["tersier"]?.[String(yr)]?.q?.[Number(node) - 1] ?? 0,
+              0,
+              props.toFixed
+            )
+          }}
+        </td>
+        <td class="text-right">
+          <!-- {{ getSumTotalFromVal("tersier") }} -->
+          {{
+            formatNumberGerman(
+              tableModel.rows["tersier"]?.[String(yr)]?.total ?? 0,
+              0,
+              props.toFixed
+            )
+          }}
+        </td>
+      </template>
     </tr>
     <tr class="PDRB-footer text-center">
       <td class="desc-col footer-column">
         <p class="mt-1 mb-1">PDRB</p>
       </td>
-      <template v-for="(node, index) in quarters">
-        <td :id="'adhb_total-' + node.label" class="total-cell">
-          {{ getPDRB(node.label) }}
+      <template v-for="yr in props.yearsToRender" :key="'pdrb-' + yr">
+        <template v-for="(node, index) in quarters">
+          <td :id="'adhb_total-' + node.label" class="total-cell">
+            <!-- {{ getPDRB(node.label) }} -->
+            {{
+              formatNumberGerman(
+                tableModel.footer["PDRB"]?.[String(yr)]?.q?.[Number(node) - 1] ?? 0,
+                0,
+                props.toFixed
+              )
+            }}
+          </td>
+        </template>
+        <td class="total-cell">
+          <!-- {{ getSumPDRB("PDRB") }} -->
+          {{
+            formatNumberGerman(
+              tableModel.footer["PDRB"]?.[String(yr)]?.total ?? 0,
+              0,
+              props.toFixed
+            )
+          }}
         </td>
       </template>
-      <td class="total-cell">{{ getSumPDRB("PDRB") }}</td>
     </tr>
   </tbody>
 </template>
 
 <script setup>
-import { onMounted, ref, watch } from "vue";
+import { computed, onMounted, ref, watch } from "vue";
 const props = defineProps({
   dataContents: {
     type: Object,
@@ -62,98 +134,97 @@ const props = defineProps({
     type: String,
     required: true,
   },
+  dataByYears: {
+    type: Object,
+    required: true,
+  },
+  yearsToRender: {
+    type: Array,
+    required: true,
+    default: () => [new Date().getFullYear()],
+  },
+  toFixed: {
+    type: Number,
+    required: false,
+    default: 4,
+  },
 });
-const dataHere = ref(props.dataContents);
+// const dataHere = ref(props.dataContents);
+const dataHere = ref(props.dataByYears);
+const isNow = computed(() => String(props.onDemandType || "").includes("_now"));
+const pack = (yr) => dataHere.value[yr] ?? {};
+const seriesOfData = (yr) => {
+  const p = pack(yr);
+  return isNow.value ? p.dataContentsSummary ?? [] : p.dataBeforeSummary ?? [];
+};
 const tableRef = ref(null);
+// watch(
+//   () => props.dataContents,
+//   (value) => {
+//     dataHere.value = value;
+//   }
+// );
 watch(
-  () => props.dataContents,
+  () => props.dataByYears,
   (value) => {
     dataHere.value = value;
   }
 );
 var observer = null;
-onMounted(() => {
-  setTimeout(() => {
-    if (tableRef.value) {
-      observer = new MutationObserver((mutations) => {
-        captureTableData(props.onDemandType);
-      });
-    }
-    observer.observe(tableRef.value, {
-      childList: true,
-      subtree: true,
-      characterData: true,
-    });
-  }, 100);
-});
 const emits = defineEmits(["update:updateDOD"]);
-const quarters = [{ label: "1" }, { label: "2" }, { label: "3" }, { label: "4" }];
-const getData = (type, quarter) => {
-  const theData = dataHere.value.find((x) => {
-    return x.quarter == quarter && x.setdata == type;
-  });
-  if (theData) {
-    let formattedResult;
-    formattedResult =
-      theData[props.type] == "" || theData[props.type] == null
-        ? null
-        : formatNumberGerman(Number(theData[props.type]), 0, 9);
-    return formattedResult;
-  }
-};
-const lvlPDRB = ref({});
-const getPDRB = (quarter) => {
-  const filteredData = dataHere.value.filter((x) => x.quarter == quarter);
-  const result = filteredData.reduce((sum, item) => sum + Number(item[props.type]), 0);
-  if (!lvlPDRB.value["PDRB"]) lvlPDRB.value["PDRB"] = {};
-  lvlPDRB.value["PDRB"][quarter] = result;
-  let formattedResult = formatNumberGerman(result);
-  return formattedResult;
-};
-const getSumPDRB = (pdrb) => {
-  if (!lvlPDRB.value[pdrb]) return 0;
-
-  let totalSum = Object.values(lvlPDRB.value[pdrb]).reduce(
-    (sum, pdrbSum) => sum + pdrbSum,
-    0
-  );
-  let formattedResult = formatNumberGerman(totalSum);
-  return formattedResult;
-};
-const getSumTotalFromVal = (value) => {
-  const filteredData = dataHere.value.filter((x) => x.setdata == value);
-  // Sum the values from the filtered data
-  const result = filteredData.reduce((sum, item) => sum + Number(item[props.type]), 0);
-  // console.log(result);
-  let formattedResult = formatNumberGerman(result);
-  return formattedResult;
-};
-const captureTableData = (type) => {
-  //   const tbody = tableRef.value.querySelector("tbody");
-  const rows = tableRef.value.querySelectorAll("tr");
-  let tempData = {};
-  rows.forEach((row) => {
-    const cells = row.querySelectorAll("td");
-    let rowData = [];
-    cells.forEach((cell, index) => {
-      const input = cell.querySelector("input");
-      if (input) {
-        rowData[index] = input.value.trim(); // Get input value
-      } else {
-        rowData[index] = cell.innerText.trim(); // Get text content
-      }
-    });
-    if (rowData.length > 1) tempData[rowData[0]] = rowData.slice(1);
-  });
-  //   dataOnDemand.value = tempData;
-  emits("update:updateDOD", { data: tempData, type: type });
-};
 const formatNumberGerman = (num, min = 2, max = 5) => {
   return new Intl.NumberFormat("de-DE", {
     minimumFractionDigits: min,
     maximumFractionDigits: max,
   }).format(num);
 };
+const idx = computed(() => {
+  const out = {};
+  for (const yr of props.yearsToRender) {
+    const y = String(yr);
+    out[y] = {};
+    for (const row of seriesOfData(y)) {
+      const setdata = row.setdata;
+      const q = String(row.quarter);
+      const val = row[props.type];
+      (out[y][setdata] ||= {})[q] = Number(val);
+    }
+  }
+  return out;
+});
+const quarters = ["1", "2", "3", "4"];
+const tableModel = computed(() => {
+  const years = props.yearsToRender.map(String);
+  const sums = (y, setdata) => {
+    const q = quarters.map((qq) =>
+      setdata.reduce((acc, sets) => acc + (idx.value?.[y]?.[sets]?.[qq] ?? 0), 0)
+    );
+    return { q, total: q.reduce((a, b) => a + b, 0) };
+  };
+  const model = {
+    rows: {},
+    footer: {},
+  };
+  for (const sets of ["primer", "sekunder", "tersier"]) {
+    const key = `${sets}`;
+    model.rows[key] = {};
+    for (const y of years) {
+      const q = quarters.map((qq) => idx.value[y]?.[sets]?.[qq] ?? 0);
+      model.rows[key][y] = { q, total: q.reduce((a, b) => a + b, 0) };
+    }
+  }
+  model.footer["PDRB"] = {};
+  for (const y of years)
+    model.footer["PDRB"][y] = sums(y, ["primer", "sekunder", "tersier"]);
+  return model;
+});
+watch(
+  () => tableModel.value,
+  (value) => {
+    emits("update:updateDOD", { data: value, type: props.onDemandType });
+  },
+  { immediate: true }
+);
 </script>
 
 <style scoped>

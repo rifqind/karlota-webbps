@@ -80,6 +80,14 @@
           </div>
           <div class="flex items-center space-x-2 justify-end">
             <div
+              v-if="showTabPanel"
+              class="btn-warning-fordone ml-auto w-[220px] text-center"
+              @click.prevent="confirmAddYear"
+            >
+              <font-awesome-icon icon="fa-solid fa-plus" />
+              Tambah Tahun Lain
+            </div>
+            <div
               class="btn-info-fordone ml-auto w-[130px] text-center"
               @click.prevent="submit"
             >
@@ -134,9 +142,15 @@
               Tabel Summary
             </button>
             <button
-              @click="downloadModalStatus = true"
-              class="btn btn-warning-fordone ml-auto"
+              class="btn btn-success-fordone ml-auto"
+              @click="addToFixedValue(true)"
             >
+              0,00 ->>
+            </button>
+            <button class="btn btn-red-fordone" @click="addToFixedValue(false)">
+              <<- 0,00
+            </button>
+            <button @click="downloadModalStatus = true" class="btn btn-warning-fordone">
               Download
             </button>
           </div>
@@ -146,12 +160,19 @@
         <table class="table shadow-md w-full mb-2" id="tabel-entry">
           <thead>
             <tr>
-              <th class="fixed-thead">Komponen</th>
-              <th>Triwulan I</th>
-              <th>Triwulan II</th>
-              <th>Triwulan III</th>
-              <th>Triwulan IV</th>
-              <th>Total</th>
+              <th class="fixed-thead" rowspan="2">Komponen</th>
+              <th v-for="yr in yearToRender" :key="yr" :colspan="5" class="text-center">
+                {{ yr }}
+              </th>
+            </tr>
+            <tr>
+              <template v-for="yr in yearToRender" :key="'q-' + yr">
+                <th>Triwulan I</th>
+                <th>Triwulan II</th>
+                <th>Triwulan III</th>
+                <th>Triwulan IV</th>
+                <th>Total</th>
+              </template>
             </tr>
           </thead>
           <template v-if="page.props.type == 'Lapangan Usaha'">
@@ -159,18 +180,24 @@
             <LapusHasilSummary
               v-show="showPdrbAndResult['adhb'] && !isFull"
               :data-contents="dataContentsSummary"
+              :data-by-years="dataByYear"
+              :years-to-render="yearToRender"
               :type="'adhb'"
               :onDemandType="'adhb_summary_now'"
+              :to-fixed="toFixed"
               :quarter-cap="quarterCap"
               @update:update-d-o-d="updateDOD"
             />
             <LapusHasil
               v-show="showPdrbAndResult['adhb'] && isFull"
               :data-contents="dataContents"
+              :data-by-years="dataByYear"
+              :years-to-render="yearToRender"
               :subsectors="subsectors"
               :type="'adhb'"
               :onDemandType="'adhb_now'"
               :quarter-cap="quarterCap"
+              :to-fixed="toFixed"
               @update:update-d-o-d="updateDOD"
             />
             <!-- #endregion -->
@@ -180,6 +207,9 @@
               :data-contents="dataContentsSummary"
               :type="'adhk'"
               :onDemandType="'adhk_summary_now'"
+              :data-by-years="dataByYear"
+              :years-to-render="yearToRender"
+              :to-fixed="toFixed"
               :quarter-cap="quarterCap"
               @update:update-d-o-d="updateDOD"
             />
@@ -187,9 +217,12 @@
               v-show="showPdrbAndResult['adhk'] && isFull"
               :data-contents="dataContents"
               :subsectors="subsectors"
+              :data-by-years="dataByYear"
+              :years-to-render="yearToRender"
               :type="'adhk'"
               :onDemandType="'adhk_now'"
               :quarter-cap="quarterCap"
+              :to-fixed="toFixed"
               @update:update-d-o-d="updateDOD"
             />
             <!-- #endregion -->
@@ -199,6 +232,8 @@
               :type="'distribusi'"
               :quarter-cap="quarterCap"
               :computed-data="computedSummaryData"
+              :to-fixed="toFixed"
+              :years-to-render="yearToRender"
             />
             <LapusHasilResult
               v-show="showPdrbAndResult['result'] && isFull"
@@ -206,6 +241,8 @@
               :type="'distribusi'"
               :quarter-cap="quarterCap"
               :computed-data="computedData"
+              :to-fixed="toFixed"
+              :years-to-render="yearToRender"
             />
             <!-- #endregion -->
 
@@ -216,6 +253,9 @@
               :data-contents="dataBeforeSummary"
               :type="'adhb'"
               :onDemandType="'adhb_summary_prev'"
+              :data-by-years="dataByYear"
+              :to-fixed="toFixed"
+              :years-to-render="yearToRender"
               :quarter-cap="quarterCap"
               @update:update-d-o-d="updateDOD"
             />
@@ -223,9 +263,12 @@
               v-show="false"
               :data-contents="dataBefore"
               :subsectors="subsectors"
+              :data-by-years="dataByYear"
+              :years-to-render="yearToRender"
               :type="'adhb'"
               :onDemandType="'adhb_prev'"
               :quarter-cap="quarterCap"
+              :to-fixed="toFixed"
               @update:update-d-o-d="updateDOD"
             />
             <!-- #endregion -->
@@ -236,6 +279,9 @@
               :data-contents="dataBeforeSummary"
               :type="'adhk'"
               :onDemandType="'adhk_summary_prev'"
+              :to-fixed="toFixed"
+              :data-by-years="dataByYear"
+              :years-to-render="yearToRender"
               :quarter-cap="quarterCap"
               @update:update-d-o-d="updateDOD"
             />
@@ -243,6 +289,9 @@
               v-show="false"
               :data-contents="dataBefore"
               :subsectors="subsectors"
+              :data-by-years="dataByYear"
+              :years-to-render="yearToRender"
+              :to-fixed="toFixed"
               :type="'adhk'"
               :onDemandType="'adhk_prev'"
               :quarter-cap="quarterCap"
@@ -258,6 +307,9 @@
               :data-contents="dataContentsSummary"
               :type="'adhb'"
               :onDemandType="'adhb_summary_now'"
+              :data-by-years="dataByYear"
+              :years-to-render="yearToRender"
+              :to-fixed="toFixed"
               :quarter-cap="quarterCap"
               @update:update-d-o-d="updateDOD"
             />
@@ -265,6 +317,9 @@
               v-show="showPdrbAndResult['adhb'] && isFull"
               :data-contents="dataContents"
               :subsectors="subsectors"
+              :data-by-years="dataByYear"
+              :years-to-render="yearToRender"
+              :to-fixed="toFixed"
               :type="'adhb'"
               :onDemandType="'adhb_now'"
               :quarter-cap="quarterCap"
@@ -276,6 +331,9 @@
               v-show="showPdrbAndResult['adhk'] && !isFull"
               :data-contents="dataContentsSummary"
               :type="'adhk'"
+              :data-by-years="dataByYear"
+              :years-to-render="yearToRender"
+              :to-fixed="toFixed"
               :onDemandType="'adhk_summary_now'"
               :quarter-cap="quarterCap"
               @update:update-d-o-d="updateDOD"
@@ -284,6 +342,9 @@
               v-show="showPdrbAndResult['adhk'] && isFull"
               :data-contents="dataContents"
               :subsectors="subsectors"
+              :data-by-years="dataByYear"
+              :years-to-render="yearToRender"
+              :to-fixed="toFixed"
               :type="'adhk'"
               :onDemandType="'adhk_now'"
               :quarter-cap="quarterCap"
@@ -296,6 +357,8 @@
               :type="'distribusi'"
               :quarter-cap="quarterCap"
               :computed-data="computedSummaryData"
+              :to-fixed="toFixed"
+              :years-to-render="yearToRender"
             />
             <PengHasilResult
               v-show="showPdrbAndResult['result'] && isFull"
@@ -303,6 +366,8 @@
               :type="'distribusi'"
               :quarter-cap="quarterCap"
               :computed-data="computedData"
+              :to-fixed="toFixed"
+              :years-to-render="yearToRender"
             />
             <!-- #endregion -->
 
@@ -314,6 +379,9 @@
               :type="'adhb'"
               :onDemandType="'adhb_summary_prev'"
               :quarter-cap="quarterCap"
+              :data-by-years="dataByYear"
+              :years-to-render="yearToRender"
+              :to-fixed="toFixed"
               @update:update-d-o-d="updateDOD"
             />
             <PengHasil
@@ -323,6 +391,9 @@
               :type="'adhb'"
               :onDemandType="'adhb_prev'"
               :quarter-cap="quarterCap"
+              :data-by-years="dataByYear"
+              :years-to-render="yearToRender"
+              :to-fixed="toFixed"
               @update:update-d-o-d="updateDOD"
             />
             <!-- #endregion -->
@@ -334,6 +405,9 @@
               :type="'adhk'"
               :onDemandType="'adhk_summary_prev'"
               :quarter-cap="quarterCap"
+              :data-by-years="dataByYear"
+              :years-to-render="yearToRender"
+              :to-fixed="toFixed"
               @update:update-d-o-d="updateDOD"
             />
             <PengHasil
@@ -343,6 +417,9 @@
               :type="'adhk'"
               :onDemandType="'adhk_prev'"
               :quarter-cap="quarterCap"
+              :data-by-years="dataByYear"
+              :years-to-render="yearToRender"
+              :to-fixed="toFixed"
               @update:update-d-o-d="updateDOD"
             />
             <!-- #endregion -->
@@ -384,6 +461,65 @@
         </button>
       </template>
     </ModalBs>
+    <ModalBs
+      :-modal-status="addYearModalStatus"
+      @close="addYearModalStatus = false"
+      :title="'Tambah tahun lain'"
+      :modal-size="'w-[30vw]'"
+    >
+      <template #modalBody>
+        <div class="mb-3 space-y-2">
+          <label for="year">Pilih Tahun<span class="text-danger">*</span></label>
+          <Multiselect
+            v-model="yearExt.year"
+            :options="yearDrop"
+            :searchable="true"
+            placeholder="-- Pilih Tahun --"
+            @change="quarterExt"
+          />
+        </div>
+        <div class="mb-3 space-y-2">
+          <label for="year">Pilih Triwulan<span class="text-danger">*</span></label>
+          <Multiselect
+            v-model="yearExt.quarter"
+            :options="quarterDropExt"
+            :searchable="true"
+            placeholder="-- Pilih Triwulan --"
+            @change="periodExt"
+          />
+        </div>
+        <div class="mb-3 space-y-2">
+          <label for="year"
+            >Pilih Periode Putaran<span class="text-danger">*</span></label
+          >
+          <div class="flex items-center gap-2">
+            <Multiselect
+              v-model="yearExt.description"
+              :options="descDropExt"
+              :searchable="true"
+              placeholder="-- Pilih Periode Putaran --"
+            />
+            <button @click="addList" class="btn btn-success-fordone whitespace-nowrap">
+              Tambah
+            </button>
+          </div>
+        </div>
+        <div class="mb-3 space-y-2">
+          <label for="year"
+            >Pilih Periode Putaran<span class="text-danger">*</span></label
+          >
+          <Multiselect
+            v-model="yearExt.real"
+            mode="tags"
+            :options="yearListExt"
+            :searchable="true"
+          />
+        </div>
+      </template>
+      <template #modalFunction>
+        <button class="btn btn-success-fordone" @click="addYearFetch">Cari</button>
+      </template>
+    </ModalBs>
   </GeneralLayout>
 </template>
 
@@ -405,7 +541,7 @@ import { tableToJson, theDownload } from "@/download";
 import GeneralLayout from "@/Layouts/GeneralLayout.vue";
 import { Head, useForm, usePage } from "@inertiajs/vue3";
 import Multiselect from "@vueform/multiselect";
-import { nextTick, onMounted, ref } from "vue";
+import { computed, nextTick, onMounted, ref } from "vue";
 
 const page = usePage();
 const form = useForm({
@@ -535,6 +671,7 @@ const showPdrbAndResult = ref({
 });
 const isFull = ref(true);
 const submit = async () => {
+  const y = baseYear.value;
   try {
     const response = await axios.get(route("pdrb.get-hasil"), {
       params: {
@@ -553,6 +690,12 @@ const submit = async () => {
       regions: null,
     };
     quarterCap.value = form.quarter;
+    dataByYear.value[y] = {
+      dataContents: response.data.current_data,
+      dataBefore: response.data.previous_data,
+      dataContentsSummary: response.data.current_summary_set,
+      dataBeforeSummary: response.data.previous_summary_set,
+    };
     dataContents.value = response.data.current_data;
     dataBefore.value = response.data.previous_data;
     dataContentsSummary.value = response.data.current_summary_set;
@@ -681,276 +824,305 @@ const showSummary = (tab) => {
 };
 const enabletoFixed = ref(true);
 const showDist = (data) => {
-  let dataset = dataOnDemand.value[data];
-  let arrayPDRB = dataset["PDRB"];
-  let stake = Number(quarterCap.value); // Current quarter
-  // Helper function to parse numbers safely
-  const parseNumber = (value) =>
-    value ? Number(value.replaceAll(".", "").replaceAll(",", ".")) : 0;
-  let result = {};
-  Object.keys(dataset).forEach((key) => {
-    result[key] = dataset[key].map((value, index) => {
-      // Include index 0 to (stake - 1) and always include index 4
-      if (index < stake || index == 4) {
-        let divisor = parseNumber(arrayPDRB[index]); // Get corresponding PDRB value
-        let dividend = parseNumber(value); // Convert current value to number
-        let dist = divisor != 0 ? (dividend / divisor) * 100 : 0; // Avoid division by zero
-        return formatNumberGerman(enabletoFixed.value ? dist.toFixed(4) : dist, 2);
-      }
-    });
-  });
-  //   computedData.value = removeSpaceOnKomponen(result);
-  return removeSpaceOnKomponen(result);
+  const years = yearToRender.value.map(String);
+  let stake = Number(quarterCap.value);
+  let dataset = dataOnDemand.value?.[data] ?? {};
+  const rows = dataset?.rows ?? {};
+  const footers = dataset?.footer ?? {};
+  const pdrb = footers["PDRB"] ?? {};
+  let result = {
+    rows: {},
+    footer: {},
+  };
+  const calculate = (item, base) => {
+    let outQ = new Array(stake);
+    const baseQ = base?.q ?? [];
+    const itemQ = item?.q ?? [];
+    for (let i = 0; i < stake; i++) {
+      const dividend = Number(itemQ[i] ?? 0);
+      const divisor = Number(baseQ[i] ?? 0);
+      outQ[i] = divisor !== 0 ? (dividend / divisor) * 100 : 0;
+    }
+    const totalDividend = Number(item?.total ?? 0);
+    const totalDivisor = Number(base?.total ?? 0);
+    const total = totalDivisor !== 0 ? (totalDividend / totalDivisor) * 100 : 0;
+    return { q: outQ, total };
+  };
+
+  for (const rowKey of Object.keys(rows)) {
+    result.rows[rowKey] = {};
+    for (const y of years) {
+      const row = rows[rowKey]?.[y];
+      const base = pdrb?.[y];
+      result.rows[rowKey][y] = calculate(row, base);
+    }
+  }
+  for (const footerKey of Object.keys(footers)) {
+    result.footer[footerKey] = {};
+    for (const y of years) {
+      const foot = footers[footerKey]?.[y];
+      const base = pdrb?.[y];
+      result.footer[footerKey][y] = calculate(foot, base);
+    }
+  }
+  return result;
 };
 
 const showGQtoQ = (now, prev) => {
-  let current_dataset = dataOnDemand.value[now];
-  let previous_dataset = dataOnDemand.value[prev];
-  // Clean up spaces
-  current_dataset = removeSpaceOnKomponen(current_dataset);
-  previous_dataset = removeSpaceOnKomponen(previous_dataset);
-  // Get only the 4th index (previous quarter) from `previous_dataset`
-  previous_dataset = Object.fromEntries(
-    Object.entries(previous_dataset).map(([key, arr]) => [key, arr[3]])
-  );
-  let result = {};
-  let stake = Number(quarterCap.value); // Set correct loop range
-  Object.keys(current_dataset).forEach((key) => {
-    result[key] = current_dataset[key]
-      .slice(0, stake) // Ensures only the required indexes are processed
-      .map((value, index) => {
-        let dividend = value ? Number(value.replaceAll(".", "").replaceAll(",", ".")) : 0;
-        let divisor;
-        if (index == 0) {
-          // Use the previous dataset for the first quarter
-          divisor = previous_dataset[key]
-            ? Number(previous_dataset[key].replaceAll(".", "").replaceAll(",", "."))
-            : 0;
-        } else {
-          // Use the previous index from the same dataset
-          divisor = current_dataset[key][index - 1]
-            ? Number(
-                current_dataset[key][index - 1].replaceAll(".", "").replaceAll(",", ".")
-              )
-            : 0;
-        }
-        let growth = divisor != 0 && dividend != 0 ? (dividend / divisor) * 100 - 100 : 0;
-        return formatNumberGerman(enabletoFixed.value ? growth.toFixed(4) : growth, 2);
-      });
-  });
-  //   computedData.value = removeSpaceOnKomponen(result);
-  return removeSpaceOnKomponen(result);
+  let current_dataset = dataOnDemand.value?.[now] ?? {};
+  let previous_dataset = dataOnDemand.value?.[prev] ?? {};
+  let stake = Number(quarterCap.value);
+  const years = yearToRender.value.map(String);
+  let result = {
+    rows: {},
+    footer: {},
+  };
+
+  const calculate = (n, p) => {
+    let outQ = new Array(stake);
+    const pQ = p?.q ?? [];
+    const nQ = n?.q ?? [];
+    for (let i = 0; i < stake; i++) {
+      const dividend = Number(nQ[i] ?? 0);
+      let divisor = 0;
+      if (i == 0) divisor = Number(pQ[3] ?? 0);
+      else divisor = Number(nQ[i - 1] ?? 0);
+      outQ[i] = divisor !== 0 ? (dividend / divisor) * 100 - 100 : 0;
+    }
+    const total = "qtoq";
+    return { q: outQ, total };
+  };
+
+  for (const rowKey of Object.keys(current_dataset?.rows ?? {})) {
+    result.rows[rowKey] = {};
+    for (const y of years) {
+      const nows = current_dataset?.rows?.[rowKey]?.[y] ?? {};
+      const prevs = previous_dataset?.rows?.[rowKey]?.[y] ?? {};
+      result.rows[rowKey][y] = calculate(nows, prevs);
+    }
+  }
+  for (const footerKey of Object.keys(current_dataset?.footer ?? {})) {
+    result.footer[footerKey] = {};
+    for (const y of years) {
+      const nows = current_dataset?.footer?.[footerKey]?.[y] ?? {};
+      const prevs = previous_dataset?.footer?.[footerKey]?.[y] ?? {};
+      result.footer[footerKey][y] = calculate(nows, prevs);
+    }
+  }
+  return result;
 };
 
 const showGYtoY = (now, prev) => {
-  let current_dataset = removeSpaceOnKomponen(dataOnDemand.value[now]);
-  let previous_dataset = removeSpaceOnKomponen(dataOnDemand.value[prev]);
-  if (isObjectEmpty(previous_dataset)) {
-    let notif = [{ message: "Data Tahun sebelumnya masih kosong", type: "error" }];
-    showNotification(notif);
-    showPdrbAndResult.value.result = false;
-    return;
+  let current_dataset = dataOnDemand.value?.[now] ?? {};
+  let previous_dataset = dataOnDemand.value?.[prev] ?? {};
+  let stake = Number(quarterCap.value);
+  const years = yearToRender.value.map(String);
+  let result = {
+    rows: {},
+    footer: {},
+  };
+  const calculate = (n, p) => {
+    let outQ = new Array(stake);
+    const pQ = p?.q ?? [];
+    const nQ = n?.q ?? [];
+    for (let i = 0; i < stake; i++) {
+      const dividend = Number(nQ[i] ?? 0);
+      const divisor = Number(pQ[i] ?? 0);
+      outQ[i] = divisor !== 0 ? (dividend / divisor) * 100 - 100 : 0;
+    }
+    const totalDividend = Number(n?.total ?? 0);
+    const totalDivisor = Number(p?.total ?? 0);
+    const total = totalDivisor !== 0 ? (totalDividend / totalDivisor) * 100 - 100 : 0;
+    return { q: outQ, total };
+  };
+
+  for (const rowKey of Object.keys(current_dataset?.rows ?? {})) {
+    result.rows[rowKey] = {};
+    for (const y of years) {
+      const nows = current_dataset?.rows?.[rowKey]?.[y] ?? {};
+      const prevs = previous_dataset?.rows?.[rowKey]?.[y] ?? {};
+      result.rows[rowKey][y] = calculate(nows, prevs);
+    }
   }
-  let stake = quarterCap.value == 4 ? 5 : Number(quarterCap.value); // Set max iteration limit
-
-  let result = {};
-  Object.keys(current_dataset).forEach((key) => {
-    result[key] = current_dataset[key]
-      .slice(0, stake) // Only process relevant indexes
-      .map((value, index) => {
-        let dividend = value ? Number(value.replaceAll(".", "").replaceAll(",", ".")) : 0;
-        let divisor = previous_dataset[key][index]
-          ? Number(previous_dataset[key][index].replaceAll(".", "").replaceAll(",", "."))
-          : 0;
-
-        let growth = divisor != 0 && dividend != 0 ? (dividend / divisor) * 100 - 100 : 0;
-        return formatNumberGerman(enabletoFixed.value ? growth.toFixed(4) : growth, 2);
-      });
-  });
-
-  //   computedData.value = removeSpaceOnKomponen(result);
-  return removeSpaceOnKomponen(result);
+  for (const footerKey of Object.keys(current_dataset?.footer ?? {})) {
+    result.footer[footerKey] = {};
+    for (const y of years) {
+      const nows = current_dataset?.footer?.[footerKey]?.[y] ?? {};
+      const prevs = previous_dataset?.footer?.[footerKey]?.[y] ?? {};
+      result.footer[footerKey][y] = calculate(nows, prevs);
+    }
+  }
+  return result;
 };
 
 const showGCtoC = (now, prev) => {
-  let current_dataset = removeSpaceOnKomponen(dataOnDemand.value[now]);
-  let previous_dataset = removeSpaceOnKomponen(dataOnDemand.value[prev]);
-  if (isObjectEmpty(previous_dataset)) {
-    let notif = [{ message: "Data Tahun sebelumnya masih kosong", type: "error" }];
-    showNotification(notif);
-    showPdrbAndResult.value.result = false;
-    return;
-  }
-  let stake = Number(quarterCap.value); // Max quarter index to loop through
-  // Helper function to convert values to numbers
-  const parseNumber = (value) =>
-    value ? Number(value.replaceAll(".", "").replaceAll(",", ".")) : 0;
-  let result = {};
-  Object.keys(current_dataset).forEach((key) => {
-    result[key] = current_dataset[key].slice(0, stake).map((_, index) => {
+  let current_dataset = dataOnDemand.value?.[now] ?? {};
+  let previous_dataset = dataOnDemand.value?.[prev] ?? {};
+  let stake = Number(quarterCap.value);
+  const years = yearToRender.value.map(String);
+  let result = {
+    rows: {},
+    footer: {},
+  };
+  const calculate = (n, p) => {
+    let outQ = new Array(stake);
+    const pQ = p?.q ?? [];
+    const nQ = n?.q ?? [];
+    for (let i = 0; i < stake; i++) {
       let dividend = 0,
         divisor = 0;
-      // Cumulative sum for each index
-      for (let cumulative = 0; cumulative <= index; cumulative++) {
-        dividend += parseNumber(current_dataset[key][cumulative]);
-        divisor += parseNumber(previous_dataset[key][cumulative]);
+      for (let cumulative = 0; cumulative <= i; cumulative++) {
+        dividend += Number(nQ[cumulative] ?? 0);
+        divisor += Number(pQ[cumulative] ?? 0);
       }
-      let growth = divisor != 0 && dividend != 0 ? (dividend / divisor) * 100 - 100 : 0;
-      return formatNumberGerman(enabletoFixed.value ? growth.toFixed(4) : growth, 2);
-    });
-  });
-  //   computedData.value = removeSpaceOnKomponen(result);
-  return removeSpaceOnKomponen(result);
+      outQ[i] = divisor !== 0 ? (dividend / divisor) * 100 - 100 : 0;
+    }
+    const total = "ctoc";
+    return { q: outQ, total };
+  };
+  for (const rowKey of Object.keys(current_dataset?.rows ?? {})) {
+    result.rows[rowKey] = {};
+    for (const y of years) {
+      const nows = current_dataset?.rows?.[rowKey]?.[y] ?? {};
+      const prevs = previous_dataset?.rows?.[rowKey]?.[y] ?? {};
+      result.rows[rowKey][y] = calculate(nows, prevs);
+    }
+  }
+  for (const footerKey of Object.keys(current_dataset?.footer ?? {})) {
+    result.footer[footerKey] = {};
+    for (const y of years) {
+      const nows = current_dataset?.footer?.[footerKey]?.[y] ?? {};
+      const prevs = previous_dataset?.footer?.[footerKey]?.[y] ?? {};
+      result.footer[footerKey][y] = calculate(nows, prevs);
+    }
+  }
+  return result;
 };
 
 const showIndeks = (now, prev) => {
-  // current = ADHB, previous = ADHK
-  let current_dataset = removeSpaceOnKomponen(dataOnDemand.value[now]);
-  let previous_dataset = removeSpaceOnKomponen(dataOnDemand.value[prev]);
-  let stake = Number(quarterCap.value); // Defines the quarter limit
-  // Helper function to parse numbers
-  const parseNumber = (value) =>
-    value ? Number(value.replaceAll(".", "").replaceAll(",", ".")) : 0;
-  let result = {};
-  Object.keys(current_dataset).forEach((key) => {
-    result[key] = current_dataset[key].slice(0, stake).map((value, index) => {
-      let dividend = parseNumber(value);
-      let divisor = parseNumber(previous_dataset[key][index]);
-      let indeks = divisor != 0 ? (dividend / divisor) * 100 : 0;
-      return formatNumberGerman(enabletoFixed.value ? indeks.toFixed(4) : indeks, 2);
-    });
-  });
-  //   computedData.value = removeSpaceOnKomponen(result);
-  return removeSpaceOnKomponen(result);
+  let current_dataset = dataOnDemand.value?.[now] ?? {};
+  let previous_dataset = dataOnDemand.value?.[prev] ?? {};
+  let stake = Number(quarterCap.value);
+  const years = yearToRender.value.map(String);
+  let result = {
+    rows: {},
+    footer: {},
+  };
+  const calculate = (n, p) => {
+    let outQ = new Array(stake);
+    const pQ = p?.q ?? [];
+    const nQ = n?.q ?? [];
+    for (let i = 0; i < stake; i++) {
+      const dividend = Number(nQ[i] ?? 0);
+      const divisor = Number(pQ[i] ?? 0);
+      outQ[i] = divisor !== 0 ? (dividend / divisor) * 100 : 0;
+    }
+    const totalDividend = Number(n?.total ?? 0);
+    const totalDivisor = Number(p?.total ?? 0);
+    const total = totalDivisor !== 0 ? (totalDividend / totalDivisor) * 100 : 0;
+    return { q: outQ, total };
+  };
+  for (const rowKey of Object.keys(current_dataset?.rows ?? {})) {
+    result.rows[rowKey] = {};
+    for (const y of years) {
+      const nows = current_dataset?.rows?.[rowKey]?.[y] ?? {};
+      const prevs = previous_dataset?.rows?.[rowKey]?.[y] ?? {};
+      result.rows[rowKey][y] = calculate(nows, prevs);
+    }
+  }
+  for (const footerKey of Object.keys(current_dataset?.footer ?? {})) {
+    result.footer[footerKey] = {};
+    for (const y of years) {
+      const nows = current_dataset?.footer?.[footerKey]?.[y] ?? {};
+      const prevs = previous_dataset?.footer?.[footerKey]?.[y] ?? {};
+      result.footer[footerKey][y] = calculate(nows, prevs);
+    }
+  }
+  return result;
 };
 
 const showGIQtoQ = (adhbnow, adhbprev, adhknow, adhkprev) => {
-  let adhb_current_dataset = removeSpaceOnKomponen(dataOnDemand.value[adhbnow]);
-  let adhk_current_dataset = removeSpaceOnKomponen(dataOnDemand.value[adhknow]);
-  let adhb_previous_dataset = removeSpaceOnKomponen(dataOnDemand.value[adhbprev]);
-  let adhk_previous_dataset = removeSpaceOnKomponen(dataOnDemand.value[adhkprev]);
-  if (isObjectEmpty(adhb_previous_dataset)) {
-    let notif = [{ message: "Data Tahun sebelumnya masih kosong", type: "error" }];
-    showNotification(notif);
-    showPdrbAndResult.value.result = false;
-    return;
-  }
-  adhb_previous_dataset = Object.fromEntries(
-    Object.entries(adhb_previous_dataset).map(([key, arr]) => [key, arr[3]])
-  );
-  adhk_previous_dataset = Object.fromEntries(
-    Object.entries(adhk_previous_dataset).map(([key, arr]) => [key, arr[3]])
-  );
-  const parseNumber = (value) =>
-    value ? Number(value.replaceAll(".", "").replaceAll(",", ".")) : 0;
   let stake = Number(quarterCap.value);
-  let indeks_implisit_previous = {};
-  Object.keys(adhb_previous_dataset).forEach((key) => {
-    let dividend = parseNumber(adhb_previous_dataset[key]);
-    let divisor = parseNumber(adhk_previous_dataset[key]);
-    let indeks = divisor != 0 && dividend != 0 ? (dividend / divisor) * 100 : 0;
-    indeks_implisit_previous[key] = formatNumberGerman(
-      enabletoFixed.value ? indeks.toFixed(4) : indeks,
-      2
-    );
-  });
-  let indeks_implisit_current = {};
-  Object.keys(adhb_current_dataset).forEach((key) => {
-    indeks_implisit_current[key] = adhb_current_dataset[key]
-      .slice(0, stake)
-      .map((value, index) => {
-        let dividend = parseNumber(value);
-        let divisor = parseNumber(adhk_current_dataset[key][index]);
-        let indeks = divisor != 0 ? (dividend / divisor) * 100 : 0;
-        return formatNumberGerman(enabletoFixed.value ? indeks.toFixed(4) : indeks, 2);
-      });
-  });
-  let result = {};
-  Object.keys(indeks_implisit_current).forEach((key) => {
-    result[key] = indeks_implisit_current[key].map((value, index) => {
-      let dividend = parseNumber(value);
-      let divisor;
-      if (index == 0) {
-        // Use the previous dataset for the first quarter
-        divisor = parseNumber(indeks_implisit_previous[key]);
-      } else {
-        // Use the previous index from the same dataset
-        divisor = parseNumber(indeks_implisit_current[key][index - 1]);
-      }
-      let growth = divisor != 0 && dividend != 0 ? (dividend / divisor) * 100 - 100 : 0;
-      return formatNumberGerman(enabletoFixed.value ? growth.toFixed(4) : growth, 2);
-    });
-  });
-  //   computedData.value = result;
+  const years = yearToRender.value.map(String);
+  let result = {
+    rows: {},
+    footer: {},
+  };
+  let previous_dataset = showIndeks(adhbprev, adhkprev);
+  let current_dataset = showIndeks(adhbnow, adhknow);
+  const calculate = (n, p) => {
+    let outQ = new Array(stake);
+    const pQ = p?.q ?? [];
+    const nQ = n?.q ?? [];
+    for (let i = 0; i < stake; i++) {
+      const dividend = Number(nQ[i] ?? 0);
+      let divisor = 0;
+      if (i == 0) divisor = Number(pQ[3] ?? 0);
+      else divisor = Number(nQ[i - 1] ?? 0);
+      outQ[i] = divisor !== 0 ? (dividend / divisor) * 100 - 100 : 0;
+    }
+    const total = "qtoq";
+    return { q: outQ, total };
+  };
+  for (const rowKey of Object.keys(current_dataset?.rows ?? {})) {
+    result.rows[rowKey] = {};
+    for (const y of years) {
+      const nows = current_dataset?.rows?.[rowKey]?.[y] ?? {};
+      const prevs = previous_dataset?.rows?.[rowKey]?.[y] ?? {};
+      result.rows[rowKey][y] = calculate(nows, prevs);
+    }
+  }
+  for (const footerKey of Object.keys(current_dataset?.footer ?? {})) {
+    result.footer[footerKey] = {};
+    for (const y of years) {
+      const nows = current_dataset?.footer?.[footerKey]?.[y] ?? {};
+      const prevs = previous_dataset?.footer?.[footerKey]?.[y] ?? {};
+      result.footer[footerKey][y] = calculate(nows, prevs);
+    }
+  }
   return result;
 };
 
 const showGIYtoY = (adhbnow, adhbprev, adhknow, adhkprev) => {
-  let adhb_current_dataset = removeSpaceOnKomponen(dataOnDemand.value[adhbnow]);
-  let adhk_current_dataset = removeSpaceOnKomponen(dataOnDemand.value[adhknow]);
-  let adhb_previous_dataset = removeSpaceOnKomponen(dataOnDemand.value[adhbprev]);
-  let adhk_previous_dataset = removeSpaceOnKomponen(dataOnDemand.value[adhkprev]);
-  if (isObjectEmpty(adhb_previous_dataset)) {
-    let notif = [{ message: "Data Tahun sebelumnya masih kosong", type: "error" }];
-    showNotification(notif);
-    showPdrbAndResult.value.result = false;
-    return;
+  let stake = Number(quarterCap.value);
+  const years = yearToRender.value.map(String);
+  let result = {
+    rows: {},
+    footer: {},
+  };
+  let previous_dataset = showIndeks(adhbprev, adhkprev);
+  let current_dataset = showIndeks(adhbnow, adhknow);
+  const calculate = (n, p) => {
+    let outQ = new Array(stake);
+    const pQ = p?.q ?? [];
+    const nQ = n?.q ?? [];
+    for (let i = 0; i < stake; i++) {
+      const dividend = Number(nQ[i] ?? 0);
+      const divisor = Number(pQ[i] ?? 0);
+      outQ[i] = divisor !== 0 ? (dividend / divisor) * 100 - 100 : 0;
+    }
+    const totalDividend = Number(n?.total ?? 0);
+    const totalDivisor = Number(p?.total ?? 0);
+    const total = totalDivisor !== 0 ? (totalDividend / totalDivisor) * 100 - 100 : 0;
+    return { q: outQ, total };
+  };
+  for (const rowKey of Object.keys(current_dataset?.rows ?? {})) {
+    result.rows[rowKey] = {};
+    for (const y of years) {
+      const nows = current_dataset?.rows?.[rowKey]?.[y] ?? {};
+      const prevs = previous_dataset?.rows?.[rowKey]?.[y] ?? {};
+      result.rows[rowKey][y] = calculate(nows, prevs);
+    }
   }
-  const parseNumber = (value) =>
-    value ? Number(value.replaceAll(".", "").replaceAll(",", ".")) : 0;
-  let stake = quarterCap.value == 4 ? 5 : Number(quarterCap.value);
-  let indeks_implisit_previous = {};
-  Object.keys(adhb_previous_dataset).forEach((key) => {
-    indeks_implisit_previous[key] = adhb_previous_dataset[key]
-      .slice(0, stake)
-      .map((value, index) => {
-        let dividend = parseNumber(value);
-        let divisor = parseNumber(adhk_previous_dataset[key][index]);
-        let indeks = divisor != 0 ? (dividend / divisor) * 100 : 0;
-        return formatNumberGerman(enabletoFixed.value ? indeks.toFixed(4) : indeks, 2);
-      });
-  });
-  let indeks_implisit_current = {};
-  Object.keys(adhb_current_dataset).forEach((key) => {
-    indeks_implisit_current[key] = adhb_current_dataset[key]
-      .slice(0, stake)
-      .map((value, index) => {
-        let dividend = parseNumber(value);
-        let divisor = parseNumber(adhk_current_dataset[key][index]);
-        let indeks = divisor != 0 ? (dividend / divisor) * 100 : 0;
-        return formatNumberGerman(enabletoFixed.value ? indeks.toFixed(4) : indeks, 2);
-      });
-  });
-  let result = {};
-  Object.keys(indeks_implisit_current).forEach((key) => {
-    result[key] = indeks_implisit_current[key].map((value, index) => {
-      let dividend = parseNumber(value);
-      let divisor = parseNumber(indeks_implisit_previous[key][index]);
-      let growth = divisor != 0 && dividend != 0 ? (dividend / divisor) * 100 - 100 : 0;
-      return formatNumberGerman(enabletoFixed.value ? growth.toFixed(4) : growth, 2);
-    });
-  });
-  //   computedData.value = result;
+  for (const footerKey of Object.keys(current_dataset?.footer ?? {})) {
+    result.footer[footerKey] = {};
+    for (const y of years) {
+      const nows = current_dataset?.footer?.[footerKey]?.[y] ?? {};
+      const prevs = previous_dataset?.footer?.[footerKey]?.[y] ?? {};
+      result.footer[footerKey][y] = calculate(nows, prevs);
+    }
+  }
   return result;
-};
-
-const removeSpaceOnKomponen = (object) => {
-  let result;
-  result = Object.fromEntries(
-    Object.entries(object).map(([key, value]) => [key.trim().replace(/\s+/g, ""), value])
-  );
-  return result;
-};
-
-const isObjectEmpty = (obj) => {
-  return !obj || Object.keys(obj).length == 0;
-};
-
-const formatNumberGerman = (num, min = 2, max = 6) => {
-  return new Intl.NumberFormat("de-DE", {
-    minimumFractionDigits: min,
-    maximumFractionDigits: max,
-  }).format(num);
 };
 const downloadModalStatus = ref(false);
 const downloadTitle = ref("Download");
@@ -1005,11 +1177,121 @@ const downloadHasil = async (id, title, type) => {
   }
 };
 // #endregion
+
+//
+const addYearModalStatus = ref(false);
+const yearExt = ref({
+  year: null,
+  quarter: null,
+  description: null,
+  real: [],
+});
+const quarterDropExt = ref(null);
+const quarterExt = async (value) => {
+  yearExt.value.quarter = null;
+  yearExt.value.description = null;
+  if (value) {
+    try {
+      const response = await axios.get(route("period.fetchQuarter"), {
+        params: {
+          type: page.props.type,
+          year: value,
+        },
+      });
+      let result = response.data;
+      quarterDropExt.value = result;
+    } catch (error) {
+      console.error(error);
+    }
+  }
+};
+const descDropExt = ref(null);
+const periodExt = async (value) => {
+  yearExt.value.description = null;
+  if (value) {
+    try {
+      const response = await axios.get(route("period.fetchPeriod"), {
+        params: {
+          type: page.props.type,
+          year: yearExt.value.year,
+          quarter: value,
+        },
+      });
+      let result = response.data;
+      descDropExt.value = result;
+    } catch (error) {
+      console.error(error);
+    }
+  }
+};
+const confirmAddYear = () => {
+  addYearModalStatus.value = true;
+};
+const yearListExt = ref([]);
+const addList = () => {
+  if (yearExt.value.description) {
+    const found = descDropExt.value.find((x) => {
+      return x.value == yearExt.value.description;
+    });
+    if (!found) return;
+    const theData = {
+      ...found,
+      label: `[${yearExt.value.year}] ${found.label}`,
+    };
+    //how to do this
+    yearListExt.value.push(theData);
+    yearExt.value.real.push(theData.value);
+    yearExt.value.description = null;
+  }
+};
+const addYearFetch = async () => {
+  try {
+    const response = await axios.get(route("pdrb.add-year-fetch"), {
+      params: {
+        type: page.props.type,
+        year: yearExt.value.year,
+        description: yearExt.value.real,
+        regions: form.regions,
+      },
+    });
+    const result = response.data.results;
+    Object.keys(result).forEach((key) => {
+      extraYears.value.push(key);
+      dataByYear.value[key] = {
+        dataContents: result[key].current_data,
+        dataBefore: result[key].previous_data,
+        dataContentsSummary: result[key].current_summary_set,
+        dataBeforeSummary: result[key].previous_summary_set,
+      };
+    });
+    addYearModalStatus.value = false;
+    showTab("adhb");
+  } catch (error) {
+    console.error(error);
+  }
+};
+const baseYear = computed(() => form.year);
+const extraYears = ref([]);
+const yearToRender = computed(() => {
+  const y = [baseYear.value, ...extraYears.value].filter(Boolean);
+  return [...new Set(y)].sort((a, b) => a - b);
+});
+const dataByYear = ref({});
+const toFixed = ref(4);
+const addToFixedValue = (up) => {
+  if (up) {
+    if (toFixed.value == 8) return;
+    else toFixed.value = toFixed.value + 1;
+  } else {
+    if (toFixed.value == 0) return;
+    else toFixed.value = toFixed.value - 1;
+  }
+};
 </script>
 <style scoped>
 .fixed-thead {
   position: sticky;
-  width: 400px;
+  width: 250px;
   left: 0;
   background-color: #175676;
   color: whitesmoke;
@@ -1020,10 +1302,11 @@ const downloadHasil = async (id, title, type) => {
 }
 
 .table {
-  table-layout: fixed;
+  /* table-layout: fixed; */
   /* Ensures consistent column width */
   width: 100%;
   border-collapse: collapse;
   /* Avoid extra spacing */
+  font-size: 13px;
 }
 </style>

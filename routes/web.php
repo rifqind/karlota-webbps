@@ -127,6 +127,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/get-hasil', [PdrbController::class, 'getHasil'])
             ->name('pdrb.get-hasil');
 
+        Route::get('/add-year-fetch', [PdrbController::class, 'addYearFetch'])
+            ->name('pdrb.add-year-fetch');
         //Diskrepansi
         Route::get('/get-diskrepansi', [PdrbController::class, 'getDiskrepansi'])
             ->name('pdrb.get-diskrepansi');

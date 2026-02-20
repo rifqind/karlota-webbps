@@ -4,31 +4,103 @@
       <td class="fixed-column">
         <label>Primer</label>
       </td>
-      <td v-for="(node, index) in quarters" class="text-right"></td>
-      <td class="text-right"></td>
+      <template v-for="yr in props.yearsToRender" :key="'primer-' + yr">
+        <td v-for="(node, index) in quarters" class="text-right">
+          {{
+            formatNumberGerman(
+              tableModel.rows?.["primer"]?.[String(yr)]?.q?.[Number(node) - 1] ?? 0,
+              0,
+              props.toFixed
+            )
+          }}
+        </td>
+        <td class="text-right">
+          {{
+            formatNumberGerman(
+              tableModel.rows?.["primer"]?.[String(yr)]?.total ?? 0,
+              0,
+              props.toFixed
+            )
+          }}
+        </td>
+      </template>
     </tr>
     <tr>
       <td class="fixed-column">
         <label>Sekunder</label>
       </td>
-      <td v-for="(node, index) in quarters" class="text-right"></td>
-      <td class="text-right"></td>
+      <template v-for="yr in props.yearsToRender" :key="'sekunder-' + yr">
+        <td v-for="(node, index) in quarters" class="text-right">
+          {{
+            formatNumberGerman(
+              tableModel.rows?.["sekunder"]?.[String(yr)]?.q?.[Number(node) - 1] ?? 0,
+              0,
+              props.toFixed
+            )
+          }}
+        </td>
+        <td class="text-right">
+          {{
+            formatNumberGerman(
+              tableModel.rows?.["sekunder"]?.[String(yr)]?.total ?? 0,
+              0,
+              props.toFixed
+            )
+          }}
+        </td>
+      </template>
     </tr>
     <tr>
       <td class="fixed-column">
         <label>Tersier</label>
       </td>
-      <td v-for="(node, index) in quarters" class="text-right"></td>
-      <td class="text-right"></td>
+      <template v-for="yr in props.yearsToRender" :key="'tersier-' + yr">
+        <td v-for="(node, index) in quarters" class="text-right">
+          {{
+            formatNumberGerman(
+              tableModel.rows?.["tersier"]?.[String(yr)]?.q?.[Number(node) - 1] ?? 0,
+              0,
+              props.toFixed
+            )
+          }}
+        </td>
+        <td class="text-right">
+          {{
+            formatNumberGerman(
+              tableModel.rows?.["tersier"]?.[String(yr)]?.total ?? 0,
+              0,
+              props.toFixed
+            )
+          }}
+        </td>
+      </template>
     </tr>
     <tr class="PDRB-footer text-center">
       <td class="desc-col footer-column">
         <p class="mt-1 mb-1">PDRB</p>
       </td>
-      <template v-for="(node, index) in quarters">
-        <td :id="'adhb_total-' + node.label" class="total-cell"></td>
+      <template v-for="yr in props.yearsToRender" :key="'pdrb-' + yr">
+        <template v-for="(node, index) in quarters">
+          <td :id="'adhb_total-' + node.label" class="total-cell">
+            {{
+              formatNumberGerman(
+                tableModel.footer?.["PDRB"]?.[String(yr)]?.q?.[Number(node) - 1] ?? 0,
+                0,
+                props.toFixed
+              )
+            }}
+          </td>
+        </template>
+        <td class="total-cell">
+          {{
+            formatNumberGerman(
+              tableModel.footer?.["PDRB"]?.[String(yr)]?.total ?? 0,
+              0,
+              props.toFixed
+            )
+          }}
+        </td>
       </template>
-      <td class="total-cell"></td>
     </tr>
   </tbody>
 </template>
@@ -50,32 +122,33 @@ const props = defineProps({
     required: true,
     default: "distribusi",
   },
+  toFixed: {
+    type: Number,
+    requried: false,
+    default: 4,
+  },
+  yearsToRender: {
+    type: Array,
+    required: true,
+    default: () => [new Date().getFullYear()],
+  },
 });
-const quarters = [{ label: "1" }, { label: "2" }, { label: "3" }, { label: "4" }];
-const thisData = ref(props.computedData);
+const quarters = ["1", "2", "3", "4"];
+const tableModel = ref(props.computedData);
 const tableRef = ref(null);
 watch(
   () => props.computedData,
   (value) => {
-    thisData.value = value;
-    if (tableRef.value) {
-      const rows = tableRef.value.querySelectorAll("tr");
-
-      rows.forEach((row) => {
-        const firstCell = row.querySelector("td:first-child"); // Get the first column (key)
-        if (!firstCell) return;
-        const key = firstCell.textContent.trim().replace(/\s+/g, ""); // Key from first column
-        if (thisData.value[key]) {
-          const cells = row.querySelectorAll("td:not(:first-child)"); // Get other columns
-          // Update the row with the computed values
-          cells.forEach((cell, index) => {
-            cell.textContent = thisData.value[key][index]; // Format and insert value
-          });
-        }
-      });
-    }
+    tableModel.value = value;
   }
 );
+const formatNumberGerman = (num, min = 2, max = 5) => {
+  if (num == "qtoq" || num == "ctoc") return "";
+  return new Intl.NumberFormat("de-DE", {
+    minimumFractionDigits: min,
+    maximumFractionDigits: max,
+  }).format(num);
+};
 </script>
 
 <style scoped>
