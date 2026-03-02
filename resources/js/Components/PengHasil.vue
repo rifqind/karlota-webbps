@@ -66,7 +66,7 @@
                 <!-- {{ getData(nodeSubsectors.id, node.label) }} -->
                 {{
                   formatNumberGerman(
-                    tableModel.rows["sub-" + nodeSubsectors.id]?.[String(yr)]?.q?.[
+                    tableModel.rows?.["sub-" + nodeSubsectors.id]?.[String(yr)]?.q?.[
                       Number(node) - 1
                     ] ?? 0,
                     0,

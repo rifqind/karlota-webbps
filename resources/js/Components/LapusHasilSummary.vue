@@ -9,7 +9,7 @@
           <!-- {{ getData("primer", node.label) }} -->
           {{
             formatNumberGerman(
-              tableModel.rows["primer"]?.[String(yr)]?.q?.[Number(node) - 1] ?? 0,
+              tableModel.rows?.["primer"]?.[String(yr)]?.q?.[Number(node) - 1] ?? 0,
               0,
               props.toFixed
             )
@@ -19,7 +19,7 @@
           <!-- {{ getSumTotalFromVal("primer") }} -->
           {{
             formatNumberGerman(
-              tableModel.rows["primer"]?.[String(yr)]?.total ?? 0,
+              tableModel.rows?.["primer"]?.[String(yr)]?.total ?? 0,
               0,
               props.toFixed
             )
@@ -36,7 +36,7 @@
           <!-- {{ getData("sekunder", node.label) }} -->
           {{
             formatNumberGerman(
-              tableModel.rows["sekunder"]?.[String(yr)]?.q?.[Number(node) - 1] ?? 0,
+              tableModel.rows?.["sekunder"]?.[String(yr)]?.q?.[Number(node) - 1] ?? 0,
               0,
               props.toFixed
             )
@@ -46,7 +46,7 @@
           <!-- {{ getSumTotalFromVal("sekunder") }} -->
           {{
             formatNumberGerman(
-              tableModel.rows["sekunder"]?.[String(yr)]?.total ?? 0,
+              tableModel.rows?.["sekunder"]?.[String(yr)]?.total ?? 0,
               0,
               props.toFixed
             )
@@ -63,7 +63,7 @@
           <!-- {{ getData("tersier", node.label) }} -->
           {{
             formatNumberGerman(
-              tableModel.rows["tersier"]?.[String(yr)]?.q?.[Number(node) - 1] ?? 0,
+              tableModel.rows?.["tersier"]?.[String(yr)]?.q?.[Number(node) - 1] ?? 0,
               0,
               props.toFixed
             )
@@ -73,7 +73,7 @@
           <!-- {{ getSumTotalFromVal("tersier") }} -->
           {{
             formatNumberGerman(
-              tableModel.rows["tersier"]?.[String(yr)]?.total ?? 0,
+              tableModel.rows?.["tersier"]?.[String(yr)]?.total ?? 0,
               0,
               props.toFixed
             )
@@ -91,7 +91,7 @@
             <!-- {{ getPDRB(node.label) }} -->
             {{
               formatNumberGerman(
-                tableModel.footer["PDRB"]?.[String(yr)]?.q?.[Number(node) - 1] ?? 0,
+                tableModel.footer?.["PDRB"]?.[String(yr)]?.q?.[Number(node) - 1] ?? 0,
                 0,
                 props.toFixed
               )
@@ -102,7 +102,7 @@
           <!-- {{ getSumPDRB("PDRB") }} -->
           {{
             formatNumberGerman(
-              tableModel.footer["PDRB"]?.[String(yr)]?.total ?? 0,
+              tableModel.footer?.["PDRB"]?.[String(yr)]?.total ?? 0,
               0,
               props.toFixed
             )

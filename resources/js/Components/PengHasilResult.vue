@@ -63,7 +63,7 @@
               <td class="text-right">
                 {{
                   formatNumberGerman(
-                    tableModel.rows["sub-" + nodeSubsectors.id]?.[String(yr)]?.q?.[
+                    tableModel.rows?.["sub-" + nodeSubsectors.id]?.[String(yr)]?.q?.[
                       Number(node) - 1
                     ] ?? 0,
                     0,
@@ -136,7 +136,7 @@
           <td :id="'adhb_total-' + node.label" class="total-cell">
             {{
               formatNumberGerman(
-                tableModel.footer["PDRB"]?.[String(yr)]?.q?.[Number(node) - 1] ?? 0,
+                tableModel.footer?.["PDRB"]?.[String(yr)]?.q?.[Number(node) - 1] ?? 0,
                 0,
                 props.toFixed
               )
@@ -146,7 +146,7 @@
         <td class="total-cell">
           {{
             formatNumberGerman(
-              tableModel.footer["PDRB"]?.[String(yr)]?.total ?? 0,
+              tableModel.footer?.["PDRB"]?.[String(yr)]?.total ?? 0,
               0,
               props.toFixed
             )

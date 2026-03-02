@@ -438,18 +438,6 @@
           <label>Masukkan Judul File</label>
           <input type="text" v-model="downloadTitle" class="input-fordone w-full" />
         </div>
-        <div class="mb-3 space-y-2">
-          <label>Tipe File</label>
-          <Multiselect
-            v-model="downloadType"
-            :options="[
-              { label: 'One Sheet Compound', value: 'one-sheet' },
-              { label: 'Many Sheet (default)', value: 'multi-sheet' },
-            ]"
-            :searchable="true"
-            placeholder="-- Pilih Tipe File Download --"
-          />
-        </div>
       </template>
       <template #modalFunction>
         <button
@@ -541,6 +529,8 @@ import SpinnerBorder from "@/Components/SpinnerBorder.vue";
 import {
   buildAOAFromRowDefs,
   buildRowDefsLapus,
+  buildRowDefsPeng,
+  buildRowDefsSum,
   newDownload,
   tableToJson,
   theDownload,
@@ -1184,8 +1174,12 @@ const downloadType = ref(null);
 //   }
 // };
 const downloadHasil = async (title) => {
+  showSummary("full");
   const years = yearToRender.value.map(String);
-  let rowDefs = buildRowDefsLapus(subsectors.value);
+  let rowDefs =
+    page.props.type == "Lapangan Usaha"
+      ? buildRowDefsLapus(subsectors.value)
+      : buildRowDefsPeng(subsectors.value);
   let list = {};
   let printed = [];
   const space = [[""], [""]];
@@ -1216,7 +1210,38 @@ const downloadHasil = async (title) => {
     printed.push(...space, [key], ...resultCalculate);
   }
   list["data"] = printed;
-  theDownload(list, title, yearToRender.value.length);
+  //
+  showSummary("summary");
+  rowDefs = buildRowDefsSum(page.props.type);
+  let summarited = [];
+  let resultAdhbSum = buildAOAFromRowDefs({
+    tableModel: dataOnDemand.value["adhb_summary_now"],
+    rowDefs,
+    years,
+    quarterCap: 4,
+  });
+  summarited.push(["ADHB"], ...resultAdhbSum);
+  let resultAdhkSum = buildAOAFromRowDefs({
+    tableModel: dataOnDemand.value["adhk_summary_now"],
+    rowDefs,
+    years,
+    quarterCap: 4,
+  });
+  summarited.push(...space, ["ADHK"], ...resultAdhkSum);
+  for (const key of Object.keys(activeTab.value)) {
+    if (key == "full" || key == "summary" || key == "adhb" || key == "adhk") continue;
+    showTab(key);
+    await new Promise((resolve) => setTimeout(resolve, 100));
+    let resultCalculate = buildAOAFromRowDefs({
+      tableModel: computedSummaryData.value,
+      rowDefs,
+      years,
+      quarterCap: 4,
+    });
+    summarited.push(...space, [key], ...resultCalculate);
+  }
+  list["summary"] = summarited;
+  theDownload(list, title, yearToRender.value.length, page.props.type);
 };
 // #endregion
 

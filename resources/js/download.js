@@ -67,17 +67,24 @@ const tableToJson = (idTabel, type = 'number', diskrepansi = false, title_name =
     // return result;
     return aoa;
 };
-const theDownload = (setdata, title = 'Hasil Download', yCount) => {
+const theDownload = (setdata, title = 'Hasil Download', yCount, RULES) => {
     var workbook = XLSX.utils.book_new();
     Object.keys(setdata).forEach((sheetName) => {
         const data = setdata[sheetName]
-        console.log(data)
         const worksheet = XLSX.utils.aoa_to_sheet(data)
-        // worksheet['F3'] = { t: 'n', f: 'SUM(B3:E3)' }
-        injectTotal(worksheet, 3, 69, yCount)
-        injectSecCat(worksheet, 3, 69, yCount)
-        injectTotal(worksheet, 75, 141, yCount)
-        injectSecCat(worksheet, 75, 141, yCount)
+        if (sheetName == 'data') {
+            if (RULES == 'Lapangan Usaha') {
+                injectTotal(worksheet, 3, 69, yCount)
+                injectSecCat(worksheet, 3, 69, yCount, RULES)
+                injectTotal(worksheet, 75, 141, yCount)
+                injectSecCat(worksheet, 75, 141, yCount, RULES)
+            } else {
+                injectTotal(worksheet, 3, 20, yCount)
+                injectSecCat(worksheet, 3, 20, yCount, RULES)
+                injectTotal(worksheet, 26, 43, yCount)
+                injectSecCat(worksheet, 26, 43, yCount, RULES)
+            }
+        }
         XLSX.utils.book_append_sheet(workbook, worksheet, sheetName)
     })
     // Convert the workbook to a binary Excel file
@@ -106,7 +113,7 @@ const theDownload = (setdata, title = 'Hasil Download', yCount) => {
 
 const newDownload = (setdata, title = "Hasil Download") => {
     const workbook = XLSX.utils.book_new();
-    console.log(workbook, setdata)
+    // console.log(workbook, setdata)
     Object.keys(setdata).forEach((sheetName) => {
         const payload = setdata[sheetName];
 
@@ -215,10 +222,64 @@ const buildRowDefsLapus = (subsectors) => {
 
     defs.push({ rowKey: "FOOTER:PDRB", label: "PDRB" });
     defs.push({ rowKey: "FOOTER:PDRB-NonMigas", label: "PDRB Nonmigas" });
-
-    //   console.log(defs)
     return defs;
 };
+
+const buildRowDefsSum = (type) => {
+    const defs = []
+    if (type == 'Lapangan Usaha') {
+        const lapusKey = ['primer', 'sekunder', 'tersier']
+        lapusKey.forEach((lk) => {
+            defs.push({ rowKey: lk, label: lk })
+        })
+    } else {
+        const pengKey = ['krt', 'kap', 'pmtb', 'lainnya']
+        pengKey.forEach((pK) => {
+            defs.push({ rowKey: pK, label: pK })
+        })
+    }
+    
+    defs.push({ rowKey: "FOOTER:PDRB", label: "PDRB" });
+    return defs
+}
+
+const buildRowDefsPeng = (subsectors) => {
+    const defs = []
+    subsectors.forEach((ns) => {
+        const catType = ns?.sector?.category?.type;
+        if (catType !== "Pengeluaran") return;
+
+        const secId = ns?.sector_id ?? ns?.sector?.id;
+        const secCode = ns?.sector?.code;
+        const secName = ns?.sector?.name;
+
+        const isSectorHeader = ns.code != null && ns.code === "a";
+        if (isSectorHeader && secId) {
+            defs.push({
+                rowKey: `sec-${secId}`,
+                label: `${secCode}. ${secName}`,
+            });
+        }
+
+        if (ns.code != null && ns.id) {
+            defs.push({
+                rowKey: `sub-${ns.id}`,
+                label: `${ns.code}. ${ns.name}`,
+            });
+            return;
+        }
+
+        if (ns.code == null && ns?.sector?.code != null && secId) {
+            defs.push({
+                rowKey: `sec-${secId}`,
+                label: `${ns.sector.code}. ${ns.sector.name}`,
+            });
+            return;
+        }
+    });
+    defs.push({ rowKey: 'FOOTER:PDRB', label: 'PDRB' })
+    return defs
+}
 
 const buildAOAFromRowDefs = ({ tableModel, rowDefs, years, quarterCap }) => {
     const stake = Number(quarterCap);
@@ -242,7 +303,6 @@ const buildAOAFromRowDefs = ({ tableModel, rowDefs, years, quarterCap }) => {
         // Footer special case
         const isFooter = def.rowKey.startsWith("FOOTER:");
         const footerKey = isFooter ? def.rowKey.replace("FOOTER:", "") : null;
-
         for (const y of years.map(String)) {
             const cell = isFooter
                 ? (tableModel?.footer?.[footerKey]?.[y] ?? { q: [], total: 0 })
@@ -260,7 +320,6 @@ const buildAOAFromRowDefs = ({ tableModel, rowDefs, years, quarterCap }) => {
 
         aoa.push(row);
     }
-
     return aoa;
 }
 
@@ -306,130 +365,18 @@ const injectTotal = (ws, start, end, yCount) => {
             ws[tAddr].t = 'n'
             ws[tAddr].f = `SUM(${q1Addr}:${q4Addr})`
 
-            // if (r == 3) {
-            //     let rNeed = [4, 12, 13]
-            //     for (const qq of qData) {
-            //         const tAddr = XLSX.utils.encode_cell({ r: 3, c: qq })
-            //         ws[tAddr].t = 'n'
-            //         let rAddr = []
-            //         for (const rr of rNeed) {
-            //             const qAddr = XLSX.utils.encode_cell({ r: rr, c: qq })
-            //             rAddr.push(qAddr)
-            //         }
-            //         ws[tAddr].f = `${rAddr[0]}+${rAddr[1]}+${rAddr[2]}`
-            //     }
-            // }
-            // if (r == 4) {
-            //     for (const qq of qData) {
-            //         const tAddr = XLSX.utils.encode_cell({ r: 4, c: qq })
-            //         ws[tAddr].t = 'n'
-            //         const r1Addr = XLSX.utils.encode_cell({ r: 5, c: qq })
-            //         const rLAddr = XLSX.utils.encode_cell({ r: 11, c: qq })
-            //         ws[tAddr].f = `SUM(${r1Addr}:${rLAddr})`
-            //     }
-            // }
-            // if (r == 14) {
-            //     for (const qq of qData) {
-            //         const tAddr = XLSX.utils.encode_cell({ r: 14, c: qq })
-            //         ws[tAddr].t = 'n'
-            //         const r1Addr = XLSX.utils.encode_cell({ r: 15, c: qq })
-            //         const rLAddr = XLSX.utils.encode_cell({ r: 18, c: qq })
-            //         ws[tAddr].f = `SUM(${r1Addr}:${rLAddr})`
-            //     }
-            // }
-            // if (r == 19) {
-            //     for (const qq of qData) {
-            //         const tAddr = XLSX.utils.encode_cell({ r: 19, c: qq })
-            //         ws[tAddr].t = 'n'
-            //         const rAddr = XLSX.utils.encode_cell({ r: 20, c: qq })
-            //         const r1Addr = XLSX.utils.encode_cell({ r: 23, c: qq })
-            //         const rLAddr = XLSX.utils.encode_cell({ r: 37, c: qq })
-            //         ws[tAddr].f = `${rAddr}+SUM(${r1Addr}:${rLAddr})`
-            //     }
-            // }
-            // if (r == 20) {
-            //     for (const qq of qData) {
-            //         const tAddr = XLSX.utils.encode_cell({ r: 20, c: qq })
-            //         ws[tAddr].t = 'n'
-            //         const r1Addr = XLSX.utils.encode_cell({ r: 21, c: qq })
-            //         const rLAddr = XLSX.utils.encode_cell({ r: 22, c: qq })
-            //         ws[tAddr].f = `SUM(${r1Addr}:${rLAddr})`
-            //     }
-            // }
-            // if (r == 38) {
-            //     for (const qq of qData) {
-            //         const tAddr = XLSX.utils.encode_cell({ r: 38, c: qq })
-            //         ws[tAddr].t = 'n'
-            //         const r1Addr = XLSX.utils.encode_cell({ r: 39, c: qq })
-            //         const rLAddr = XLSX.utils.encode_cell({ r: 40, c: qq })
-            //         ws[tAddr].f = `SUM(${r1Addr}:${rLAddr})`
-            //     }
-            // }
-            // if (r == 43) {
-            //     for (const qq of qData) {
-            //         const tAddr = XLSX.utils.encode_cell({ r: 43, c: qq })
-            //         ws[tAddr].t = 'n'
-            //         const r1Addr = XLSX.utils.encode_cell({ r: 44, c: qq })
-            //         const rLAddr = XLSX.utils.encode_cell({ r: 45, c: qq })
-            //         ws[tAddr].f = `SUM(${r1Addr}:${rLAddr})`
-            //     }
-            // }
-            // if (r == 46) {
-            //     for (const qq of qData) {
-            //         const tAddr = XLSX.utils.encode_cell({ r: 46, c: qq })
-            //         ws[tAddr].t = 'n'
-            //         const r1Addr = XLSX.utils.encode_cell({ r: 47, c: qq })
-            //         const rLAddr = XLSX.utils.encode_cell({ r: 52, c: qq })
-            //         ws[tAddr].f = `SUM(${r1Addr}:${rLAddr})`
-            //     }
-            // }
-            // if (r == 53) {
-            //     for (const qq of qData) {
-            //         const tAddr = XLSX.utils.encode_cell({ r: 53, c: qq })
-            //         ws[tAddr].t = 'n'
-            //         const r1Addr = XLSX.utils.encode_cell({ r: 54, c: qq })
-            //         const rLAddr = XLSX.utils.encode_cell({ r: 55, c: qq })
-            //         ws[tAddr].f = `SUM(${r1Addr}:${rLAddr})`
-            //     }
-            // }
-            // if (r == 57) {
-            //     for (const qq of qData) {
-            //         const tAddr = XLSX.utils.encode_cell({ r: 57, c: qq })
-            //         ws[tAddr].t = 'n'
-            //         const r1Addr = XLSX.utils.encode_cell({ r: 58, c: qq })
-            //         const rLAddr = XLSX.utils.encode_cell({ r: 61, c: qq })
-            //         ws[tAddr].f = `SUM(${r1Addr}:${rLAddr})`
-            //     }
-            // }
-            // if (r == 68) {
-            //     for (const qq of qData) {
-            //         const tAddr = XLSX.utils.encode_cell({ r: 68, c: qq });
-            //         ws[tAddr].t = "n";
-            //         const parts = [3, 14, 19, 38, 41, 42, 43, 46, 53, 56, 57];
-            //         const refs = parts.map((rr) => XLSX.utils.encode_cell({ r: rr, c: qq }));
-            //         const r1Addr = XLSX.utils.encode_cell({ r: 62, c: qq });
-            //         const rLAddr = XLSX.utils.encode_cell({ r: 67, c: qq });
-            //         ws[tAddr].f = `${refs.join("+")}+SUM(${r1Addr}:${rLAddr})`;
-            //     }
-            // }
-            // if (r == 69) {
-            //     for (const qq of qData) {
-            //         const tAddr = XLSX.utils.encode_cell({ r: 69, c: qq })
-            //         ws[tAddr].t = 'n'
-            //         const r1Addr = XLSX.utils.encode_cell({ r: 68, c: qq })
-            //         const rLAddr = XLSX.utils.encode_cell({ r: 15, c: qq })
-            //         ws[tAddr].f = `${r1Addr}-${rLAddr}`
-            //     }
-            // }
         }
     }
 }
 const ensureCell = (ws, addr) => (ws[addr] ??= { t: "n", v: 0 });
 const cell = (r, c) => XLSX.utils.encode_cell({ r, c });
-const OFFSET = [0, 72]
-const injectSecCat = (ws, start, end, yCount) => {
+const OFFSET_LAPUS = [0, 72]
+const OFFSET_PENG = [0, 23]
+const injectSecCat = (ws, start, end, yCount, RULES) => {
+    let rules = RULES == 'Lapangan Usaha' ? RULES_LAPUS : RULES_PENG
+    let offset = RULES == 'Lapangan Usaha' ? OFFSET_LAPUS : OFFSET_PENG
     const baseCol = 1
-    for (const off of OFFSET) {
+    for (const off of offset) {
         for (let y = 0; y < yCount; y++) {
             const q1Col = baseCol + (y * 5)
             const q2Col = q1Col + 1
@@ -437,7 +384,7 @@ const injectSecCat = (ws, start, end, yCount) => {
             const q4Col = q1Col + 3
             const tCol = q1Col + 4
             const qData = [q1Col, q2Col, q3Col, q4Col]
-            for (const [targetStr, expr] of Object.entries(RULES)) {
+            for (const [targetStr, expr] of Object.entries(rules)) {
                 const target = Number(targetStr) + off
                 for (const qq of qData) {
                     const addr = cell(target, qq);
@@ -448,7 +395,7 @@ const injectSecCat = (ws, start, end, yCount) => {
         }
     }
 }
-const RULES = {
+const RULES_LAPUS = {
     3: "4+12+13",
     4: "5:11",
     14: "15:18",
@@ -466,6 +413,11 @@ const RULES = {
     // selisih
     69: "68-15",
 };
+const RULES_PENG = {
+    3: "4:10",
+    13: "14:15",
+    17: "18-19"
+}
 const buildFormula = (expr, col, off = 0) => {
     const s = String(expr).replace(/\s+/g, "");
 
@@ -495,4 +447,4 @@ const buildFormula = (expr, col, off = 0) => {
 };
 
 
-export { tableToJson, theDownload, buildRowDefsLapus, buildAOAFromRowDefs, newDownload } 
+export { tableToJson, theDownload, buildRowDefsLapus, buildAOAFromRowDefs, buildRowDefsPeng, newDownload, buildRowDefsSum } 
