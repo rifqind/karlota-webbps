@@ -438,25 +438,14 @@
           <label>Masukkan Judul File</label>
           <input type="text" v-model="downloadTitle" class="input-fordone w-full" />
         </div>
-        <div class="mb-3 space-y-2">
-          <label>Tipe File</label>
-          <Multiselect
-            v-model="downloadType"
-            :options="[
-              { label: 'One Sheet Compound', value: 'one-sheet' },
-              { label: 'Many Sheet (default)', value: 'multi-sheet' },
-            ]"
-            :searchable="true"
-            placeholder="-- Pilih Tipe File Download --"
-          />
-        </div>
       </template>
       <template #modalFunction>
         <button
           type="button"
           class="btn-success-fordone btn-sm"
-          @click.prevent="downloadHasil('tabel-entry', downloadTitle, downloadType)"
+          @click.prevent="downloadHasil(downloadTitle, downloadType)"
         >
+          <!-- @click.prevent="downloadHasil('tabel-entry', downloadTitle, downloadType)" -->
           Download
         </button>
       </template>
@@ -472,7 +461,7 @@
           <label for="year">Pilih Tahun<span class="text-danger">*</span></label>
           <Multiselect
             v-model="yearExt.year"
-            :options="yearDrop"
+            :options="yearExtDrop"
             :searchable="true"
             placeholder="-- Pilih Tahun --"
             @change="quarterExt"
@@ -537,7 +526,15 @@ import PengHasilResult from "@/Components/PengHasilResult.vue";
 import PengHasilSummary from "@/Components/PengHasilSummary.vue";
 import PengHasilSummaryResult from "@/Components/PengHasilSummaryResult.vue";
 import SpinnerBorder from "@/Components/SpinnerBorder.vue";
-import { tableToJson, theDownload } from "@/download";
+import {
+  buildAOAFromRowDefs,
+  buildRowDefsLapus,
+  buildRowDefsPeng,
+  buildRowDefsSum,
+  newDownload,
+  tableToJson,
+  theDownload,
+} from "@/download";
 import GeneralLayout from "@/Layouts/GeneralLayout.vue";
 import { Head, useForm, usePage } from "@inertiajs/vue3";
 import Multiselect from "@vueform/multiselect";
@@ -1127,54 +1124,124 @@ const showGIYtoY = (adhbnow, adhbprev, adhknow, adhkprev) => {
 const downloadModalStatus = ref(false);
 const downloadTitle = ref("Download");
 const downloadType = ref(null);
-const downloadHasil = async (id, title, type) => {
+// const downloadHasil = async (id, title, type) => {
+//   let list = {};
+//   triggerSpinner.value = true;
+//   enabletoFixed.value = false;
+//   try {
+//     showSummary("full");
+//     await nextTick();
+//     let printed = [];
+//     for (const key of Object.keys(activeTab.value)) {
+//       if (key == "full" || key == "summary") continue;
+//       showTab(key);
+//       await new Promise((resolve) => setTimeout(resolve, 800));
+//       if (type == "one-sheet") {
+//         let tablejson = tableToJson(id, "number", false, key);
+//         const spaceone = [""];
+//         const spacetwo = [""];
+//         printed.push(...spaceone, ...spacetwo, ...tablejson);
+//       } else if (type == "multi-sheet") {
+//         list[key] = tableToJson(id);
+//       }
+//     }
+//     showSummary("summary");
+//     await nextTick();
+//     let printedTwo = [];
+//     for (const key of Object.keys(activeTab.value)) {
+//       if (key == "full" || key == "summary") continue;
+//       showTab(key);
+//       await new Promise((resolve) => setTimeout(resolve, 800));
+//       if (type == "one-sheet") {
+//         let tablejson = tableToJson(id, "number", false, key);
+//         const spaceone = [""];
+//         const spacetwo = [""];
+//         printedTwo.push(...spaceone, ...spacetwo, ...tablejson);
+//       } else if (type == "multi-sheet") {
+//         list[key + "-summary"] = tableToJson(id);
+//       }
+//     }
+//     if (type == "one-sheet") {
+//       list["core"] = printed;
+//       list["summary"] = printedTwo;
+//     }
+//     theDownload(list, title);
+//   } catch (error) {
+//     console.error(error);
+//   } finally {
+//     triggerSpinner.value = false;
+//     enabletoFixed.value = true;
+//   }
+// };
+const downloadHasil = async (title) => {
+  showSummary("full");
+  const years = yearToRender.value.map(String);
+  let rowDefs =
+    page.props.type == "Lapangan Usaha"
+      ? buildRowDefsLapus(subsectors.value)
+      : buildRowDefsPeng(subsectors.value);
   let list = {};
-  triggerSpinner.value = true;
-  enabletoFixed.value = false;
-  try {
-    showSummary("full");
-    await nextTick();
-    let printed = [];
-    for (const key of Object.keys(activeTab.value)) {
-      if (key == "full" || key == "summary") continue;
-      showTab(key);
-      await new Promise((resolve) => setTimeout(resolve, 800));
-      if (type == "one-sheet") {
-        let tablejson = tableToJson(id, "number", false, key);
-        const spaceone = [""];
-        const spacetwo = [""];
-        printed.push(...spaceone, ...spacetwo, ...tablejson);
-      } else if (type == "multi-sheet") {
-        list[key] = tableToJson(id);
-      }
-    }
-    showSummary("summary");
-    await nextTick();
-    let printedTwo = [];
-    for (const key of Object.keys(activeTab.value)) {
-      if (key == "full" || key == "summary") continue;
-      showTab(key);
-      await new Promise((resolve) => setTimeout(resolve, 800));
-      if (type == "one-sheet") {
-        let tablejson = tableToJson(id, "number", false, key);
-        const spaceone = [""];
-        const spacetwo = [""];
-        printedTwo.push(...spaceone, ...spacetwo, ...tablejson);
-      } else if (type == "multi-sheet") {
-        list[key + "-summary"] = tableToJson(id);
-      }
-    }
-    if (type == "one-sheet") {
-      list["core"] = printed;
-      list["summary"] = printedTwo;
-    }
-    theDownload(list, title);
-  } catch (error) {
-    console.error(error);
-  } finally {
-    triggerSpinner.value = false;
-    enabletoFixed.value = true;
+  let printed = [];
+  const space = [[""], [""]];
+  let resultAdhb = buildAOAFromRowDefs({
+    tableModel: dataOnDemand.value["adhb_now"],
+    rowDefs,
+    years,
+    quarterCap: 4,
+  });
+  printed.push(["ADHB"], ...resultAdhb);
+  let resultAdhk = buildAOAFromRowDefs({
+    tableModel: dataOnDemand.value["adhk_now"],
+    rowDefs,
+    years,
+    quarterCap: 4,
+  });
+  printed.push(...space, ["ADHK"], ...resultAdhk);
+  for (const key of Object.keys(activeTab.value)) {
+    if (key == "full" || key == "summary" || key == "adhb" || key == "adhk") continue;
+    showTab(key);
+    await new Promise((resolve) => setTimeout(resolve, 100));
+    let resultCalculate = buildAOAFromRowDefs({
+      tableModel: computedData.value,
+      rowDefs,
+      years,
+      quarterCap: 4,
+    });
+    printed.push(...space, [key], ...resultCalculate);
   }
+  list["data"] = printed;
+  //
+  showSummary("summary");
+  rowDefs = buildRowDefsSum(page.props.type);
+  let summarited = [];
+  let resultAdhbSum = buildAOAFromRowDefs({
+    tableModel: dataOnDemand.value["adhb_summary_now"],
+    rowDefs,
+    years,
+    quarterCap: 4,
+  });
+  summarited.push(["ADHB"], ...resultAdhbSum);
+  let resultAdhkSum = buildAOAFromRowDefs({
+    tableModel: dataOnDemand.value["adhk_summary_now"],
+    rowDefs,
+    years,
+    quarterCap: 4,
+  });
+  summarited.push(...space, ["ADHK"], ...resultAdhkSum);
+  for (const key of Object.keys(activeTab.value)) {
+    if (key == "full" || key == "summary" || key == "adhb" || key == "adhk") continue;
+    showTab(key);
+    await new Promise((resolve) => setTimeout(resolve, 100));
+    let resultCalculate = buildAOAFromRowDefs({
+      tableModel: computedSummaryData.value,
+      rowDefs,
+      years,
+      quarterCap: 4,
+    });
+    summarited.push(...space, [key], ...resultCalculate);
+  }
+  list["summary"] = summarited;
+  theDownload(list, title, yearToRender.value.length, page.props.type);
 };
 // #endregion
 
@@ -1185,6 +1252,10 @@ const yearExt = ref({
   quarter: null,
   description: null,
   real: [],
+});
+const yearExtDrop = computed(() => {
+  const usedYear = yearToRender.value.map(String);
+  return yearDrop.value.filter((item) => !usedYear.includes(String(item.value)));
 });
 const quarterDropExt = ref(null);
 const quarterExt = async (value) => {
