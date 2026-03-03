@@ -176,28 +176,28 @@
           </thead>
           <template v-if="page.props.type == 'Lapangan Usaha'">
             <DiskrepansiLapus
-              v-for="(node, index) in ['1', '2', '3', '4', 't']"
-              v-show="showPdrbAndResult['adhb']['quarter_' + node]"
+              v-show="showPdrbAndResult['adhb']"
               :subsectors="page.props.subsectors"
               :table-column="tableColumn"
-              :data-contents="dataContents['quarter_' + node]"
+              :data-contents="dataContents"
               :type="'adhb'"
               :on-demand-type="'adhb_now'"
-              :quarter="node"
-              :calculate="calculateData.adhb['quarter_' + node]"
+              :quarter="quarterCap"
+              :calculate="calculateData.adhb"
               @update:update-d-o-d="updateDOD"
+              :regions="page.props.regions"
             />
             <DiskrepansiLapus
-              v-for="(node, index) in ['1', '2', '3', '4', 't']"
-              v-show="showPdrbAndResult['adhk']['quarter_' + node]"
+              v-show="showPdrbAndResult['adhk']"
               :subsectors="page.props.subsectors"
               :table-column="tableColumn"
-              :data-contents="dataContents['quarter_' + node]"
+              :data-contents="dataContents"
               :type="'adhk'"
               :on-demand-type="'adhk_now'"
-              :quarter="node"
-              :calculate="calculateData.adhk['quarter_' + node]"
+              :quarter="quarterCap"
+              :calculate="calculateData.adhk"
               @update:update-d-o-d="updateDOD"
+              :regions="page.props.regions"
             />
             <DiskrepansiLapusResult
               v-show="showPdrbAndResult['result']"
@@ -208,26 +208,26 @@
               :computed-data="computedData"
             />
             <DiskrepansiLapus
-              v-for="(node, index) in ['1', '2', '3', '4', 't']"
               v-show="false"
               :subsectors="page.props.subsectors"
               :table-column="tableColumn"
-              :data-contents="dataBefore['quarter_' + node]"
+              :data-contents="dataBefore"
               :type="'adhb'"
               :on-demand-type="'adhb_prev'"
-              :quarter="node"
+              :quarter="quarterCap"
               @update:update-d-o-d="updateDOD"
+              :regions="page.props.regions"
             />
             <DiskrepansiLapus
-              v-for="(node, index) in ['1', '2', '3', '4', 't']"
               v-show="false"
               :subsectors="page.props.subsectors"
               :table-column="tableColumn"
-              :data-contents="dataBefore['quarter_' + node]"
+              :data-contents="dataBefore"
               :type="'adhk'"
               :on-demand-type="'adhk_prev'"
-              :quarter="node"
+              :quarter="quarterCap"
               @update:update-d-o-d="updateDOD"
+              :regions="page.props.regions"
             />
           </template>
           <template v-if="page.props.type == 'Pengeluaran'">
@@ -375,25 +375,32 @@ const listTab = ref({
   t: false,
 });
 const mountThis = ref(false);
-const dataContents = ref({
-  quarter_1: [],
-  quarter_2: [],
-  quarter_3: [],
-  quarter_4: [],
-  quarter_t: [],
-});
-const dataBefore = ref({
-  quarter_1: [],
-  quarter_2: [],
-  quarter_3: [],
-  quarter_4: [],
-  quarter_t: [],
-});
+const dataContents = ref([]);
+// const dataContents = ref({\
+
+//   quarter_1: [],
+//   quarter_2: [],
+//   quarter_3: [],
+//   quarter_4: [],
+//   quarter_t: [],
+// });
+const dataBefore = ref([]);
+// const dataBefore = ref({
+//   quarter_1: [],
+//   quarter_2: [],
+//   quarter_3: [],
+//   quarter_4: [],
+//   quarter_t: [],
+// });
 const computedData = ref({});
 const dataOnDemand = ref({ adhb_now: {}, adhb_prev: {}, adhk_now: {}, adhk_prev: {} });
+// const calculateData = ref({
+//   adhb: { quarter_1: {}, quarter_2: {}, quarter_3: {}, quarter_4: {}, quarter_t: {} },
+//   adhk: { quarter_1: {}, quarter_2: {}, quarter_3: {}, quarter_4: {}, quarter_t: {} },
+// });
 const calculateData = ref({
-  adhb: { quarter_1: {}, quarter_2: {}, quarter_3: {}, quarter_4: {}, quarter_t: {} },
-  adhk: { quarter_1: {}, quarter_2: {}, quarter_3: {}, quarter_4: {}, quarter_t: {} },
+  adhb: [],
+  adhk: [],
 });
 const showTabPanel = ref(false);
 const yearDrop = ref([]);
@@ -418,7 +425,7 @@ onMounted(() => {
   tableColumn.value = tempData;
 });
 const updateDOD = (data) => {
-  dataOnDemand.value[data.type][data.quarter] = data.data;
+  dataOnDemand.value[data.type] = data.data;
 };
 const fetchYear = async () => {
   form.quarter = null;
@@ -503,64 +510,65 @@ const submit = async () => {
       }
       listTab.value[index] = true;
     }
-    ["1", "2", "3", "4", "t"].forEach((element) => {
-      if (element != "t") {
-        dataContents.value["quarter_" + element] = response.data.current_data.filter(
-          (x) => {
-            return x.quarter == element;
-          }
-        );
-        dataBefore.value["quarter_" + element] = response.data.previous_data.filter(
-          (x) => {
-            return x.quarter == element;
-          }
-        );
-      } else {
-        let filteredData = {};
-        let yearlyData = [];
-        page.props.subsectors.forEach((subsector) => {
-          page.props.regions.forEach((regions) => {
-            let adhbSum, adhkSum;
-            filteredData = response.data.current_data.filter((x) => {
-              return x.subsector_id == subsector.id && x.region_id == regions.value;
-            });
-            adhbSum = filteredData.reduce((sum, item) => sum + Number(item["adhb"]), 0);
-            adhkSum = filteredData.reduce((sum, item) => sum + Number(item["adhk"]), 0);
-            if (filteredData.length > 0) {
-              let yearlyEntry = { ...filteredData[0] };
-              yearlyEntry.quarter = "t";
-              yearlyEntry.adhb = adhbSum;
-              yearlyEntry.adhk = adhkSum;
-              yearlyData.push(yearlyEntry);
-            }
-          });
-        });
-        dataContents.value["quarter_t"] = yearlyData;
+    // ["1", "2", "3", "4", "t"].forEach((element) => {
+    //   if (element != "t") {
+    //     dataContents.value["quarter_" + element] = response.data.current_data.filter(
+    //       (x) => {
+    //         return x.quarter == element;
+    //       }
+    //     );
+    //     dataBefore.value["quarter_" + element] = response.data.previous_data.filter(
+    //       (x) => {
+    //         return x.quarter == element;
+    //       }
+    //     );
+    //   } else {
+    //     let filteredData = {};
+    //     let yearlyData = [];
+    //     page.props.subsectors.forEach((subsector) => {
+    //       page.props.regions.forEach((regions) => {
+    //         let adhbSum, adhkSum;
+    //         filteredData = response.data.current_data.filter((x) => {
+    //           return x.subsector_id == subsector.id && x.region_id == regions.value;
+    //         });
+    //         adhbSum = filteredData.reduce((sum, item) => sum + Number(item["adhb"]), 0);
+    //         adhkSum = filteredData.reduce((sum, item) => sum + Number(item["adhk"]), 0);
+    //         if (filteredData.length > 0) {
+    //           let yearlyEntry = { ...filteredData[0] };
+    //           yearlyEntry.quarter = "t";
+    //           yearlyEntry.adhb = adhbSum;
+    //           yearlyEntry.adhk = adhkSum;
+    //           yearlyData.push(yearlyEntry);
+    //         }
+    //       });
+    //     });
+    //     dataContents.value["quarter_t"] = yearlyData;
 
-        filteredData = {};
-        yearlyData = [];
-        page.props.subsectors.forEach((subsector) => {
-          page.props.regions.forEach((regions) => {
-            let adhbSum, adhkSum;
-            filteredData = response.data.previous_data.filter((x) => {
-              return x.subsector_id == subsector.id && x.region_id == regions.value;
-            });
-            adhbSum = filteredData.reduce((sum, item) => sum + Number(item["adhb"]), 0);
-            adhkSum = filteredData.reduce((sum, item) => sum + Number(item["adhk"]), 0);
-            if (filteredData.length > 0) {
-              let yearlyEntry = { ...filteredData[0] };
-              yearlyEntry.quarter = "t";
-              yearlyEntry.adhb = adhbSum;
-              yearlyEntry.adhk = adhkSum;
-              yearlyData.push(yearlyEntry);
-            }
-          });
-        });
-        dataBefore.value["quarter_t"] = yearlyData;
-      }
-    });
+    //     filteredData = {};
+    //     yearlyData = [];
+    //     page.props.subsectors.forEach((subsector) => {
+    //       page.props.regions.forEach((regions) => {
+    //         let adhbSum, adhkSum;
+    //         filteredData = response.data.previous_data.filter((x) => {
+    //           return x.subsector_id == subsector.id && x.region_id == regions.value;
+    //         });
+    //         adhbSum = filteredData.reduce((sum, item) => sum + Number(item["adhb"]), 0);
+    //         adhkSum = filteredData.reduce((sum, item) => sum + Number(item["adhk"]), 0);
+    //         if (filteredData.length > 0) {
+    //           let yearlyEntry = { ...filteredData[0] };
+    //           yearlyEntry.quarter = "t";
+    //           yearlyEntry.adhb = adhbSum;
+    //           yearlyEntry.adhk = adhkSum;
+    //           yearlyData.push(yearlyEntry);
+    //         }
+    //       });
+    //     });
+    //     dataBefore.value["quarter_t"] = yearlyData;
+    //   }
+    // });
 
     // dataBefore.value = response.data.previous_data;
+    dataContents.value = response.data.current_data;
     formError.value = {
       year: null,
       quarter: null,
@@ -614,20 +622,8 @@ const activeQuarters = ref({
   t: def,
 });
 const showPdrbAndResult = ref({
-  adhb: {
-    quarter_1: false,
-    quarter_2: false,
-    quarter_3: false,
-    quarter_4: false,
-    quarter_t: false,
-  },
-  adhk: {
-    quarter_1: false,
-    quarter_2: false,
-    quarter_3: false,
-    quarter_4: false,
-    quarter_t: false,
-  },
+  adhb: false,
+  adhk: false,
   result: false,
 });
 const setActiveTab = (value) => {
@@ -650,9 +646,7 @@ const quartersTab = (quarter) => {
 const resetShowTable = () => {
   Object.keys(showPdrbAndResult.value).forEach((key) => {
     if (key != "result") {
-      Object.keys(showPdrbAndResult.value[key]).forEach((node) => {
-        showPdrbAndResult.value[key][node] = false;
-      });
+      showPdrbAndResult.value[key] = false;
     } else {
       showPdrbAndResult.value.result = false;
     }
@@ -667,11 +661,11 @@ const showTab = async (tab) => {
   resetShowTable();
   if (tab == "adhb") {
     tableColumn.value[0].label = "Diskrepansi";
-    showPdrbAndResult.value.adhb["quarter_" + quarterCap.value] = true;
+    showPdrbAndResult.value.adhb = true;
   }
   if (tab == "adhk") {
     tableColumn.value[0].label = "Diskrepansi";
-    showPdrbAndResult.value.adhk["quarter_" + quarterCap.value] = true;
+    showPdrbAndResult.value.adhk = true;
   }
   if (tab == "dist") {
     tableColumn.value[0].label = "Selisih";
