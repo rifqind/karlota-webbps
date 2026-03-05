@@ -67,22 +67,25 @@ const tableToJson = (idTabel, type = 'number', diskrepansi = false, title_name =
     // return result;
     return aoa;
 };
-const theDownload = (setdata, title = 'Hasil Download', yCount, RULES) => {
+const theDownload = ({ setdata, title = 'Hasil Download', yCount, RULES, diskrepansi = false }) => {
     var workbook = XLSX.utils.book_new();
     Object.keys(setdata).forEach((sheetName) => {
         const data = setdata[sheetName]
         const worksheet = XLSX.utils.aoa_to_sheet(data)
-        if (sheetName == 'data') {
-            if (RULES == 'Lapangan Usaha') {
-                injectTotal(worksheet, 3, 69, yCount)
-                injectSecCat(worksheet, 3, 69, yCount, RULES)
-                injectTotal(worksheet, 75, 141, yCount)
-                injectSecCat(worksheet, 75, 141, yCount, RULES)
-            } else {
-                injectTotal(worksheet, 3, 20, yCount)
-                injectSecCat(worksheet, 3, 20, yCount, RULES)
-                injectTotal(worksheet, 26, 43, yCount)
-                injectSecCat(worksheet, 26, 43, yCount, RULES)
+        if (diskrepansi) {
+        } else {
+            if (sheetName == 'data') {
+                if (RULES == 'Lapangan Usaha') {
+                    injectTotal(worksheet, 3, 69, yCount)
+                    injectSecCat(worksheet, 3, 69, yCount, RULES)
+                    injectTotal(worksheet, 75, 141, yCount)
+                    injectSecCat(worksheet, 75, 141, yCount, RULES)
+                } else {
+                    injectTotal(worksheet, 3, 20, yCount)
+                    injectSecCat(worksheet, 3, 20, yCount, RULES)
+                    injectTotal(worksheet, 26, 43, yCount)
+                    injectSecCat(worksheet, 26, 43, yCount, RULES)
+                }
             }
         }
         XLSX.utils.book_append_sheet(workbook, worksheet, sheetName)
@@ -238,7 +241,7 @@ const buildRowDefsSum = (type) => {
             defs.push({ rowKey: pK, label: pK })
         })
     }
-    
+
     defs.push({ rowKey: "FOOTER:PDRB", label: "PDRB" });
     return defs
 }
@@ -321,6 +324,45 @@ const buildAOAFromRowDefs = ({ tableModel, rowDefs, years, quarterCap }) => {
         aoa.push(row);
     }
     return aoa;
+}
+
+const buildAOADiskrepansi = ({ tableModel, secondModel, rowDefs, tableColumn, quarterCap, diskrepansi = false }) => {
+    const aoa = []
+
+    const header1 = ['Komponen']
+    for (const rr of tableColumn) header1.push(rr.label)
+    aoa.push(header1)
+
+    for (const def of rowDefs) {
+        const row = [def.label]
+        const isFooter = def.rowKey.startsWith("FOOTER:");
+        const footerKey = isFooter ? def.rowKey.replace("FOOTER:", "") : null;
+        for (const rr of tableColumn) {
+            if (!isNaN(Number(rr.value))) {
+                const cell = isFooter
+                    ? (tableModel?.footer?.[footerKey]?.[rr.value] ?? { q: [], total: 0 })
+                    : (tableModel?.rows?.[def.rowKey]?.[rr.value] ?? { q: [], total: 0 });
+                const datas = quarterCap == 't' ? cell.total ?? [] : cell.q[Number(quarterCap) - 1] ?? []
+                row.push(datas)
+            } else if (isNaN(Number(rr.value))) {
+                if (rr.value == 'calculate') {
+                    const calculated = isFooter
+                        ? (secondModel?.footer?.[footerKey] ?? { q: [], total: 0 })
+                        : (secondModel?.rows?.[def.rowKey] ?? { q: [], total: 0 })
+                    const datas = diskrepansi ? calculated.disk : calculated.diff
+                    row.push(datas)
+                } else if (rr.value == 'total') {
+                    const cell = isFooter
+                        ? (tableModel?.footer?.[footerKey]?.[rr.value] ?? { q: [], total: 0 })
+                        : (tableModel?.rows?.[def.rowKey]?.[rr.value] ?? { q: [], total: 0 });
+                    const datas = quarterCap == 't' ? cell.total ?? 0 : cell.q[Number(quarterCap) - 1] ?? 0
+                    row.push(datas)
+                }
+            }
+        }
+        aoa.push(row)
+    }
+    return aoa
 }
 
 const injectTotalFormulas = (ws, { startRow, endRow, yearsCount, quarterCap }) => {
@@ -447,4 +489,4 @@ const buildFormula = (expr, col, off = 0) => {
 };
 
 
-export { tableToJson, theDownload, buildRowDefsLapus, buildAOAFromRowDefs, buildRowDefsPeng, newDownload, buildRowDefsSum } 
+export { tableToJson, theDownload, buildRowDefsLapus, buildAOAFromRowDefs, buildRowDefsPeng, newDownload, buildRowDefsSum, buildAOADiskrepansi } 

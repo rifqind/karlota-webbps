@@ -1124,55 +1124,6 @@ const showGIYtoY = (adhbnow, adhbprev, adhknow, adhkprev) => {
 const downloadModalStatus = ref(false);
 const downloadTitle = ref("Download");
 const downloadType = ref(null);
-// const downloadHasil = async (id, title, type) => {
-//   let list = {};
-//   triggerSpinner.value = true;
-//   enabletoFixed.value = false;
-//   try {
-//     showSummary("full");
-//     await nextTick();
-//     let printed = [];
-//     for (const key of Object.keys(activeTab.value)) {
-//       if (key == "full" || key == "summary") continue;
-//       showTab(key);
-//       await new Promise((resolve) => setTimeout(resolve, 800));
-//       if (type == "one-sheet") {
-//         let tablejson = tableToJson(id, "number", false, key);
-//         const spaceone = [""];
-//         const spacetwo = [""];
-//         printed.push(...spaceone, ...spacetwo, ...tablejson);
-//       } else if (type == "multi-sheet") {
-//         list[key] = tableToJson(id);
-//       }
-//     }
-//     showSummary("summary");
-//     await nextTick();
-//     let printedTwo = [];
-//     for (const key of Object.keys(activeTab.value)) {
-//       if (key == "full" || key == "summary") continue;
-//       showTab(key);
-//       await new Promise((resolve) => setTimeout(resolve, 800));
-//       if (type == "one-sheet") {
-//         let tablejson = tableToJson(id, "number", false, key);
-//         const spaceone = [""];
-//         const spacetwo = [""];
-//         printedTwo.push(...spaceone, ...spacetwo, ...tablejson);
-//       } else if (type == "multi-sheet") {
-//         list[key + "-summary"] = tableToJson(id);
-//       }
-//     }
-//     if (type == "one-sheet") {
-//       list["core"] = printed;
-//       list["summary"] = printedTwo;
-//     }
-//     theDownload(list, title);
-//   } catch (error) {
-//     console.error(error);
-//   } finally {
-//     triggerSpinner.value = false;
-//     enabletoFixed.value = true;
-//   }
-// };
 const downloadHasil = async (title) => {
   showSummary("full");
   const years = yearToRender.value.map(String);
@@ -1241,7 +1192,13 @@ const downloadHasil = async (title) => {
     summarited.push(...space, [key], ...resultCalculate);
   }
   list["summary"] = summarited;
-  theDownload(list, title, yearToRender.value.length, page.props.type);
+  // theDownload(list, title, yearToRender.value.length, page.props.type);
+  theDownload({
+    setdata: list,
+    title: title,
+    yCount: yearToRender.value.length,
+    RULES: page.props.type,
+  });
 };
 // #endregion
 

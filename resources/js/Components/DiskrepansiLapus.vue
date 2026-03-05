@@ -348,13 +348,12 @@ const props = defineProps({
   },
 });
 const dataHere = ref(props.dataContents);
-const tableRef = ref(null);
 const quarters = ref(props.quarter);
-const getDataCache = ref(new Map());
 const dataRegion = (r) => {
   const result = dataHere.value.filter((x) => x.region_id == r);
   return result;
 };
+const isNow = computed(() => String(props.onDemandType || "").includes("_now"));
 watch(
   () => props.dataContents,
   (value) => {
@@ -380,10 +379,18 @@ const classCalculate = (colors) => {
   }
 };
 const formatNumberGerman = (num, min = 2, max = 5) => {
-  return new Intl.NumberFormat("de-DE", {
+  const threshold = 0.0001;
+
+  if (Math.abs(num) < threshold) {
+    let numb = "~0";
+    if (num > 0) return numb;
+    if (num < 0) return "~(-0)";
+  }
+  let result = new Intl.NumberFormat("de-DE", {
     minimumFractionDigits: min,
     maximumFractionDigits: max,
   }).format(num);
+  return result;
 };
 //
 const idx = computed(() => {
@@ -506,6 +513,15 @@ const diskreData = computed(() => {
   }
   return out;
 });
+watch(
+  () => diskreData.value,
+  (value) => {
+    if (isNow) {
+      const types = props.onDemandType + "_disk";
+      emits("update:updateDOD", { data: value, type: types });
+    }
+  }
+);
 </script>
 
 <style scoped>
@@ -520,10 +536,12 @@ const diskreData = computed(() => {
   border-right: 1px solid #ccc;
   border-left: 1px solid #ccc;
 }
+
 .total-cell {
   background-color: #175676;
   color: whitesmoke;
 }
+
 .footer-column {
   font-weight: bold;
   position: sticky;
@@ -540,6 +558,7 @@ const diskreData = computed(() => {
 tbody tr td:not(:nth-child(1)) {
   text-align: right;
 }
+
 tbody tr td {
   padding: 0.25rem;
 }

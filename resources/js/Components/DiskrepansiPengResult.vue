@@ -15,7 +15,36 @@
             >
           </td>
           <template v-for="(node, indRegion) in tableColumn" :key="indRegion">
-            <td></td>
+            <td
+              v-if="node.value == 'calculate'"
+              class="text-right font-bold"
+              :class="
+                classCalculate(
+                  resultDatas?.rows?.['sec-' + nodeSubsectors.sector_id]?.diff ?? 0
+                )
+              "
+            >
+              {{ resultDatas?.rows?.["sec-" + nodeSubsectors.sector_id]?.note ?? "" }}
+              {{
+                formatNumberGerman(
+                  resultDatas?.rows?.["sec-" + nodeSubsectors.sector_id]?.diff ?? 0,
+                  0,
+                  props.toFixed
+                )
+              }}
+            </td>
+            <td v-else class="text-right pr-2">
+              {{
+                formatNumberGerman(
+                  pickQuarter(
+                    tableModel?.rows?.["sec-" + nodeSubsectors.sector_id]?.[node.value],
+                    props.quarter
+                  ),
+                  0,
+                  props.toFixed
+                )
+              }}
+            </td>
           </template>
         </tr>
       </template>
@@ -32,7 +61,34 @@
             </p>
           </td>
           <template v-for="(node, indRegion) in tableColumn" :key="indRegion">
-            <td></td>
+            <td
+              v-if="node.value == 'calculate'"
+              class="text-right font-bold"
+              :class="
+                classCalculate(resultDatas?.rows?.['sub-' + nodeSubsectors.id]?.diff ?? 0)
+              "
+            >
+              {{ resultDatas?.rows?.["sub-" + nodeSubsectors.id]?.note ?? "" }}
+              {{
+                formatNumberGerman(
+                  resultDatas?.rows?.["sub-" + nodeSubsectors.id]?.diff ?? 0,
+                  0,
+                  props.toFixed
+                )
+              }}
+            </td>
+            <td v-else>
+              {{
+                formatNumberGerman(
+                  pickQuarter(
+                    tableModel?.rows?.["sub-" + nodeSubsectors.id]?.[node.value],
+                    props.quarter
+                  ),
+                  0,
+                  props.toFixed
+                )
+              }}
+            </td>
           </template>
         </tr>
       </template>
@@ -50,7 +106,34 @@
             </label>
           </td>
           <template v-for="(node, indRegion) in tableColumn" :key="indRegion">
-            <td></td>
+            <td
+              v-if="node.value == 'calculate'"
+              class="text-right font-bold"
+              :class="
+                classCalculate(resultDatas?.rows?.['sub-' + nodeSubsectors.id]?.diff ?? 0)
+              "
+            >
+              {{ resultDatas?.rows?.["sub-" + nodeSubsectors.id]?.note ?? "" }}
+              {{
+                formatNumberGerman(
+                  resultDatas?.rows?.["sub-" + nodeSubsectors.id]?.diff ?? 0,
+                  0,
+                  props.toFixed
+                )
+              }}
+            </td>
+            <td v-else>
+              {{
+                formatNumberGerman(
+                  pickQuarter(
+                    tableModel?.rows?.["sub-" + nodeSubsectors.id]?.[node.value],
+                    props.quarter
+                  ),
+                  0,
+                  props.toFixed
+                )
+              }}
+            </td>
           </template>
         </tr>
       </template>
@@ -60,13 +143,31 @@
         <p class="mt-1 mb-1">PDRB</p>
       </td>
       <template v-for="(node, indRegion) in tableColumn" :key="indRegion">
-        <td :id="'adhb_total-' + node.label" class="total-cell"></td>
+        <td
+          v-if="node.value == 'calculate'"
+          class="total-cell"
+          :class="classCalculate(resultDatas?.footer?.['PDRB']?.diff ?? 0)"
+        >
+          {{ resultDatas?.footer?.["PDRB"]?.note ?? "" }}
+          {{
+            formatNumberGerman(resultDatas?.footer?.["PDRB"]?.diff ?? 0, 0, props.toFixed)
+          }}
+        </td>
+        <td v-else :id="'adhb_total-' + node.value" class="total-cell">
+          {{
+            formatNumberGerman(
+              pickQuarter(tableModel?.footer?.["PDRB"]?.[node.value], props.quarter),
+              0,
+              props.toFixed
+            )
+          }}
+        </td>
       </template>
     </tr>
   </tbody>
 </template>
 <script setup>
-import { ref, watch } from "vue";
+import { computed, ref, watch } from "vue";
 
 const props = defineProps({
   subsectors: {
@@ -91,60 +192,99 @@ const props = defineProps({
     default: "distribusi",
   },
 });
-const thisData = ref(props.computedData);
-const tableRef = ref(null);
+const tableModel = ref(props.computedData);
+const quarters = ref(props.quarter);
+watch(
+  () => props.quarter,
+  (value) => {
+    quarters.value = value;
+  }
+);
 watch(
   () => props.computedData,
   (value) => {
-    thisData.value = value;
-    if (tableRef.value && thisData.value) {
-      const rows = tableRef.value.querySelectorAll("tr");
-
-      rows.forEach((row) => {
-        const firstCell = row.querySelector("td:first-child"); // Get the first column (key)
-        if (!firstCell) return;
-        const key = firstCell.textContent.trim().replace(/\s+/g, ""); // Key from first column
-        if (thisData.value[key]) {
-          const cells = row.querySelectorAll("td:not(:first-child)"); // Get other columns
-          // Update the row with the computed values
-          cells.forEach((cell, index) => {
-            cell.textContent = thisData.value[key][index]; // Format and insert value
-          });
-        }
-      });
-      rows.forEach((row) => {
-        const parseNumber = (value) =>
-          value ? Number(value.replaceAll(".", "").replaceAll(",", ".")) : 0;
-        const prov = row.querySelector("td:nth-child(3)");
-        const total = row.querySelector("td:nth-child(4)");
-        let selisih = parseNumber(prov.textContent) - parseNumber(total.textContent);
-        const selisihCell = row.querySelector("td:nth-child(2)");
-        if (Math.abs(selisih) > 5) selisihCell.classList.add("text-red-500");
-        if (Math.abs(selisih) > 2) selisihCell.classList.add("text-yellow-500");
-        if (Math.abs(selisih)) selisihCell.classList.add("text-black");
-        if (
-          (parseNumber(prov.textContent) > 0 && parseNumber(total.textContent) < 0) ||
-          (parseNumber(prov.textContent) < 0 && parseNumber(total.textContent) > 0)
-        ) {
-          selisihCell.textContent =
-            "(Beda Arah) " + formatNumberGerman(selisih.toFixed(4), 2, 4);
-        } else selisihCell.textContent = formatNumberGerman(selisih.toFixed(4), 2, 4);
-      });
-    }
+    tableModel.value = value;
   }
 );
+const classCalculate = (colors) => {
+  if (Math.abs(colors) > 5) {
+    return "text-red-500";
+  }
+  if (Math.abs(colors) > 2) {
+    return "text-yellow-500";
+  }
+  if (colors) {
+    return "text-black";
+  }
+};
+const pickQuarter = (cell, quarter) => {
+  if (!cell) return 0;
+  return quarter === "t" ? cell.total ?? 0 : cell.q?.[Number(quarter) - 1] ?? 0;
+};
+const resultDatas = computed(() => {
+  const out = {
+    rows: {},
+    footer: {},
+  };
+  const bedaArah = (p, t) => p * t < 0;
+  for (const [rK, rr] of Object.entries(tableModel.value?.rows ?? {})) {
+    const prov = pickQuarter(rr?.[1], props.quarter);
+    const total = pickQuarter(rr?.["total"], props.quarter);
+
+    const diff = Math.abs(prov - total);
+    const disk = diff != 0 && prov != 0 ? (diff / prov) * 100 : 0;
+    const note = bedaArah(prov, total);
+    out.rows[rK] = {
+      prov,
+      total,
+      diff,
+      disk,
+      note: note ? "(beda arah)" : "",
+    };
+  }
+  for (const [fK, rr] of Object.entries(tableModel.value?.footer ?? {})) {
+    const prov = pickQuarter(rr?.[1], props.quarter);
+    const total = pickQuarter(rr?.["total"], props.quarter);
+
+    const diff = Math.abs(prov - total);
+    const disk = diff != 0 && prov != 0 ? (diff / prov) * 100 : 0;
+    const note = bedaArah(prov, total);
+    out.footer[fK] = {
+      prov,
+      total,
+      diff,
+      disk,
+      note: note ? "(beda arah)" : "",
+    };
+  }
+  return out;
+});
 const formatNumberGerman = (num, min = 2, max = 5) => {
+  const threshold = 0.0001;
+
+  if (Math.abs(num) < threshold) {
+    let numb = "~0";
+    if (num > 0) return numb;
+    if (num < 0) return "~(-0)";
+  }
   return new Intl.NumberFormat("de-DE", {
     minimumFractionDigits: min,
     maximumFractionDigits: max,
   }).format(num);
 };
+const emits = defineEmits(["update:updateDOD"]);
+watch(
+  () => resultDatas.value,
+  (value) => {
+    emits("update:updateDOD", { data: value, type: "computed_diff" });
+  }
+);
 </script>
 
 <style scoped>
 .fixed-column {
   position: sticky;
-  width: 400px;
+  min-width: 400px;
   left: 0;
   background-color: white;
   color: black;
@@ -153,12 +293,10 @@ const formatNumberGerman = (num, min = 2, max = 5) => {
   border-right: 1px solid #ccc;
   border-left: 1px solid #ccc;
 }
-
 .total-cell {
   background-color: #175676;
   color: whitesmoke;
 }
-
 .footer-column {
   font-weight: bold;
   position: sticky;
@@ -172,26 +310,10 @@ const formatNumberGerman = (num, min = 2, max = 5) => {
   border-left: 1px solid #ccc;
 }
 
-.input-fordone {
+tbody tr td:not(:nth-child(1)) {
   text-align: right;
 }
-
-tbody td {
+tbody tr td {
   padding: 0.25rem;
-  height: 50px;
-  /* Set a fixed height */
-  line-height: 1.2;
-  /* Adjust line height */
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-tbody tr {
-  height: 50px;
-}
-
-.not-fixed {
-  min-width: 250px;
 }
 </style>
