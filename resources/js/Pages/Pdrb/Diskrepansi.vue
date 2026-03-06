@@ -351,6 +351,7 @@ import SpinnerBorder from "@/Components/SpinnerBorder.vue";
 import {
   buildAOADiskrepansi,
   buildRowDefsLapus,
+  buildRowDefsPeng,
   tableToJson,
   theDownload,
 } from "@/download";
@@ -980,7 +981,10 @@ const downloadModalStatus = ref(false);
 const downloadTitle = ref("Download");
 const downloadType = ref(null);
 const downloadHasil = async (id, title, type) => {
-  const rowDefs = buildRowDefsLapus(page.props.subsectors);
+  const rowDefs =
+    page.props.type == "Lapangan Usaha"
+      ? buildRowDefsLapus(page.props.subsectors)
+      : buildRowDefsPeng(page.props.subsectors);
   let list = {};
   let quarter = Number(quarterCap.value);
   let quarterList = [];
@@ -992,7 +996,8 @@ const downloadHasil = async (id, title, type) => {
 
   for (const key of quarterList) {
     quartersTab(key);
-    await new Promise((resolve) => setTimeout(resolve, 100));
+    tableColumn.value[0].label = "Diskrepansi";
+    await new Promise((resolve) => setTimeout(resolve, 120));
     let printed = [];
     const resultAdhb = buildAOADiskrepansi({
       tableModel: dataOnDemand.value["adhb_now"],
@@ -1002,7 +1007,7 @@ const downloadHasil = async (id, title, type) => {
       quarterCap: key,
       diskrepansi: true,
     });
-    printed.push(["ADHB"], ...resultAdhb);
+    printed.push(["ADHB"], ...space[0], ...resultAdhb);
     const resultAdhk = buildAOADiskrepansi({
       tableModel: dataOnDemand.value["adhk_now"],
       secondModel: dataOnDemand.value["adhk_now_disk"],
@@ -1011,11 +1016,12 @@ const downloadHasil = async (id, title, type) => {
       quarterCap: key,
       diskrepansi: true,
     });
-    printed.push(...space, ["ADHK"], ...resultAdhk);
+    printed.push(...space, ["ADHK"], ...space[0], ...resultAdhk);
     for (const keytab of Object.keys(activeTab.value)) {
       if (keytab == "adhb" || keytab == "adhk") continue;
       showTab(keytab);
-      await new Promise((resolve) => setTimeout(resolve, 100));
+      tableColumn.value[0].label = "Selisih";
+      await new Promise((resolve) => setTimeout(resolve, 120));
       const resultCalculate = buildAOADiskrepansi({
         tableModel: computedData.value,
         secondModel: dataOnDemand.value["computed_diff"],
@@ -1027,38 +1033,7 @@ const downloadHasil = async (id, title, type) => {
     }
     list["Triwulan-" + key] = printed;
   }
-  theDownload({ setdata: list, diskrepansi: true });
-
-  // let list = {};
-  // triggerSpinner.value = true;
-  // try {
-  //   // for (let key of Object.keys(activeQuarters.value)) {
-  //   for (let key of quarterList) {
-  //     quartersTab(key);
-  //     await nextTick();
-  //     let printed = [];
-  //     for (let keytab of Object.keys(activeTab.value)) {
-  //       showTab(keytab);
-  //       await new Promise((resolve) => setTimeout(resolve, 1000));
-  //       if (type == "one-sheet") {
-  //         let tablejson = tableToJson(id, "number", true, keytab);
-  //         const spaceone = [""];
-  //         const spacetwo = [""];
-  //         printed.push(...spaceone, ...spacetwo, ...tablejson);
-  //       } else if (type == "multi-sheet") {
-  //         list["Triwulan-" + key + "-" + keytab] = tableToJson(id, "number", true);
-  //       }
-  //     }
-  //     list["Triwulan-" + key] = printed;
-  //   }
-  //   // }
-  //   // console.log(list);
-  //   theDownload(list, title);
-  // } catch (error) {
-  //   console.error(error);
-  // } finally {
-  //   triggerSpinner.value = false;
-  // }
+  theDownload({ setdata: list, title: title, RULES: page.props.type, diskrepansi: true });
 };
 </script>
 <style scoped>

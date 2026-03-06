@@ -67,24 +67,37 @@ const tableToJson = (idTabel, type = 'number', diskrepansi = false, title_name =
     // return result;
     return aoa;
 };
+const OFFSET_LAPUS = [0, 72]
+const OFFSET_PENG = [0, 23]
 const theDownload = ({ setdata, title = 'Hasil Download', yCount, RULES, diskrepansi = false }) => {
     var workbook = XLSX.utils.book_new();
     Object.keys(setdata).forEach((sheetName) => {
         const data = setdata[sheetName]
         const worksheet = XLSX.utils.aoa_to_sheet(data)
         if (diskrepansi) {
+            if (RULES == 'Lapangan Usaha') {
+                injectSecCat({ ws: worksheet, start: 3, end: 69, RULES: RULES, offset: OFFSET_LAPUS, diskrepansi: true })
+                injectSecCat({ ws: worksheet, start: 75, end: 141, RULES: RULES, offset: OFFSET_LAPUS, diskrepansi: true })
+            } else {
+                injectSecCat({ ws: worksheet, start: 3, end: 20, RULES: RULES, offset: OFFSET_PENG, diskrepansi: true })
+                injectSecCat({ ws: worksheet, start: 26, end: 43, RULES: RULES, offset: OFFSET_PENG, diskrepansi: true })
+            }
         } else {
             if (sheetName == 'data') {
                 if (RULES == 'Lapangan Usaha') {
                     injectTotal(worksheet, 3, 69, yCount)
-                    injectSecCat(worksheet, 3, 69, yCount, RULES)
+                    // injectSecCat(worksheet, 3, 69, yCount, RULES, OFFSET_LAPUS)
+                    injectSecCat({ ws: worksheet, start: 3, end: 69, yCount: yCount, RULES: RULES, offset: OFFSET_LAPUS })
                     injectTotal(worksheet, 75, 141, yCount)
-                    injectSecCat(worksheet, 75, 141, yCount, RULES)
+                    // injectSecCat(worksheet, 75, 141, yCount, RULES, OFFSET_LAPUS)
+                    injectSecCat({ ws: worksheet, start: 75, end: 141, yCount: yCount, RULES: RULES, offset: OFFSET_LAPUS })
                 } else {
                     injectTotal(worksheet, 3, 20, yCount)
-                    injectSecCat(worksheet, 3, 20, yCount, RULES)
+                    // injectSecCat(worksheet, 3, 20, yCount, RULES, OFFSET_PENG)
+                    injectSecCat({ ws: worksheet, start: 3, end: 20, yCount: yCount, RULES: RULES, offset: OFFSET_PENG })
                     injectTotal(worksheet, 26, 43, yCount)
-                    injectSecCat(worksheet, 26, 43, yCount, RULES)
+                    // injectSecCat(worksheet, 26, 43, yCount, RULES, OFFSET_PENG)
+                    injectSecCat({ ws: worksheet, start: 26, end: 43, yCount: yCount, RULES: RULES, offset: OFFSET_PENG })
                 }
             }
         }
@@ -412,26 +425,35 @@ const injectTotal = (ws, start, end, yCount) => {
 }
 const ensureCell = (ws, addr) => (ws[addr] ??= { t: "n", v: 0 });
 const cell = (r, c) => XLSX.utils.encode_cell({ r, c });
-const OFFSET_LAPUS = [0, 72]
-const OFFSET_PENG = [0, 23]
-const injectSecCat = (ws, start, end, yCount, RULES) => {
+const injectSecCat = ({ ws, start, end, yCount, RULES, offset, diskrepansi = false }) => {
     let rules = RULES == 'Lapangan Usaha' ? RULES_LAPUS : RULES_PENG
-    let offset = RULES == 'Lapangan Usaha' ? OFFSET_LAPUS : OFFSET_PENG
+    // let offset = RULES == 'Lapangan Usaha' ? OFFSET_LAPUS : OFFSET_PENG
     const baseCol = 1
     for (const off of offset) {
-        for (let y = 0; y < yCount; y++) {
-            const q1Col = baseCol + (y * 5)
-            const q2Col = q1Col + 1
-            const q3Col = q1Col + 2
-            const q4Col = q1Col + 3
-            const tCol = q1Col + 4
-            const qData = [q1Col, q2Col, q3Col, q4Col]
-            for (const [targetStr, expr] of Object.entries(rules)) {
-                const target = Number(targetStr) + off
-                for (const qq of qData) {
-                    const addr = cell(target, qq);
-                    ensureCell(ws, addr).t = "n";
-                    ws[addr].f = buildFormula(expr, qq, off);
+        if (!diskrepansi) {
+            for (let y = 0; y < yCount; y++) {
+                const q1Col = baseCol + (y * 5)
+                const q2Col = q1Col + 1
+                const q3Col = q1Col + 2
+                const q4Col = q1Col + 3
+                const tCol = q1Col + 4
+                const qData = [q1Col, q2Col, q3Col, q4Col]
+                for (const [targetStr, expr] of Object.entries(rules)) {
+                    const target = Number(targetStr) + off
+                    for (const qq of qData) {
+                        const addr = cell(target, qq);
+                        ensureCell(ws, addr).t = "n";
+                        ws[addr].f = buildFormula(expr, qq, off);
+                    }
+                }
+            }
+        } else {
+            for (let rr = 2; rr <= 18; rr++) {
+                for (const [targetStr, expr] of Object.entries(rules)) {
+                    const target = Number(targetStr) + off
+                    const addr = cell(target, rr)
+                    ensureCell(ws, addr).t = 'n'
+                    ws[addr].f = buildFormula(expr, rr, off)
                 }
             }
         }
@@ -458,7 +480,8 @@ const RULES_LAPUS = {
 const RULES_PENG = {
     3: "4:10",
     13: "14:15",
-    17: "18-19"
+    17: "18-19",
+    20: "3+11+12+13+16+17"
 }
 const buildFormula = (expr, col, off = 0) => {
     const s = String(expr).replace(/\s+/g, "");
