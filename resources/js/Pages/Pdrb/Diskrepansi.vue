@@ -271,6 +271,7 @@
               :quarter="quarterCap"
               :type="'distribusi'"
               :computed-data="computedData"
+              @update:update-d-o-d="updateDOD"
             />
             <DiskrepansiPeng
               v-show="false"
@@ -312,18 +313,6 @@
         <div class="mb-3 space-y-2">
           <label>Masukkan Judul File</label>
           <input type="text" v-model="downloadTitle" class="input-fordone w-full" />
-        </div>
-        <div class="mb-3 space-y-2">
-          <label>Tipe File</label>
-          <Multiselect
-            v-model="downloadType"
-            :options="[
-              { label: 'One Sheet Compound', value: 'one-sheet' },
-              { label: 'Many Sheet (default)', value: 'multi-sheet' },
-            ]"
-            :searchable="true"
-            placeholder="-- Pilih Tipe File Download --"
-          />
         </div>
       </template>
       <template #modalFunction>

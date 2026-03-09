@@ -362,7 +362,11 @@ const buildAOADiskrepansi = ({ tableModel, secondModel, rowDefs, tableColumn, qu
                     const calculated = isFooter
                         ? (secondModel?.footer?.[footerKey] ?? { q: [], total: 0 })
                         : (secondModel?.rows?.[def.rowKey] ?? { q: [], total: 0 })
-                    const datas = diskrepansi ? calculated.disk : calculated.diff
+                    let results = ''
+                    if (!diskrepansi) {
+                        results = (calculated.note) ? calculated.note + ' ' + String(calculated.diff).replaceAll(".", ",") : calculated.diff
+                    }
+                    const datas = diskrepansi ? calculated.disk : results
                     row.push(datas)
                 } else if (rr.value == 'total') {
                     const cell = isFooter
