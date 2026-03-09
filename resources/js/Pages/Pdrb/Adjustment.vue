@@ -146,6 +146,7 @@
               <th colspan="2">Y-on-Y</th>
               <th colspan="2">C-to-C</th>
               <th colspan="2">Laju Imp Q-to-Q</th>
+              <th colspan="2">Laju Imp Y-on-Y</th>
               <th colspan="2">Kontribusi thd Total</th>
             </tr>
             <tr>
@@ -155,6 +156,8 @@
               <th class="min-w-[150px]">Inisial</th>
               <th class="min-w-[150px]">Adjustment</th>
               <th class="min-w-[150px]">Berjalan</th>
+              <th class="min-w-[120px]">Inisial</th>
+              <th class="min-w-[120px]">Berjalan</th>
               <th class="min-w-[120px]">Inisial</th>
               <th class="min-w-[120px]">Berjalan</th>
               <th class="min-w-[120px]">Inisial</th>

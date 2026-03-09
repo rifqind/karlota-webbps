@@ -132,6 +132,8 @@ const createAdjVal = (region) => ({
     ctoc_berjalan: null,
     lajuimpqtoq_initial: null,
     lajuimpqtoq_berjalan: null,
+    lajuimpyony_initial: null,
+    lajuimpyony_berjalan: null,
     kontribusi_initial: null,
     kontribusi_berjalan: null,
   },
@@ -228,6 +230,16 @@ const showThisVal = (region, type) => {
       return gIQtoQ(region, "adhb_berjalan", "adhk_berjalan", type);
     if (region == "Total Kabupaten/Kota")
       return gIQtoQ(region, "adhb_berjalan", "adhk_berjalan", type);
+  } else if (type == "lajuimpyony_initial") {
+    if (!isNaN(Number(region)))
+      return getIYonY(region, "adhb_initial", "adhk_initial", type);
+    if (region == "Total Kabupaten/Kota")
+      return getIYonY(region, "adhb_initial", "adhk_initial", type);
+  } else if (type == "lajuimpyony_berjalan") {
+    if (!isNaN(Number(region)))
+      return getIYonY(region, "adhb_berjalan", "adhk_berjalan", type);
+    if (region == "Total Kabupaten/Kota")
+      return getIYonY(region, "adhb_berjalan", "adhk_berjalan", type);
   } else if (type == "kontribusi_initial") {
     if (!isNaN(Number(region))) return getKontribusi("adhb_initial", region, type);
     if (region == "Total Kabupaten/Kota")
@@ -435,8 +447,6 @@ const gIQtoQ = (region, adhb, adhk, type) => {
     adhkCurrent = null,
     adhbPrevious = null,
     adhkPrevious = null,
-    dividend = 0,
-    divisor = 0,
     idxCurrent = 0,
     idxPrevious = 0;
   if (props.dataOnDemand[quarter] && Array.isArray(props.dataOnDemand[quarter])) {
@@ -480,6 +490,45 @@ const gIQtoQ = (region, adhb, adhk, type) => {
     idxPrevious =
       adhbPrevious != 0 && adhkPrevious != 0 ? (adhbPrevious / adhkPrevious) * 100 : 0;
   }
+  let growth =
+    idxPrevious != 0 && idxCurrent != 0 ? (idxCurrent / idxPrevious) * 100 - 100 : 0;
+  setAdjustmentVal(region, type, growth);
+  return formatNumberGerman(growth.toFixed(props.toFixed), 2, 4);
+};
+const getIYonY = (region, adhb, adhk, type) => {
+  let quarter = Number(props.quarterCap);
+  let current = null,
+    previous = null,
+    adhbCurrent = null,
+    adhkCurrent = null,
+    adhbPrevious = null,
+    adhkPrevious = null,
+    idxCurrent = 0,
+    idxPrevious = 0;
+  if (props.dataOnDemand[quarter] && Array.isArray(props.dataOnDemand[quarter])) {
+    current = props.dataOnDemand[quarter].find((x) => x.region == region) ?? null;
+  }
+  adhbCurrent = Number(current?.adjVal?.[adhb]) ?? 0;
+  adhkCurrent = Number(current?.adjVal?.[adhk]) ?? 0;
+  idxCurrent =
+    adhbCurrent != 0 && adhkCurrent != 0 ? (adhbCurrent / adhkCurrent) * 100 : 0;
+  if (!isNaN(Number(region))) {
+    previous =
+      dataHereBefore.value.find(
+        (x) => x.quarter == props.quarterCap && x.region_id == region
+      ) ?? null;
+    adhbPrevious = Number(previous?.adhb) ?? 0;
+    adhkPrevious = Number(previous?.adhk) ?? 0;
+  } else {
+    const filteredData = dataHereBefore.value.filter(
+      (x) => x.quarter == props.quarterCap && x.region_id != 1
+    );
+    adhbPrevious = filteredData.reduce((sum, item) => sum + (Number(item?.adhb) ?? 0), 0);
+    adhkPrevious = filteredData.reduce((sum, item) => sum + (Number(item?.adhk) ?? 0), 0);
+  }
+  idxPrevious =
+    adhbPrevious != 0 && adhkPrevious != 0 ? (adhbPrevious / adhkPrevious) * 100 : 0;
+
   let growth =
     idxPrevious != 0 && idxCurrent != 0 ? (idxCurrent / idxPrevious) * 100 - 100 : 0;
   setAdjustmentVal(region, type, growth);
