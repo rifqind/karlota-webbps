@@ -20,18 +20,29 @@
               class="text-right font-bold"
               :class="
                 classCalculate(
-                  nodeSubsectors.sector.code + '.' + nodeSubsectors.sector.name
+                  diskreData?.rows?.['sec-' + nodeSubsectors.sector_id]?.disk ?? 0
                 )
               "
             >
               {{
-                getCalculate(
-                  nodeSubsectors.sector.code + "." + nodeSubsectors.sector.name
+                formatNumberGerman(
+                  diskreData?.rows?.["sec-" + nodeSubsectors.sector_id]?.disk ?? 0,
+                  0,
+                  props.toFixed
                 )
               }}
             </td>
-            <td v-else class="text-right font-bold">
-              {{ getSumLvlTwo(nodeSubsectors.sector.id, node.value) }}
+            <td v-else class="text-right pr-2">
+              {{
+                formatNumberGerman(
+                  pickQuarter(
+                    tableModel?.rows?.["sec-" + nodeSubsectors.sector_id]?.[node.value],
+                    props.quarter
+                  ),
+                  0,
+                  props.toFixed
+                )
+              }}
             </td>
           </template>
         </tr>
@@ -52,12 +63,29 @@
             <td
               v-if="node.value == 'calculate'"
               class="text-right font-bold"
-              :class="classCalculate(nodeSubsectors.code + '.' + nodeSubsectors.name)"
+              :class="
+                classCalculate(diskreData?.rows?.['sub-' + nodeSubsectors.id]?.disk ?? 0)
+              "
             >
-              {{ getCalculate(nodeSubsectors.code + ". " + nodeSubsectors.name) }}
+              {{
+                formatNumberGerman(
+                  diskreData?.rows?.["sub-" + nodeSubsectors.id]?.disk ?? 0,
+                  0,
+                  props.toFixed
+                )
+              }}
             </td>
             <td v-else>
-              {{ getData(nodeSubsectors.id, node.value) }}
+              {{
+                formatNumberGerman(
+                  pickQuarter(
+                    tableModel?.rows?.["sub-" + nodeSubsectors.id]?.[node.value],
+                    props.quarter
+                  ),
+                  0,
+                  props.toFixed
+                )
+              }}
             </td>
           </template>
         </tr>
@@ -80,19 +108,28 @@
               v-if="node.value == 'calculate'"
               class="text-right font-bold"
               :class="
-                classCalculate(
-                  nodeSubsectors.sector.code + '.' + nodeSubsectors.sector.name
-                )
+                classCalculate(diskreData?.rows?.['sub-' + nodeSubsectors.id]?.disk ?? 0)
               "
             >
               {{
-                getCalculate(
-                  nodeSubsectors.sector.code + ". " + nodeSubsectors.sector.name
+                formatNumberGerman(
+                  diskreData?.rows?.["sub-" + nodeSubsectors.id]?.disk ?? 0,
+                  0,
+                  props.toFixed
                 )
               }}
             </td>
-            <td v-else class="font-bold text-right">
-              {{ getData(nodeSubsectors.id, node.value) }}
+            <td v-else>
+              {{
+                formatNumberGerman(
+                  pickQuarter(
+                    tableModel?.rows?.["sub-" + nodeSubsectors.id]?.[node.value],
+                    props.quarter
+                  ),
+                  0,
+                  props.toFixed
+                )
+              }}
             </td>
           </template>
         </tr>
@@ -103,11 +140,23 @@
         <p class="mt-1 mb-1">PDRB</p>
       </td>
       <template v-for="(node, indRegion) in tableColumn" :key="indRegion">
-        <td v-if="node.value == 'calculate'" class="total-cell">
-          {{ getCalculate("PDRB") }}
+        <td
+          v-if="node.value == 'calculate'"
+          class="total-cell"
+          :class="classCalculate(diskreData?.footer?.['PDRB']?.disk ?? 0)"
+        >
+          {{
+            formatNumberGerman(diskreData?.footer?.["PDRB"]?.disk ?? 0, 0, props.toFixed)
+          }}
         </td>
         <td v-else :id="'adhb_total-' + node.value" class="total-cell">
-          {{ getPDRB(node.value) }}
+          {{
+            formatNumberGerman(
+              pickQuarter(tableModel?.footer?.["PDRB"]?.[node.value], props.quarter),
+              0,
+              props.toFixed
+            )
+          }}
         </td>
       </template>
     </tr>
@@ -115,7 +164,7 @@
 </template>
 
 <script setup>
-import { onMounted, ref, watch } from "vue";
+import { computed, onMounted, ref, watch } from "vue";
 
 const props = defineProps({
   subsectors: {
@@ -144,269 +193,199 @@ const props = defineProps({
     type: String || Number,
     required: true,
   },
-  calculate: {
-    type: Object || Array,
+  regions: {
+    type: Array,
     required: false,
+    default: [],
+  },
+  toFixed: {
+    type: Number,
+    required: false,
+    default: 4,
   },
 });
 const dataHere = ref(props.dataContents);
-const tableRef = ref(null);
 const quarters = ref(props.quarter);
-const getDataCache = ref(new Map());
+const dataRegion = (r) => {
+  const result = dataHere.value.filter((x) => x.region_id == r);
+  return result;
+};
 watch(
   () => props.dataContents,
   (value) => {
-    if (value.length > 0) {
-      triggerSpinner.value = true;
-      try {
-        dataHere.value = value;
-        fetchData();
-      } catch (error) {
-        console.error(error);
-      } finally {
-        triggerSpinner.value = false;
-      }
-    }
-  },
-  { immediate: true }
-);
-const triggerSpinner = ref(false);
-const fetchData = () => {
-  getDataCache.value.clear();
-  for (const nodeS of props.subsectors) {
-    for (const node of props.tableColumn) {
-      if (node.value != "calculate") {
-        const cacheKey = `${nodeS.id}-${node.value}-${quarters.value}`;
-        const result = getData(nodeS.id, node.value);
-        getDataCache.value.set(cacheKey, result);
-      }
-    }
+    dataHere.value = value;
   }
-};
+);
 watch(
   () => props.quarter,
   (value) => {
     quarters.value = value;
   }
 );
-var observer = null;
-onMounted(() => {
-  setTimeout(() => {
-    if (tableRef.value) {
-      observer = new MutationObserver((mutations) => {
-        captureTableData(props.onDemandType);
-      });
-    }
-    observer.observe(tableRef.value, {
-      childList: true,
-      subtree: true,
-      characterData: true,
-    });
-  }, 100);
-});
 const emits = defineEmits(["update:updateDOD"]);
-const getData = (subsectors, regions) => {
-  const cacheKey = `${subsectors}-${regions}-${quarters.value}`; // Unique key for caching
-  if (getDataCache.value.has(cacheKey)) {
-    return getDataCache.value.get(cacheKey); // Return cached result
+const classCalculate = (colors) => {
+  if (Math.abs(colors) > 5) {
+    return "text-red-500";
   }
-  if (quarters.value != "t") {
-    if (!isNaN(regions)) {
-      const theData = dataHere.value.find((x) => {
-        return (
-          x.region_id == regions &&
-          x.subsector_id == subsectors &&
-          x.quarter == quarters.value
-        );
-      });
-      if (theData) {
-        let formattedResult;
-        formattedResult =
-          theData[props.type] == "" || theData[props.type] == null
-            ? null
-            : formatNumberGerman(Number(theData[props.type]), 0, 9);
-        return formattedResult;
-      }
-    }
-    if (regions == "total") {
-      const filteredData = dataHere.value.filter(
-        (x) =>
-          x.region_id != 1 && x.subsector_id == subsectors && x.quarter == quarters.value
-      );
-      let result;
-      if (filteredData)
-        result = filteredData.reduce((sum, item) => sum + Number(item[props.type]), 0);
-      return formatNumberGerman(result, 0, 9);
-    }
-  } else {
-    let filteredData;
-    filteredData = dataHere.value.filter(
-      (x) =>
-        (regions == "total" ? x.region_id != 1 : x.region_id == regions) &&
-        x.subsector_id == subsectors
-    );
-    let result;
-    if (filteredData)
-      result = filteredData.reduce((sum, item) => sum + Number(item[props.type] || 0), 0);
-    return formatNumberGerman(result, 0, 9);
+  if (Math.abs(colors) > 2) {
+    return "text-yellow-500";
   }
-};
-const getSumLvlTwo = (value, region_id) => {
-  let subsectorIds = props.subsectors
-    .filter((x) => x.sector.id == value)
-    .map((x) => x.id);
-  let filteredData, exportFilter, importFilter, result;
-  if (value == 54) {
-    if (quarters.value == "t") {
-      exportFilter = dataHere.value.filter(
-        (x) =>
-          (region_id == "total" ? x.region_id != 1 : x.region_id == region_id) &&
-          subsectorIds[0] == x.subsector_id
-      );
-      importFilter = dataHere.value.filter(
-        (x) =>
-          (region_id == "total" ? x.region_id != 1 : x.region_id == region_id) &&
-          subsectorIds[1] == x.subsector_id
-      );
-    } else {
-      exportFilter = dataHere.value.filter(
-        (x) =>
-          (region_id == "total" ? x.region_id != 1 : x.region_id == region_id) &&
-          subsectorIds[0] == x.subsector_id &&
-          x.quarter == quarters.value
-      );
-      importFilter = dataHere.value.filter(
-        (x) =>
-          (region_id == "total" ? x.region_id != 1 : x.region_id == region_id) &&
-          subsectorIds[1] == x.subsector_id &&
-          x.quarter == quarters.value
-      );
-    }
-    let exportValue = exportFilter.reduce(
-      (sum, item) => sum + Number(item[props.type]),
-      0
-    );
-    let importValue = importFilter.reduce(
-      (sum, item) => sum + Number(item[props.type]),
-      0
-    );
-    result = exportValue - importValue;
-  } else {
-    filteredData = dataHere.value.filter(
-      (x) =>
-        (region_id == "total" ? x.region_id != 1 : x.region_id == region_id) &&
-        subsectorIds.includes(Number(x.subsector_id)) &&
-        x.quarter == quarters.value
-    );
-    if (quarters.value == "t") {
-      filteredData = dataHere.value.filter(
-        (x) =>
-          (region_id == "total" ? x.region_id != 1 : x.region_id == region_id) &&
-          subsectorIds.includes(Number(x.subsector_id))
-      );
-    }
-    result = filteredData.reduce((sum, item) => sum + Number(item[props.type]), 0);
-  }
-
-  let formattedResult = formatNumberGerman(result);
-  return formattedResult;
-};
-const getPDRB = (region_id) => {
-  let filteredData, importData;
-
-  if (quarters.value == "t") {
-    filteredData = dataHere.value.filter(
-      (x) =>
-        (region_id == "total" ? x.region_id != 1 : x.region_id == region_id) &&
-        ![69].includes(Number(x.subsector_id))
-    );
-    importData = dataHere.value.filter(
-      (x) =>
-        (region_id == "total" ? x.region_id != 1 : x.region_id == region_id) &&
-        x.subsector_id == 69
-    );
-  } else {
-    filteredData = dataHere.value.filter(
-      (x) =>
-        (region_id == "total" ? x.region_id != 1 : x.region_id == region_id) &&
-        x.quarter == quarters.value &&
-        ![69].includes(Number(x.subsector_id))
-    );
-    importData = dataHere.value.filter(
-      (x) =>
-        (region_id == "total" ? x.region_id != 1 : x.region_id == region_id) &&
-        x.quarter == quarters.value &&
-        x.subsector_id == 69
-    );
-  }
-  let result = filteredData.reduce((sum, item) => sum + Number(item[props.type]), 0);
-  let importValue = importData.reduce((sum, item) => sum + Number(item[props.type]), 0);
-  result -= importValue;
-  let formattedResult = formatNumberGerman(result);
-  return formattedResult;
-};
-const getCalculate = (keys) => {
-  let trimmedKeys = keys.trim().replace(/\s+/g, "");
-  if (props.calculate) {
-    let objectLength;
-    objectLength = Object.entries(props.calculate).length;
-    if (objectLength > 0) {
-      let data = Object.entries(props.calculate).find(
-        ([key, value]) => key == trimmedKeys
-      );
-      return data[1][1];
-    }
-  }
-};
-const classCalculate = (keys) => {
-  let trimmedKeys = keys.trim().replace(/\s+/g, "");
-  const parseNumber = (value) =>
-    value ? Number(value.replaceAll(".", "").replaceAll(",", ".")) : 0;
-  if (props.calculate) {
-    let objectLength;
-    objectLength = Object.entries(props.calculate).length;
-    if (objectLength > 0) {
-      let data = Object.entries(props.calculate).find(
-        ([key, value]) => key == trimmedKeys
-      );
-      let colors = parseNumber(data[1][1]);
-      if (Math.abs(colors) > 5) {
-        return "text-red-500";
-      }
-      if (Math.abs(colors) > 2) {
-        return "text-yellow-500";
-      }
-      if (colors) {
-        return "text-black";
-      }
-    }
+  if (colors) {
+    return "text-black";
   }
 };
 const formatNumberGerman = (num, min = 2, max = 5) => {
-  return new Intl.NumberFormat("de-DE", {
+  const threshold = 0.0001;
+
+  if (Math.abs(num) < threshold) {
+    let numb = "~0";
+    if (num > 0) return numb;
+    if (num < 0) return "~(-0)";
+  }
+  let result = new Intl.NumberFormat("de-DE", {
     minimumFractionDigits: min,
     maximumFractionDigits: max,
   }).format(num);
+  return result;
 };
-const captureTableData = (type) => {
-  //   const tbody = tableRef.value.querySelector("tbody");
-  const rows = tableRef.value.querySelectorAll("tr");
-  let tempData = {};
-  rows.forEach((row) => {
-    const cells = row.querySelectorAll("td");
-    let rowData = [];
-    cells.forEach((cell, index) => {
-      const input = cell.querySelector("input");
-      if (input) {
-        rowData[index] = input.value.trim(); // Get input value
-      } else {
-        rowData[index] = cell.innerText.trim(); // Get text content
+const idx = computed(() => {
+  const out = {};
+  const regionKey = props.regions.map((r) => r.value);
+  for (const rr of regionKey) out[rr] = {};
+  out["total"] = {};
+
+  for (const rr of regionKey) {
+    for (const row of dataRegion(rr)) {
+      const sid = Number(row.subsector_id);
+      const q = String(row.quarter);
+      const val = row[props.type];
+
+      (out[rr][sid] ||= {})[q] = Number(val);
+      if (Number(rr) != 1) {
+        (out["total"][sid] ||= {})[q] = (out["total"][sid]?.[q] ?? 0) + Number(val);
       }
+    }
+  }
+  return out;
+});
+const quartz = ["1", "2", "3", "4"];
+const tableModel = computed(() => {
+  const region = props.regions.map((x) => x.value);
+  region.push("total");
+  const subsectorsBySector = {};
+  const allSubsectorIds = new Set();
+  for (const s of props.subsectors) {
+    if (s.id) allSubsectorIds.add(Number(s.id));
+
+    if (s.sector_id && s.id) {
+      (subsectorsBySector[s.sector_id] ||= []).push(Number(s.id));
+    }
+  }
+  const sumIds = (rr, ids) => {
+    const q = quartz.map((qq) =>
+      ids.reduce((acc, sid) => acc + (idx.value?.[rr]?.[sid]?.[qq] ?? 0), 0)
+    );
+    return { q, total: q.reduce((a, b) => a + b, 0) };
+  };
+  const model = {
+    rows: {},
+    footer: {},
+  };
+  for (const sid of allSubsectorIds) {
+    const key = `sub-${sid}`;
+    model.rows[key] = {};
+    for (const rr of region) {
+      const q = quartz.map((qq) => idx.value?.[rr]?.[sid]?.[qq] ?? 0);
+      model.rows[key][rr] = { q, total: q.reduce((a, b) => a + b, 0) };
+    }
+  }
+  for (const [sectorId, ids] of Object.entries(subsectorsBySector)) {
+    const key = `sec-${sectorId}`;
+    model.rows[key] = {};
+    for (const rr of region) {
+      if (sectorId == 54) {
+        for (const rr of region) {
+          const q = quartz.map((qq) => {
+            const qResult =
+              (idx.value?.[rr]?.[ids[0]]?.[qq] ?? 0) -
+              (idx.value?.[rr]?.[ids[1]]?.[qq] ?? 0);
+            return qResult;
+          });
+          model.rows[key][rr] = { q, total: q.reduce((a, b) => a + b, 0) };
+        }
+      } else model.rows[key][rr] = sumIds(rr, ids);
+    }
+  }
+
+  const allIds = Array.from(allSubsectorIds).filter((id) => ![69].includes(Number(id)));
+  model.footer["PDRB"] = {};
+  for (const rr of region) {
+    const q = quartz.map((qq) => {
+      const pdrbs = allIds.reduce(
+        (acc, sid) => acc + (idx.value?.[rr]?.[sid]?.[qq] ?? 0),
+        0
+      );
+      const imports = idx.value?.[rr]?.[69]?.[qq] ?? 0;
+      const qResult = pdrbs - imports;
+      return qResult;
     });
-    if (rowData.length > 1) tempData[rowData[0]] = rowData.slice(1);
-  });
-  emits("update:updateDOD", { data: tempData, type: type, quarter: quarters.value });
+    model.footer["PDRB"][rr] = { q, total: q.reduce((a, b) => a + b, 0) };
+  }
+  return model;
+});
+const pickQuarter = (cell, quarter) => {
+  if (!cell) return 0;
+  return quarter === "t" ? cell.total ?? 0 : cell.q?.[Number(quarter) - 1] ?? 0;
 };
+watch(
+  () => tableModel.value,
+  (value) => {
+    emits("update:updateDOD", { data: value, type: props.onDemandType });
+  }
+);
+const diskreData = computed(() => {
+  const out = {
+    rows: {},
+    footer: {},
+  };
+  for (const [rK, rr] of Object.entries(tableModel.value?.rows ?? {})) {
+    const prov = pickQuarter(rr?.[1], props.quarter);
+    const total = pickQuarter(rr?.["total"], props.quarter);
+
+    const diff = prov - total;
+    const disk = diff != 0 && prov != 0 ? (diff / prov) * 100 : 0;
+    out.rows[rK] = {
+      prov,
+      total,
+      diff,
+      disk,
+    };
+  }
+  for (const [fK, rr] of Object.entries(tableModel.value?.footer ?? {})) {
+    const prov = pickQuarter(rr?.[1], props.quarter);
+    const total = pickQuarter(rr?.["total"], props.quarter);
+
+    const diff = prov - total;
+    const disk = diff != 0 && prov != 0 ? (diff / prov) * 100 : 0;
+    out.footer[fK] = {
+      prov,
+      total,
+      diff,
+      disk,
+    };
+  }
+  return out;
+});
+const isNow = computed(() => String(props.onDemandType || "").includes("_now"));
+watch(
+  () => diskreData.value,
+  (value) => {
+    if (isNow.value) {
+      const types = props.onDemandType + "_disk";
+      emits("update:updateDOD", { data: value, type: types });
+    }
+  }
+);
 </script>
 
 <style scoped>
@@ -441,6 +420,7 @@ const captureTableData = (type) => {
 tbody tr td:not(:nth-child(1)) {
   text-align: right;
 }
+
 tbody tr td {
   padding: 0.25rem;
 }

@@ -67,22 +67,38 @@ const tableToJson = (idTabel, type = 'number', diskrepansi = false, title_name =
     // return result;
     return aoa;
 };
-const theDownload = (setdata, title = 'Hasil Download', yCount, RULES) => {
+const OFFSET_LAPUS = [0, 72]
+const OFFSET_PENG = [0, 23]
+const theDownload = ({ setdata, title = 'Hasil Download', yCount, RULES, diskrepansi = false }) => {
     var workbook = XLSX.utils.book_new();
     Object.keys(setdata).forEach((sheetName) => {
         const data = setdata[sheetName]
         const worksheet = XLSX.utils.aoa_to_sheet(data)
-        if (sheetName == 'data') {
+        if (diskrepansi) {
             if (RULES == 'Lapangan Usaha') {
-                injectTotal(worksheet, 3, 69, yCount)
-                injectSecCat(worksheet, 3, 69, yCount, RULES)
-                injectTotal(worksheet, 75, 141, yCount)
-                injectSecCat(worksheet, 75, 141, yCount, RULES)
+                injectSecCat({ ws: worksheet, start: 3, end: 69, RULES: RULES, offset: OFFSET_LAPUS, diskrepansi: true })
+                injectSecCat({ ws: worksheet, start: 75, end: 141, RULES: RULES, offset: OFFSET_LAPUS, diskrepansi: true })
             } else {
-                injectTotal(worksheet, 3, 20, yCount)
-                injectSecCat(worksheet, 3, 20, yCount, RULES)
-                injectTotal(worksheet, 26, 43, yCount)
-                injectSecCat(worksheet, 26, 43, yCount, RULES)
+                injectSecCat({ ws: worksheet, start: 3, end: 20, RULES: RULES, offset: OFFSET_PENG, diskrepansi: true })
+                injectSecCat({ ws: worksheet, start: 26, end: 43, RULES: RULES, offset: OFFSET_PENG, diskrepansi: true })
+            }
+        } else {
+            if (sheetName == 'data') {
+                if (RULES == 'Lapangan Usaha') {
+                    injectTotal(worksheet, 3, 69, yCount)
+                    // injectSecCat(worksheet, 3, 69, yCount, RULES, OFFSET_LAPUS)
+                    injectSecCat({ ws: worksheet, start: 3, end: 69, yCount: yCount, RULES: RULES, offset: OFFSET_LAPUS })
+                    injectTotal(worksheet, 75, 141, yCount)
+                    // injectSecCat(worksheet, 75, 141, yCount, RULES, OFFSET_LAPUS)
+                    injectSecCat({ ws: worksheet, start: 75, end: 141, yCount: yCount, RULES: RULES, offset: OFFSET_LAPUS })
+                } else {
+                    injectTotal(worksheet, 3, 20, yCount)
+                    // injectSecCat(worksheet, 3, 20, yCount, RULES, OFFSET_PENG)
+                    injectSecCat({ ws: worksheet, start: 3, end: 20, yCount: yCount, RULES: RULES, offset: OFFSET_PENG })
+                    injectTotal(worksheet, 26, 43, yCount)
+                    // injectSecCat(worksheet, 26, 43, yCount, RULES, OFFSET_PENG)
+                    injectSecCat({ ws: worksheet, start: 26, end: 43, yCount: yCount, RULES: RULES, offset: OFFSET_PENG })
+                }
             }
         }
         XLSX.utils.book_append_sheet(workbook, worksheet, sheetName)
@@ -238,7 +254,7 @@ const buildRowDefsSum = (type) => {
             defs.push({ rowKey: pK, label: pK })
         })
     }
-    
+
     defs.push({ rowKey: "FOOTER:PDRB", label: "PDRB" });
     return defs
 }
@@ -323,6 +339,49 @@ const buildAOAFromRowDefs = ({ tableModel, rowDefs, years, quarterCap }) => {
     return aoa;
 }
 
+const buildAOADiskrepansi = ({ tableModel, secondModel, rowDefs, tableColumn, quarterCap, diskrepansi = false }) => {
+    const aoa = []
+
+    const header1 = ['Komponen']
+    for (const rr of tableColumn) header1.push(rr.label)
+    aoa.push(header1)
+
+    for (const def of rowDefs) {
+        const row = [def.label]
+        const isFooter = def.rowKey.startsWith("FOOTER:");
+        const footerKey = isFooter ? def.rowKey.replace("FOOTER:", "") : null;
+        for (const rr of tableColumn) {
+            if (!isNaN(Number(rr.value))) {
+                const cell = isFooter
+                    ? (tableModel?.footer?.[footerKey]?.[rr.value] ?? { q: [], total: 0 })
+                    : (tableModel?.rows?.[def.rowKey]?.[rr.value] ?? { q: [], total: 0 });
+                const datas = quarterCap == 't' ? cell.total ?? [] : cell.q[Number(quarterCap) - 1] ?? []
+                row.push(datas)
+            } else if (isNaN(Number(rr.value))) {
+                if (rr.value == 'calculate') {
+                    const calculated = isFooter
+                        ? (secondModel?.footer?.[footerKey] ?? { q: [], total: 0 })
+                        : (secondModel?.rows?.[def.rowKey] ?? { q: [], total: 0 })
+                    let results = ''
+                    if (!diskrepansi) {
+                        results = (calculated.note) ? calculated.note + ' ' + String(calculated.diff).replaceAll(".", ",") : calculated.diff
+                    }
+                    const datas = diskrepansi ? calculated.disk : results
+                    row.push(datas)
+                } else if (rr.value == 'total') {
+                    const cell = isFooter
+                        ? (tableModel?.footer?.[footerKey]?.[rr.value] ?? { q: [], total: 0 })
+                        : (tableModel?.rows?.[def.rowKey]?.[rr.value] ?? { q: [], total: 0 });
+                    const datas = quarterCap == 't' ? cell.total ?? 0 : cell.q[Number(quarterCap) - 1] ?? 0
+                    row.push(datas)
+                }
+            }
+        }
+        aoa.push(row)
+    }
+    return aoa
+}
+
 const injectTotalFormulas = (ws, { startRow, endRow, yearsCount, quarterCap }) => {
     const stake = Number(quarterCap);      // 1..4
     const stride = 5;                      // Q1..Q4 + Total
@@ -370,26 +429,35 @@ const injectTotal = (ws, start, end, yCount) => {
 }
 const ensureCell = (ws, addr) => (ws[addr] ??= { t: "n", v: 0 });
 const cell = (r, c) => XLSX.utils.encode_cell({ r, c });
-const OFFSET_LAPUS = [0, 72]
-const OFFSET_PENG = [0, 23]
-const injectSecCat = (ws, start, end, yCount, RULES) => {
+const injectSecCat = ({ ws, start, end, yCount, RULES, offset, diskrepansi = false }) => {
     let rules = RULES == 'Lapangan Usaha' ? RULES_LAPUS : RULES_PENG
-    let offset = RULES == 'Lapangan Usaha' ? OFFSET_LAPUS : OFFSET_PENG
+    // let offset = RULES == 'Lapangan Usaha' ? OFFSET_LAPUS : OFFSET_PENG
     const baseCol = 1
     for (const off of offset) {
-        for (let y = 0; y < yCount; y++) {
-            const q1Col = baseCol + (y * 5)
-            const q2Col = q1Col + 1
-            const q3Col = q1Col + 2
-            const q4Col = q1Col + 3
-            const tCol = q1Col + 4
-            const qData = [q1Col, q2Col, q3Col, q4Col]
-            for (const [targetStr, expr] of Object.entries(rules)) {
-                const target = Number(targetStr) + off
-                for (const qq of qData) {
-                    const addr = cell(target, qq);
-                    ensureCell(ws, addr).t = "n";
-                    ws[addr].f = buildFormula(expr, qq, off);
+        if (!diskrepansi) {
+            for (let y = 0; y < yCount; y++) {
+                const q1Col = baseCol + (y * 5)
+                const q2Col = q1Col + 1
+                const q3Col = q1Col + 2
+                const q4Col = q1Col + 3
+                const tCol = q1Col + 4
+                const qData = [q1Col, q2Col, q3Col, q4Col]
+                for (const [targetStr, expr] of Object.entries(rules)) {
+                    const target = Number(targetStr) + off
+                    for (const qq of qData) {
+                        const addr = cell(target, qq);
+                        ensureCell(ws, addr).t = "n";
+                        ws[addr].f = buildFormula(expr, qq, off);
+                    }
+                }
+            }
+        } else {
+            for (let rr = 2; rr <= 18; rr++) {
+                for (const [targetStr, expr] of Object.entries(rules)) {
+                    const target = Number(targetStr) + off
+                    const addr = cell(target, rr)
+                    ensureCell(ws, addr).t = 'n'
+                    ws[addr].f = buildFormula(expr, rr, off)
                 }
             }
         }
@@ -416,7 +484,8 @@ const RULES_LAPUS = {
 const RULES_PENG = {
     3: "4:10",
     13: "14:15",
-    17: "18-19"
+    17: "18-19",
+    20: "3+11+12+13+16+17"
 }
 const buildFormula = (expr, col, off = 0) => {
     const s = String(expr).replace(/\s+/g, "");
@@ -447,4 +516,4 @@ const buildFormula = (expr, col, off = 0) => {
 };
 
 
-export { tableToJson, theDownload, buildRowDefsLapus, buildAOAFromRowDefs, buildRowDefsPeng, newDownload, buildRowDefsSum } 
+export { tableToJson, theDownload, buildRowDefsLapus, buildAOAFromRowDefs, buildRowDefsPeng, newDownload, buildRowDefsSum, buildAOADiskrepansi } 
