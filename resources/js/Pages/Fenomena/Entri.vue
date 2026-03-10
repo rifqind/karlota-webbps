@@ -66,9 +66,19 @@
               Download
             </div>
             <div
-              class="btn-info-fordone ml-auto w-[130px] text-center"
-              @click.prevent="submit"
+              v-if="!changeView"
+              @click="changeImplisit = !changeImplisit"
+              class="btn-warning-fordone text-center"
             >
+              {{ changeImplisit ? "Hide Implisit" : "Show Implisit" }}
+            </div>
+            <div
+              @click="changeView = !changeView"
+              class="btn-success-fordone text-center"
+            >
+              Ganti Tampilan
+            </div>
+            <div class="btn-info-fordone w-[130px] text-center" @click.prevent="submit">
               <font-awesome-icon icon="fa-solid fa-magnifying-glass" />
               Cari Data
             </div>
@@ -80,14 +90,21 @@
           <thead>
             <tr>
               <th class="fixed-thead">Komponen</th>
-              <th v-if="!isYear">Fenomena Q-to-Q</th>
-              <th>Fenomena Y-on-Y</th>
-              <th>Fenomena Implisit</th>
+              <template v-if="changeView">
+                <th v-if="!isYear">Fenomena Q-to-Q</th>
+                <th>Fenomena Y-on-Y</th>
+                <th>Fenomena Implisit</th>
+              </template>
+              <template v-else>
+                <th class="w-[150px]">Pertumbuhan</th>
+                <th class="w-[150px]">Nilai</th>
+                <th>Fenomena</th>
+              </template>
             </tr>
           </thead>
           <LapusFenomena
             v-if="page.props.type == 'Lapangan Usaha'"
-            v-show="showTabPanel"
+            v-show="showTabPanel && changeView"
             :subsectors="page.props.subsectors"
             :data-contents="dataContents"
             :fenomena-status="fenomenasets.status"
@@ -96,6 +113,20 @@
             @update:handle-input="handleInput"
             @update:handle-paste="handlePaste"
             @update:set-default-data="setDefaultData"
+          />
+          <LapusFenomenaCoded
+            v-if="page.props.type == 'Lapangan Usaha'"
+            v-show="showTabPanel && !changeView"
+            :subsectors="page.props.subsectors"
+            :data-contents="dataContents"
+            :fenomena-status="fenomenasets.status"
+            :is-year="isYear"
+            :is-implisit="changeImplisit"
+            @update:update-data-contents="updateDataContents"
+            @update:handle-input="handleInput"
+            @update:handle-paste="handlePaste"
+            @update:set-default-data="setDefaultData"
+            @update:update-fenom-spec-dev="updateFenomSpecDev"
           />
           <PengFenomena
             v-if="page.props.type == 'Pengeluaran'"
@@ -153,9 +184,15 @@ import { triggerSpinner } from "@/axiosSetup";
 import FlashFetch from "@/Components/FlashFetch.vue";
 import FloatScrollDown from "@/Components/FloatScrollDown.vue";
 import LapusFenomena from "@/Components/LapusFenomena.vue";
+import LapusFenomenaCoded from "@/Components/LapusFenomenaCoded.vue";
 import PengFenomena from "@/Components/PengFenomena.vue";
 import SpinnerBorder from "@/Components/SpinnerBorder.vue";
-import { tableToJson, theDownload } from "@/download";
+import {
+  buildAOAFenomena,
+  buildRowDefsLapus,
+  buildRowDefsPeng,
+  theDownload,
+} from "@/download";
 import GeneralLayout from "@/Layouts/GeneralLayout.vue";
 import { Head, useForm, usePage } from "@inertiajs/vue3";
 import Multiselect from "@vueform/multiselect";
@@ -209,6 +246,9 @@ const setDefaultData = (value) => {
 };
 const handlePaste = (value) => {
   dataContents.value[value.theIndex][value.type] = value.value;
+};
+const updateFenomSpecDev = (value) => {
+  rowspanspec.value = value;
 };
 onMounted(() => {});
 const submit = async () => {
@@ -338,18 +378,34 @@ const unsubmitEntri = async () => {
     },
   });
 };
+const rowspanspec = ref([]);
 const downloadHasil = (id) => {
-  try {
-    triggerSpinner.value = true;
-    let list = {};
-    list["fenomena"] = tableToJson(id, "text");
-    theDownload(list);
-  } catch (error) {
-    console.error(error);
-  } finally {
-    triggerSpinner.value = false;
-  }
+  let rowDefs =
+    page.props.type == "Lapangan Usaha"
+      ? buildRowDefsLapus(page.props.subsectors)
+      : buildRowDefsPeng(page.props.subsectors);
+  let aoas = buildAOAFenomena({
+    rowDefs: rowDefs,
+    rowspanspec: rowspanspec.value,
+    data: dataContents.value,
+  });
+  let list = {};
+  list["fenomena"] = aoas;
+  theDownload({ setdata: list });
+  // try {
+  //   triggerSpinner.value = true;
+  //   let list = {};
+  //   list["fenomena"] = tableToJson(id, "text");
+  //   theDownload(list);
+  // } catch (error) {
+  //   console.error(error);
+  // } finally {
+  //   triggerSpinner.value = false;
+  // }
 };
+//
+const changeView = ref(false);
+const changeImplisit = ref(true);
 </script>
 
 <style scoped>
