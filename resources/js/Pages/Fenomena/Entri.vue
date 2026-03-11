@@ -23,6 +23,7 @@
               :options="yearDrop.options"
               :searchable="true"
               placeholder="-- Pilih Tahun --"
+              @change="fetchQuarter"
             />
             <div class="text-danger text-left" v-if="true" id="error-dinas">
               {{ formError.year }}
@@ -64,6 +65,13 @@
               class="btn-warning-fordone text-center"
             >
               Download
+            </div>
+            <div
+              v-if="!changeView"
+              @click="modalValue = true"
+              class="btn-fordone bg-[#60435F] text-white text-center"
+            >
+              Ambil Nilai
             </div>
             <div
               v-if="!changeView"
@@ -177,6 +185,60 @@
       </div>
     </div>
   </GeneralLayout>
+  <ModalBs
+    :-modal-status="modalValue"
+    @close="modalValue = false"
+    :modal-size="'min-w-[40vw]'"
+    :title="'Ambil Nilai'"
+  >
+    <template #modalBody>
+      <div class="form-group">
+        <div class="space-y-2 mb-3">
+          <label for="year">Pilih Triwulan<span class="text-danger">*</span></label>
+          <Multiselect
+            v-model="quarterDrop.selected"
+            :options="quarterDrop.options"
+            :searchable="true"
+            placeholder="-- Pilih Triwulan --"
+            @change="fetchPeriod"
+          />
+        </div>
+        <div class="mb-3 space-y-2">
+          <label for="year"
+            >Pilih Periode Putaran<span class="text-danger">*</span></label
+          >
+          <Multiselect
+            v-model="descDrop.selected"
+            :options="descDrop.options"
+            :searchable="true"
+            placeholder="-- Pilih Periode Putaran --"
+            @change="fetchYearBefore"
+          />
+        </div>
+        <div class="mb-3 space-y-2">
+          <label for="year">Pilih Data Tahun Sebelumnya</label>
+          <Multiselect
+            v-model="dataBeforeDrop.selected"
+            :options="dataBeforeDrop.options"
+            :searchable="true"
+            placeholder="-- Pilih Data Tahun Sebelumnya (opsional, jika tidak dipilih maka akan memilih data tahun paling terbaru/terakhir) --"
+          />
+        </div>
+        <div class="text-red-900">
+          {{ errorModula ?? null }}
+        </div>
+      </div>
+    </template>
+    <template #modalFunction>
+      <button
+        type="button"
+        class="btn-success-fordone btn-sm"
+        @click.prevent="fetchingData"
+      >
+        Fetch
+      </button>
+    </template>
+  </ModalBs>
 </template>
 
 <script setup>
@@ -185,6 +247,7 @@ import FlashFetch from "@/Components/FlashFetch.vue";
 import FloatScrollDown from "@/Components/FloatScrollDown.vue";
 import LapusFenomena from "@/Components/LapusFenomena.vue";
 import LapusFenomenaCoded from "@/Components/LapusFenomenaCoded.vue";
+import ModalBs from "@/Components/ModalBs.vue";
 import PengFenomena from "@/Components/PengFenomena.vue";
 import SpinnerBorder from "@/Components/SpinnerBorder.vue";
 import {
@@ -406,6 +469,80 @@ const downloadHasil = (id) => {
 //
 const changeView = ref(false);
 const changeImplisit = ref(true);
+const modalValue = ref(false);
+const quarterDrop = ref({ selected: null, options: [] });
+const descDrop = ref({ selected: null, options: [] });
+const dataBeforeDrop = ref({ selected: null, options: [] });
+const fetchQuarter = async (value) => {
+  if (value) {
+    try {
+      const response = await axios.get(route("period.fetchQuarter"), {
+        params: {
+          type: page.props.type,
+          year: value,
+        },
+      });
+      let result = response.data;
+      quarterDrop.value.options = result;
+    } catch (error) {
+      console.error(error);
+    }
+  }
+};
+const fetchPeriod = async (value, type = "normal") => {
+  if (value) {
+    try {
+      const response = await axios.get(route("period.fetchPeriod"), {
+        params: {
+          type: page.props.type,
+          year: form.year,
+          quarter: value,
+        },
+      });
+      let result = response.data;
+      descDrop.value.options = result;
+    } catch (error) {
+      console.error(error);
+    }
+  }
+};
+const fetchYearBefore = async (value) => {
+  try {
+    const response = await axios.get(route("period.fetchYearBefore"), {
+      params: {
+        type: page.props.type,
+        year: form.year,
+      },
+    });
+    let result = response.data;
+    dataBeforeDrop.value.options = result;
+  } catch (error) {
+    console.error(error);
+  }
+};
+const errorModula = ref("");
+const fetchingData = async () => {
+  if (!quarterDrop.value.selected || !form.regions) {
+    errorModula.value = "Form belum lengkap, cek kabupaten/kota, triwulan, dan putaran";
+    return;
+  } else {
+    errorModula.value = "";
+  }
+
+  try {
+    const response = await axios.get(route("pdrb.show"), {
+      params: {
+        type: page.props.type,
+        year: form.year,
+        quarter: quarterDrop.value.selected,
+        regions: form.regions,
+        description: descDrop.value.selected,
+        dataBefore: dataBeforeDrop.value.selected,
+      },
+    });
+    console.log(response.data);
+  } catch (error) {}
+};
 </script>
 
 <style scoped>
