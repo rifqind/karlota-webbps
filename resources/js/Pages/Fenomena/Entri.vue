@@ -540,9 +540,106 @@ const fetchingData = async () => {
         dataBefore: dataBeforeDrop.value.selected,
       },
     });
-    console.log(response.data);
+    dataFetched.value.before = response.data.previous_data;
+    dataFetched.value.current = response.data.current_data;
   } catch (error) {}
 };
+const dataFetched = ref({ before: [], current: [] });
+const idx = computed(() => {
+  const out = {};
+  for (const [key, df] of Object.entries(dataFetched.value)) {
+    out[key] = {};
+    for (const dd of df) {
+      const sid = Number(dd.subsector_id);
+      const q = String(dd.quarter);
+      const adhb = dd?.["adhb"] ?? 0;
+      const adhk = dd?.["adhk"] ?? 0;
+
+      out[key][sid] ||= {};
+      out[key][sid].adhb ||= {};
+      out[key][sid].adhk ||= {};
+
+      out[key][sid].adhb[q] = Number(adhb);
+      out[key][sid].adhk[q] = Number(adhk);
+    }
+  }
+  return out;
+});
+const tableModel = computed(() => {
+  const period = ["before", "current"];
+  const types = ["adhb", "adhk"];
+  const quarters = ["1", "2", "3", "4"];
+  const subsectorsBySector = {};
+  const subsectorsByCategory = {};
+  const allSubsectorIds = new Set();
+
+  for (const s of page.props.subsectors) {
+    if (s.id) allSubsectorIds.add(Number(s.id));
+
+    if (s.sector_id && s.id) {
+      (subsectorsBySector[s.sector_id] ||= []).push(Number(s.id));
+    }
+
+    const catId = s?.sector?.category_id;
+    if (catId && s.id) {
+      (subsectorsByCategory[catId] ||= []).push(Number(s.id));
+    }
+  }
+  const sumIds = (p, ids, t) => {
+    const q = quarters.map((qq) =>
+      ids.reduce((acc, sid) => acc + (idx.value?.[p]?.[sid]?.[t]?.[qq] ?? 0), 0)
+    );
+    return { q, total: q.reduce((a, b) => a + b, 0) };
+  };
+  const result = {};
+  for (const p of period) {
+    result[p] = {};
+  }
+  for (const sid of allSubsectorIds) {
+    const key = `sub-${sid}`;
+    for (const p of period) {
+      result[p][key] = {};
+      for (const t of types) {
+        const q = quarters.map((qq) => idx.value?.[p]?.[sid]?.[t]?.[qq] ?? 0);
+        result[p][key][t] = { q, total: q.reduce((a, b) => a + b, 0) };
+      }
+    }
+  }
+  for (const [sectorId, ids] of Object.entries(subsectorsBySector)) {
+    const key = `sec-${sectorId}`;
+    for (const p of period) {
+      result[p][key] ||= {};
+      for (const t of types) result[p][key][t] = sumIds(p, ids, t);
+    }
+  }
+  for (const [catId, ids] of Object.entries(subsectorsByCategory)) {
+    const key = `cat-${catId}`;
+    for (const p of period) {
+      result[p][key] ||= {};
+      for (const t of types) result[p][key][t] = sumIds(p, ids, t);
+    }
+  }
+  const growth = { qtoq: {}, yony: {}, implisit: {} };
+  const current = result.current;
+  const previous = result.previous;
+  for (const rowKey of Object.keys(current ?? {})) {
+    //qtoq
+    const dQtoQ = current?.[rowKey]?.["adhk"]?.q[Number(form.quarter) - 1];
+    let dsQtoQ = 0;
+    if (form.quarter - 1 == 0) {
+      dsQtoQ = previous?.[rowKey]?.["adhk"]?.q[Number(form.quarter) - 1];
+    } else dsQtoQ = current?.[rowKey]?.["adhk"]?.q[Number(form.quarter) - 2];
+    growth.qtoq[rowKey] = dsQtoQ !== 0 ? (dQtoQ / dsQtoQ) * 100 - 100 : 0;
+
+    //yony
+    let dsYonY = previous?.[rowKey]?.["adhk"]?.q[Number(form.quarter) - 1];
+    growth.yony[rowKey] = dsYonY !== 0 ? (dQtoQ / dsYonY) * 100 - 100 : 0;
+
+    //implisit
+    const adhb;
+  }
+  return result;
+});
 </script>
 
 <style scoped>
