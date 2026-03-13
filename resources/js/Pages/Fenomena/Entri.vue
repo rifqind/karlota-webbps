@@ -130,6 +130,7 @@
             :fenomena-status="fenomenasets.status"
             :is-year="isYear"
             :is-implisit="changeImplisit"
+            :table-model="tableModel"
             @update:update-data-contents="updateDataContents"
             @update:handle-input="handleInput"
             @update:handle-paste="handlePaste"
@@ -138,7 +139,7 @@
           />
           <PengFenomena
             v-if="page.props.type == 'Pengeluaran'"
-            v-show="showTabPanel"
+            v-show="showTabPanel && changeView"
             :subsectors="page.props.subsectors"
             :data-contents="dataContents"
             :fenomena-status="fenomenasets.status"
@@ -147,6 +148,21 @@
             @update:handle-input="handleInput"
             @update:handle-paste="handlePaste"
             @update:set-default-data="setDefaultData"
+          />
+          <PengFenomenaCoded
+            v-if="page.props.type == 'Pengeluaran'"
+            v-show="showTabPanel && !changeView"
+            :subsectors="page.props.subsectors"
+            :data-contents="dataContents"
+            :fenomena-status="fenomenasets.status"
+            :is-year="isYear"
+            :is-implisit="changeImplisit"
+            :table-model="tableModel"
+            @update:update-data-contents="updateDataContents"
+            @update:handle-input="handleInput"
+            @update:handle-paste="handlePaste"
+            @update:set-default-data="setDefaultData"
+            @update:update-fenom-spec-dev="updateFenomSpecDev"
           />
         </table>
       </div>
@@ -249,11 +265,13 @@ import LapusFenomena from "@/Components/LapusFenomena.vue";
 import LapusFenomenaCoded from "@/Components/LapusFenomenaCoded.vue";
 import ModalBs from "@/Components/ModalBs.vue";
 import PengFenomena from "@/Components/PengFenomena.vue";
+import PengFenomenaCoded from "@/Components/PengFenomenaCoded.vue";
 import SpinnerBorder from "@/Components/SpinnerBorder.vue";
 import {
   buildAOAFenomena,
   buildRowDefsLapus,
   buildRowDefsPeng,
+  tableToJson,
   theDownload,
 } from "@/download";
 import GeneralLayout from "@/Layouts/GeneralLayout.vue";
@@ -443,28 +461,32 @@ const unsubmitEntri = async () => {
 };
 const rowspanspec = ref([]);
 const downloadHasil = (id) => {
-  let rowDefs =
-    page.props.type == "Lapangan Usaha"
-      ? buildRowDefsLapus(page.props.subsectors)
-      : buildRowDefsPeng(page.props.subsectors);
-  let aoas = buildAOAFenomena({
-    rowDefs: rowDefs,
-    rowspanspec: rowspanspec.value,
-    data: dataContents.value,
-  });
-  let list = {};
-  list["fenomena"] = aoas;
-  theDownload({ setdata: list });
-  // try {
-  //   triggerSpinner.value = true;
-  //   let list = {};
-  //   list["fenomena"] = tableToJson(id, "text");
-  //   theDownload(list);
-  // } catch (error) {
-  //   console.error(error);
-  // } finally {
-  //   triggerSpinner.value = false;
-  // }
+  if (changeView.value) {
+    try {
+      triggerSpinner.value = true;
+      let list = {};
+      list["fenomena-normal"] = tableToJson(id, "text");
+      theDownload({ setdata: list });
+    } catch (error) {
+      console.error(error);
+    } finally {
+      triggerSpinner.value = false;
+    }
+  } else {
+    let rowDefs =
+      page.props.type == "Lapangan Usaha"
+        ? buildRowDefsLapus(page.props.subsectors)
+        : buildRowDefsPeng(page.props.subsectors);
+    let aoas = buildAOAFenomena({
+      rowDefs: rowDefs,
+      growth: tableModel.value.growth,
+      rowspanspec: rowspanspec.value,
+      data: dataContents.value,
+    });
+    let list = {};
+    list["fenomena"] = aoas;
+    theDownload({ setdata: list });
+  }
 };
 //
 const changeView = ref(false);
@@ -528,7 +550,6 @@ const fetchingData = async () => {
   } else {
     errorModula.value = "";
   }
-
   try {
     const response = await axios.get(route("pdrb.show"), {
       params: {
@@ -542,7 +563,10 @@ const fetchingData = async () => {
     });
     dataFetched.value.before = response.data.previous_data;
     dataFetched.value.current = response.data.current_data;
-  } catch (error) {}
+    modalValue.value = false;
+  } catch (error) {
+    console.error(error);
+  }
 };
 const dataFetched = ref({ before: [], current: [] });
 const idx = computed(() => {
@@ -605,11 +629,31 @@ const tableModel = computed(() => {
       }
     }
   }
-  for (const [sectorId, ids] of Object.entries(subsectorsBySector)) {
-    const key = `sec-${sectorId}`;
-    for (const p of period) {
-      result[p][key] ||= {};
-      for (const t of types) result[p][key][t] = sumIds(p, ids, t);
+  if (page.props.type == "Lapangan Usaha") {
+    for (const [sectorId, ids] of Object.entries(subsectorsBySector)) {
+      const key = `sec-${sectorId}`;
+      for (const p of period) {
+        result[p][key] ||= {};
+        for (const t of types) result[p][key][t] = sumIds(p, ids, t);
+      }
+    }
+  } else if (page.props.type == "Pengeluaran") {
+    for (const [sectorId, ids] of Object.entries(subsectorsBySector)) {
+      const key = `sec-${sectorId}`;
+      for (const p of period) {
+        result[p][key] ||= {};
+        if (sectorId == 54) {
+          for (const t of types) {
+            const q = quarters.map((qq) => {
+              const qResult =
+                (idx.value?.[p]?.[ids[0]]?.[t]?.[qq] ?? 0) -
+                (idx.value?.[p]?.[ids[1]]?.[t]?.[qq] ?? 0);
+              return qResult;
+            });
+            result[p][key][t] = { q, total: q.reduce((a, b) => a + b, 0) };
+          }
+        } else for (const t of types) result[p][key][t] = sumIds(p, ids, t);
+      }
     }
   }
   for (const [catId, ids] of Object.entries(subsectorsByCategory)) {
@@ -621,24 +665,38 @@ const tableModel = computed(() => {
   }
   const growth = { qtoq: {}, yony: {}, implisit: {} };
   const current = result.current;
-  const previous = result.previous;
+  const previous = result.before;
+  const thisQuarter = Number(form.quarter) - 1;
   for (const rowKey of Object.keys(current ?? {})) {
+    const currAdhk = Number(current?.[rowKey]?.adhk?.q[thisQuarter] ?? 0);
+    const currAdhb = Number(current?.[rowKey]?.adhb?.q[thisQuarter] ?? 0);
     //qtoq
-    const dQtoQ = current?.[rowKey]?.["adhk"]?.q[Number(form.quarter) - 1];
     let dsQtoQ = 0;
-    if (form.quarter - 1 == 0) {
-      dsQtoQ = previous?.[rowKey]?.["adhk"]?.q[Number(form.quarter) - 1];
-    } else dsQtoQ = current?.[rowKey]?.["adhk"]?.q[Number(form.quarter) - 2];
-    growth.qtoq[rowKey] = dsQtoQ !== 0 ? (dQtoQ / dsQtoQ) * 100 - 100 : 0;
+    if (thisQuarter == 0) {
+      dsQtoQ = Number(previous?.[rowKey]?.adhk?.q[3] ?? 0);
+    } else dsQtoQ = Number(current?.[rowKey]?.adhk?.q[thisQuarter - 1]);
+    growth.qtoq[rowKey] = dsQtoQ !== 0 ? (currAdhk / dsQtoQ) * 100 - 100 : 0;
 
     //yony
-    let dsYonY = previous?.[rowKey]?.["adhk"]?.q[Number(form.quarter) - 1];
-    growth.yony[rowKey] = dsYonY !== 0 ? (dQtoQ / dsYonY) * 100 - 100 : 0;
+    let dsYonY = Number(previous?.[rowKey]?.adhk?.q[thisQuarter]);
+    growth.yony[rowKey] = dsYonY !== 0 ? (currAdhk / dsYonY) * 100 - 100 : 0;
+    // growth.yony[rowKey] = dsYonY;
 
     //implisit
-    const adhb;
+    const dImplisit = currAdhk != 0 ? currAdhb / currAdhk : 0;
+    let dsImplisit = 0;
+    if (thisQuarter == 0) {
+      const prevAdhb = Number(previous?.[rowKey]?.adhb?.q[3] ?? 0);
+      const prevAdhk = Number(previous?.[rowKey]?.adhk?.q[3] ?? 0);
+      dsImplisit = prevAdhk != 0 ? prevAdhb / prevAdhk : 0;
+    } else {
+      const prevAdhb = Number(current?.[rowKey]?.adhb?.q[thisQuarter - 1] ?? 0);
+      const prevAdhk = Number(current?.[rowKey]?.adhk?.q[thisQuarter - 1] ?? 0);
+      dsImplisit = prevAdhk != 0 ? prevAdhb / prevAdhk : 0;
+    }
+    growth.implisit[rowKey] = dsImplisit != 0 ? (dImplisit / dsImplisit) * 100 - 100 : 0;
   }
-  return result;
+  return { result, growth };
 });
 </script>
 

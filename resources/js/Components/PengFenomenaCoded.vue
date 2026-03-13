@@ -3,73 +3,17 @@
     <template v-for="(nodeSubsectors, index) in subsectors">
       <template
         v-if="
-          (nodeSubsectors.code != null &&
-            nodeSubsectors.code == 'a' &&
-            nodeSubsectors.sector.code == '1' &&
-            nodeSubsectors.sector.category.type == 'Lapangan Usaha') ||
-          (nodeSubsectors.code == null &&
-            nodeSubsectors.sector.code == '1' &&
-            nodeSubsectors.sector.category.type == 'Lapangan Usaha')
+          nodeSubsectors.code != null &&
+          nodeSubsectors.code == 'a' &&
+          nodeSubsectors.sector.category.type == 'Pengeluaran'
         "
       >
         <tr v-for="(node, index) in fenomenaValue">
           <template v-if="index == 0">
             <td :rowspan="fenomenaValue.length" class="desc-col fixed-column">
               <label class=""
-                >{{ nodeSubsectors.sector.category.code }}.
-                {{ nodeSubsectors.sector.category.name }}</label
+                >{{ nodeSubsectors.sector.code }}. {{ nodeSubsectors.sector.name }}</label
               >
-            </td>
-          </template>
-          <td class="text-right">{{ node }}</td>
-          <td class="text-center font-bold">
-            {{
-              formatNumberGerman(
-                tableModel?.growth?.[node]?.[
-                  "cat-" + nodeSubsectors.sector.category_id
-                ] ?? 0,
-                0,
-                4
-              )
-            }}
-          </td>
-          <td>
-            <textarea
-              rows="8"
-              spellcheck="false"
-              :disabled="setDisabled()"
-              :id="
-                nodeSubsectors.sector.category_id + '-' + null + '-' + null + '-' + node
-              "
-              class="w-full input-fordone"
-              @input="
-                (event) => {
-                  handleInput(event, nodeSubsectors.sector.category_id, null, null, node);
-                }
-              "
-              @paste="
-                (event) => {
-                  handlePaste(event, nodeSubsectors.sector.category_id, null, null, node);
-                }
-              "
-              :value="getData(nodeSubsectors.sector.category_id, null, null, node)"
-            ></textarea>
-          </td>
-        </tr>
-      </template>
-      <template
-        v-if="
-          nodeSubsectors.code != null &&
-          nodeSubsectors.code == 'a' &&
-          nodeSubsectors.sector.category.type == 'Lapangan Usaha'
-        "
-      >
-        <tr v-for="(node, index) in fenomenaValue">
-          <template v-if="index == 0">
-            <td :rowspan="fenomenaValue.length" class="desc-col fixed-column">
-              <p class="pl-4">
-                {{ nodeSubsectors.sector.code }}. {{ nodeSubsectors.sector.name }}
-              </p>
             </td>
           </template>
           <td class="text-right">{{ node }}</td>
@@ -134,7 +78,7 @@
       <template
         v-if="
           nodeSubsectors.code != null &&
-          nodeSubsectors.sector.category.type == 'Lapangan Usaha'
+          nodeSubsectors.sector.category.type == 'Pengeluaran'
         "
       >
         <tr v-for="(node, index) in fenomenaValue">
@@ -208,25 +152,22 @@
         v-else-if="
           nodeSubsectors.code == null &&
           nodeSubsectors.sector.code != null &&
-          nodeSubsectors.sector.category.type == 'Lapangan Usaha'
+          nodeSubsectors.sector.category.type == 'Pengeluaran'
         "
       >
         <tr v-for="(node, index) in fenomenaValue">
           <template v-if="index == 0">
             <td :rowspan="fenomenaValue.length" class="desc-col fixed-column">
-              <p
-                class="pl-4 pr-4"
-                :for="nodeSubsectors.sector.code + '_' + nodeSubsectors.sector.name"
-              >
+              <label :for="nodeSubsectors.sector.code + '_' + nodeSubsectors.sector.name">
                 {{ nodeSubsectors.sector.code + ". " + nodeSubsectors.sector.name }}
-              </p>
+              </label>
             </td>
           </template>
           <td class="text-right">{{ node }}</td>
           <td class="text-center font-bold">
             {{
               formatNumberGerman(
-                tableModel?.growth?.[node]?.["sub-" + nodeSubsectors.id] ?? "",
+                tableModel?.growth?.[node]?.["sub-" + nodeSubsectors.id] ?? 0,
                 0,
                 4
               )
@@ -281,90 +222,12 @@
           </td>
         </tr>
       </template>
-      <template
-        v-else-if="
-          nodeSubsectors.code == null &&
-          nodeSubsectors.sector.code == null &&
-          nodeSubsectors.sector.category.type == 'Lapangan Usaha'
-        "
-      >
-        <tr v-for="(node, index) in fenomenaValue">
-          <template v-if="index == 0">
-            <td :rowspan="fenomenaValue.length" class="desc-col fixed-column">
-              <label
-                class="col"
-                :for="nodeSubsectors.sector.category.code + '_' + nodeSubsectors.name"
-              >
-                {{ nodeSubsectors.sector.category.code + ". " + nodeSubsectors.name }}
-              </label>
-            </td>
-          </template>
-          <td class="text-right">{{ node }}</td>
-          <td class="text-center font-bold">
-            {{
-              formatNumberGerman(
-                tableModel?.growth?.[node]?.["sub-" + nodeSubsectors.id] ?? 0,
-                0,
-                4
-              )
-            }}
-          </td>
-          <td>
-            <textarea
-              rows="8"
-              spellcheck="false"
-              :disabled="setDisabled()"
-              :id="
-                nodeSubsectors.sector.category_id +
-                '-' +
-                nodeSubsectors.sector.id +
-                '-' +
-                nodeSubsectors.id +
-                '-' +
-                node
-              "
-              class="w-full input-fordone font-bold"
-              @input="
-                (event) => {
-                  handleInput(
-                    event,
-                    nodeSubsectors.sector.category_id,
-                    nodeSubsectors.sector.id,
-                    nodeSubsectors.id,
-                    node
-                  );
-                }
-              "
-              @paste="
-                (event) => {
-                  handlePaste(
-                    event,
-                    nodeSubsectors.sector.category_id,
-                    nodeSubsectors.sector.id,
-                    nodeSubsectors.id,
-                    node
-                  );
-                }
-              "
-              :value="
-                getData(
-                  nodeSubsectors.sector.category_id,
-                  nodeSubsectors.sector.id,
-                  nodeSubsectors.id,
-                  node
-                )
-              "
-            />
-          </td>
-        </tr>
-      </template>
     </template>
   </tbody>
 </template>
 
 <script setup>
-import { parseTSVWithQuotes } from "@/handleCopy";
-import { computed, onMounted, ref, watch } from "vue";
+import { onMounted, ref, watch, computed } from "vue";
 
 const props = defineProps({
   subsectors: {
@@ -612,18 +475,17 @@ const handlePaste = (event) => {
         const parsedRows = parseTSVWithQuotes(text);
         // lines.forEach((line, index) => {
         parsedRows.forEach((cells, index) => {
+          // const cells = line.trim().split("\t");
           cells.forEach((cell, subIndex) => {
             const row = rowIndex + index;
             const col = columnIndex + subIndex;
             const table = event.target.closest("table");
             const tableRow = table.rows[row];
             if (tableRow) {
-              const columnLengthCurr = tableRow.cells.length - 1;
-              const tableCell = tableRow.cells[columnLengthCurr];
+              const tableCell = tableRow.cells[col];
               if (tableCell) {
                 let input = tableCell.querySelector("textarea");
                 if (input) {
-                  //   console.log({ input: input, cell: cell });
                   let category = input.id.split("-")[0];
                   let sector = input.id.split("-")[1];
                   let subsector = input.id.split("-")[2];
@@ -654,6 +516,48 @@ const handlePaste = (event) => {
       });
     }
   }
+};
+const parseTSVWithQuotes = (text) => {
+  const rows = [];
+  let currentRow = [];
+  let currentCell = "";
+  let inQuotes = false;
+
+  for (let i = 0; i < text.length; i++) {
+    const char = text[i];
+    const nextChar = text[i + 1];
+
+    if (char == '"') {
+      if (inQuotes && nextChar == '"') {
+        // Escaped quote
+        currentCell += '"';
+        i++; // skip next quote
+      } else {
+        inQuotes = !inQuotes; // toggle quotes
+      }
+    } else if (char == "\t" && !inQuotes) {
+      currentRow.push(currentCell);
+      currentCell = "";
+    } else if ((char == "\n" || char == "\r") && !inQuotes) {
+      if (currentCell || currentCell == "") {
+        currentRow.push(currentCell);
+        currentCell = "";
+      }
+      if (currentRow.length > 0) {
+        rows.push(currentRow);
+        currentRow = [];
+      }
+      if (char == "\r" && nextChar == "\n") i++; // Windows \r\n
+    } else {
+      currentCell += char;
+    }
+  }
+
+  // Add last cell and row
+  if (currentCell || currentCell == "") currentRow.push(currentCell);
+  if (currentRow.length > 0) rows.push(currentRow);
+
+  return rows;
 };
 const formatNumberGerman = (num, min = 2, max = 5) => {
   if (num == 0) return "";
@@ -719,7 +623,7 @@ tbody tr {
   height: 50px;
 }
 
-/* .not-fixed {
+.not-fixed {
   min-width: 250px;
-} */
+}
 </style>

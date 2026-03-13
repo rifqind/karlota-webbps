@@ -283,6 +283,7 @@ const buildRowDefsPeng = (subsectors) => {
         const catType = ns?.sector?.category?.type;
         if (catType !== "Pengeluaran") return;
 
+        const catId = ns?.sector?.category_id;
         const secId = ns?.sector_id ?? ns?.sector?.id;
         const secCode = ns?.sector?.code;
         const secName = ns?.sector?.name;
@@ -291,6 +292,9 @@ const buildRowDefsPeng = (subsectors) => {
         if (isSectorHeader && secId) {
             defs.push({
                 rowKey: `sec-${secId}`,
+                catId: catId,
+                secId: secId,
+                subId: null,
                 label: `${secCode}. ${secName}`,
             });
         }
@@ -298,6 +302,9 @@ const buildRowDefsPeng = (subsectors) => {
         if (ns.code != null && ns.id) {
             defs.push({
                 rowKey: `sub-${ns.id}`,
+                catId: catId,
+                secId: secId,
+                subId: ns.id,
                 label: `${ns.code}. ${ns.name}`,
             });
             return;
@@ -306,6 +313,9 @@ const buildRowDefsPeng = (subsectors) => {
         if (ns.code == null && ns?.sector?.code != null && secId) {
             defs.push({
                 rowKey: `sec-${secId}`,
+                catId: catId,
+                secId: secId,
+                subId: ns.id,
                 label: `${ns.sector.code}. ${ns.sector.name}`,
             });
             return;
@@ -533,7 +543,7 @@ const buildFormula = (expr, col, off = 0) => {
     return sumExpr(s);
 };
 
-const buildAOAFenomena = ({ rowDefs, rowspanspec, data }) => {
+const buildAOAFenomena = ({ rowDefs, rowspanspec, growth, data }) => {
     const aoa = []
     const header1 = ['Komponen', 'Pertumbuhan', 'Nilai', 'Fenomena']
     aoa.push(header1)
@@ -545,7 +555,6 @@ const buildAOAFenomena = ({ rowDefs, rowspanspec, data }) => {
                 const isCat = (def.catId && !def.secId && !def.subId) ? true : false
                 const isSec = (def.catId && def.secId && !def.subId) ? true : false
                 const isSub = (def.catId && def.secId && def.subId) ? true : false
-                const keys = Number(def.rowKey.split('-')[1])
                 const theData = data.find((x) => {
                     if (isCat) {
                         return (x.category_id == def.catId && x.sector_id == null && x.subsector_id == null)
@@ -559,7 +568,8 @@ const buildAOAFenomena = ({ rowDefs, rowspanspec, data }) => {
                     return false
                 })
                 row.push(spec)
-                row.push('example value')
+                const gvalue = growth?.[spec]?.[def.rowKey] ?? '-'
+                row.push(gvalue)
                 row.push(theData?.[spec] ?? '')
                 aoa.push(row)
             }
