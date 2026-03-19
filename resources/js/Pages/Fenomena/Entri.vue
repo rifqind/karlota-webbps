@@ -23,6 +23,7 @@
               :options="yearDrop.options"
               :searchable="true"
               placeholder="-- Pilih Tahun --"
+              @change="fetchQuarter"
             />
             <div class="text-danger text-left" v-if="true" id="error-dinas">
               {{ formError.year }}
@@ -66,9 +67,26 @@
               Download
             </div>
             <div
-              class="btn-info-fordone ml-auto w-[130px] text-center"
-              @click.prevent="submit"
+              v-if="!changeView"
+              @click="modalValue = true"
+              class="btn-fordone bg-[#60435F] text-white text-center"
             >
+              Ambil Nilai
+            </div>
+            <div
+              v-if="!changeView"
+              @click="changeImplisit = !changeImplisit"
+              class="btn-warning-fordone text-center"
+            >
+              {{ changeImplisit ? "Hide Implisit" : "Show Implisit" }}
+            </div>
+            <div
+              @click="changeView = !changeView"
+              class="btn-success-fordone text-center"
+            >
+              Ganti Tampilan
+            </div>
+            <div class="btn-info-fordone w-[130px] text-center" @click.prevent="submit">
               <font-awesome-icon icon="fa-solid fa-magnifying-glass" />
               Cari Data
             </div>
@@ -80,14 +98,21 @@
           <thead>
             <tr>
               <th class="fixed-thead">Komponen</th>
-              <th v-if="!isYear">Fenomena Q-to-Q</th>
-              <th>Fenomena Y-on-Y</th>
-              <th>Fenomena Implisit</th>
+              <template v-if="changeView">
+                <th v-if="!isYear">Fenomena Q-to-Q</th>
+                <th>Fenomena Y-on-Y</th>
+                <th>Fenomena Implisit</th>
+              </template>
+              <template v-else>
+                <th class="w-[150px]">Pertumbuhan</th>
+                <th class="w-[150px]">Nilai</th>
+                <th>Fenomena</th>
+              </template>
             </tr>
           </thead>
           <LapusFenomena
             v-if="page.props.type == 'Lapangan Usaha'"
-            v-show="showTabPanel"
+            v-show="showTabPanel && changeView"
             :subsectors="page.props.subsectors"
             :data-contents="dataContents"
             :fenomena-status="fenomenasets.status"
@@ -97,9 +122,24 @@
             @update:handle-paste="handlePaste"
             @update:set-default-data="setDefaultData"
           />
+          <LapusFenomenaCoded
+            v-if="page.props.type == 'Lapangan Usaha'"
+            v-show="showTabPanel && !changeView"
+            :subsectors="page.props.subsectors"
+            :data-contents="dataContents"
+            :fenomena-status="fenomenasets.status"
+            :is-year="isYear"
+            :is-implisit="changeImplisit"
+            :table-model="tableModel"
+            @update:update-data-contents="updateDataContents"
+            @update:handle-input="handleInput"
+            @update:handle-paste="handlePaste"
+            @update:set-default-data="setDefaultData"
+            @update:update-fenom-spec-dev="updateFenomSpecDev"
+          />
           <PengFenomena
             v-if="page.props.type == 'Pengeluaran'"
-            v-show="showTabPanel"
+            v-show="showTabPanel && changeView"
             :subsectors="page.props.subsectors"
             :data-contents="dataContents"
             :fenomena-status="fenomenasets.status"
@@ -108,6 +148,21 @@
             @update:handle-input="handleInput"
             @update:handle-paste="handlePaste"
             @update:set-default-data="setDefaultData"
+          />
+          <PengFenomenaCoded
+            v-if="page.props.type == 'Pengeluaran'"
+            v-show="showTabPanel && !changeView"
+            :subsectors="page.props.subsectors"
+            :data-contents="dataContents"
+            :fenomena-status="fenomenasets.status"
+            :is-year="isYear"
+            :is-implisit="changeImplisit"
+            :table-model="tableModel"
+            @update:update-data-contents="updateDataContents"
+            @update:handle-input="handleInput"
+            @update:handle-paste="handlePaste"
+            @update:set-default-data="setDefaultData"
+            @update:update-fenom-spec-dev="updateFenomSpecDev"
           />
         </table>
       </div>
@@ -146,6 +201,60 @@
       </div>
     </div>
   </GeneralLayout>
+  <ModalBs
+    :-modal-status="modalValue"
+    @close="modalValue = false"
+    :modal-size="'min-w-[40vw]'"
+    :title="'Ambil Nilai'"
+  >
+    <template #modalBody>
+      <div class="form-group">
+        <div class="space-y-2 mb-3">
+          <label for="year">Pilih Triwulan<span class="text-danger">*</span></label>
+          <Multiselect
+            v-model="quarterDrop.selected"
+            :options="quarterDrop.options"
+            :searchable="true"
+            placeholder="-- Pilih Triwulan --"
+            @change="fetchPeriod"
+          />
+        </div>
+        <div class="mb-3 space-y-2">
+          <label for="year"
+            >Pilih Periode Putaran<span class="text-danger">*</span></label
+          >
+          <Multiselect
+            v-model="descDrop.selected"
+            :options="descDrop.options"
+            :searchable="true"
+            placeholder="-- Pilih Periode Putaran --"
+            @change="fetchYearBefore"
+          />
+        </div>
+        <div class="mb-3 space-y-2">
+          <label for="year">Pilih Data Tahun Sebelumnya</label>
+          <Multiselect
+            v-model="dataBeforeDrop.selected"
+            :options="dataBeforeDrop.options"
+            :searchable="true"
+            placeholder="-- Pilih Data Tahun Sebelumnya (opsional, jika tidak dipilih maka akan memilih data tahun paling terbaru/terakhir) --"
+          />
+        </div>
+        <div class="text-red-900">
+          {{ errorModula ?? null }}
+        </div>
+      </div>
+    </template>
+    <template #modalFunction>
+      <button
+        type="button"
+        class="btn-success-fordone btn-sm"
+        @click.prevent="fetchingData"
+      >
+        Fetch
+      </button>
+    </template>
+  </ModalBs>
 </template>
 
 <script setup>
@@ -153,9 +262,18 @@ import { triggerSpinner } from "@/axiosSetup";
 import FlashFetch from "@/Components/FlashFetch.vue";
 import FloatScrollDown from "@/Components/FloatScrollDown.vue";
 import LapusFenomena from "@/Components/LapusFenomena.vue";
+import LapusFenomenaCoded from "@/Components/LapusFenomenaCoded.vue";
+import ModalBs from "@/Components/ModalBs.vue";
 import PengFenomena from "@/Components/PengFenomena.vue";
+import PengFenomenaCoded from "@/Components/PengFenomenaCoded.vue";
 import SpinnerBorder from "@/Components/SpinnerBorder.vue";
-import { tableToJson, theDownload } from "@/download";
+import {
+  buildAOAFenomena,
+  buildRowDefsLapus,
+  buildRowDefsPeng,
+  tableToJson,
+  theDownload,
+} from "@/download";
 import GeneralLayout from "@/Layouts/GeneralLayout.vue";
 import { Head, useForm, usePage } from "@inertiajs/vue3";
 import Multiselect from "@vueform/multiselect";
@@ -209,6 +327,9 @@ const setDefaultData = (value) => {
 };
 const handlePaste = (value) => {
   dataContents.value[value.theIndex][value.type] = value.value;
+};
+const updateFenomSpecDev = (value) => {
+  rowspanspec.value = value;
 };
 onMounted(() => {});
 const submit = async () => {
@@ -338,18 +459,245 @@ const unsubmitEntri = async () => {
     },
   });
 };
+const rowspanspec = ref([]);
 const downloadHasil = (id) => {
-  try {
-    triggerSpinner.value = true;
+  if (changeView.value) {
+    try {
+      triggerSpinner.value = true;
+      let list = {};
+      list["fenomena-normal"] = tableToJson(id, "text");
+      theDownload({ setdata: list });
+    } catch (error) {
+      console.error(error);
+    } finally {
+      triggerSpinner.value = false;
+    }
+  } else {
+    let rowDefs =
+      page.props.type == "Lapangan Usaha"
+        ? buildRowDefsLapus(page.props.subsectors)
+        : buildRowDefsPeng(page.props.subsectors);
+    let aoas = buildAOAFenomena({
+      rowDefs: rowDefs,
+      growth: tableModel.value.growth,
+      rowspanspec: rowspanspec.value,
+      data: dataContents.value,
+    });
     let list = {};
-    list["fenomena"] = tableToJson(id, "text");
-    theDownload(list);
-  } catch (error) {
-    console.error(error);
-  } finally {
-    triggerSpinner.value = false;
+    list["fenomena"] = aoas;
+    theDownload({ setdata: list });
   }
 };
+//
+const changeView = ref(false);
+const changeImplisit = ref(true);
+const modalValue = ref(false);
+const quarterDrop = ref({ selected: null, options: [] });
+const descDrop = ref({ selected: null, options: [] });
+const dataBeforeDrop = ref({ selected: null, options: [] });
+const fetchQuarter = async (value) => {
+  if (value) {
+    try {
+      const response = await axios.get(route("period.fetchQuarter"), {
+        params: {
+          type: page.props.type,
+          year: value,
+        },
+      });
+      let result = response.data;
+      quarterDrop.value.options = result;
+    } catch (error) {
+      console.error(error);
+    }
+  }
+};
+const fetchPeriod = async (value, type = "normal") => {
+  if (value) {
+    try {
+      const response = await axios.get(route("period.fetchPeriod"), {
+        params: {
+          type: page.props.type,
+          year: form.year,
+          quarter: value,
+        },
+      });
+      let result = response.data;
+      descDrop.value.options = result;
+    } catch (error) {
+      console.error(error);
+    }
+  }
+};
+const fetchYearBefore = async (value) => {
+  try {
+    const response = await axios.get(route("period.fetchYearBefore"), {
+      params: {
+        type: page.props.type,
+        year: form.year,
+      },
+    });
+    let result = response.data;
+    dataBeforeDrop.value.options = result;
+  } catch (error) {
+    console.error(error);
+  }
+};
+const errorModula = ref("");
+const fetchingData = async () => {
+  if (!quarterDrop.value.selected || !form.regions) {
+    errorModula.value = "Form belum lengkap, cek kabupaten/kota, triwulan, dan putaran";
+    return;
+  } else {
+    errorModula.value = "";
+  }
+  try {
+    const response = await axios.get(route("pdrb.show"), {
+      params: {
+        type: page.props.type,
+        year: form.year,
+        quarter: quarterDrop.value.selected,
+        regions: form.regions,
+        description: descDrop.value.selected,
+        dataBefore: dataBeforeDrop.value.selected,
+      },
+    });
+    dataFetched.value.before = response.data.previous_data;
+    dataFetched.value.current = response.data.current_data;
+    modalValue.value = false;
+  } catch (error) {
+    console.error(error);
+  }
+};
+const dataFetched = ref({ before: [], current: [] });
+const idx = computed(() => {
+  const out = {};
+  for (const [key, df] of Object.entries(dataFetched.value)) {
+    out[key] = {};
+    for (const dd of df) {
+      const sid = Number(dd.subsector_id);
+      const q = String(dd.quarter);
+      const adhb = dd?.["adhb"] ?? 0;
+      const adhk = dd?.["adhk"] ?? 0;
+
+      out[key][sid] ||= {};
+      out[key][sid].adhb ||= {};
+      out[key][sid].adhk ||= {};
+
+      out[key][sid].adhb[q] = Number(adhb);
+      out[key][sid].adhk[q] = Number(adhk);
+    }
+  }
+  return out;
+});
+const tableModel = computed(() => {
+  const period = ["before", "current"];
+  const types = ["adhb", "adhk"];
+  const quarters = ["1", "2", "3", "4"];
+  const subsectorsBySector = {};
+  const subsectorsByCategory = {};
+  const allSubsectorIds = new Set();
+
+  for (const s of page.props.subsectors) {
+    if (s.id) allSubsectorIds.add(Number(s.id));
+
+    if (s.sector_id && s.id) {
+      (subsectorsBySector[s.sector_id] ||= []).push(Number(s.id));
+    }
+
+    const catId = s?.sector?.category_id;
+    if (catId && s.id) {
+      (subsectorsByCategory[catId] ||= []).push(Number(s.id));
+    }
+  }
+  const sumIds = (p, ids, t) => {
+    const q = quarters.map((qq) =>
+      ids.reduce((acc, sid) => acc + (idx.value?.[p]?.[sid]?.[t]?.[qq] ?? 0), 0)
+    );
+    return { q, total: q.reduce((a, b) => a + b, 0) };
+  };
+  const result = {};
+  for (const p of period) {
+    result[p] = {};
+  }
+  for (const sid of allSubsectorIds) {
+    const key = `sub-${sid}`;
+    for (const p of period) {
+      result[p][key] = {};
+      for (const t of types) {
+        const q = quarters.map((qq) => idx.value?.[p]?.[sid]?.[t]?.[qq] ?? 0);
+        result[p][key][t] = { q, total: q.reduce((a, b) => a + b, 0) };
+      }
+    }
+  }
+  if (page.props.type == "Lapangan Usaha") {
+    for (const [sectorId, ids] of Object.entries(subsectorsBySector)) {
+      const key = `sec-${sectorId}`;
+      for (const p of period) {
+        result[p][key] ||= {};
+        for (const t of types) result[p][key][t] = sumIds(p, ids, t);
+      }
+    }
+  } else if (page.props.type == "Pengeluaran") {
+    for (const [sectorId, ids] of Object.entries(subsectorsBySector)) {
+      const key = `sec-${sectorId}`;
+      for (const p of period) {
+        result[p][key] ||= {};
+        if (sectorId == 54) {
+          for (const t of types) {
+            const q = quarters.map((qq) => {
+              const qResult =
+                (idx.value?.[p]?.[ids[0]]?.[t]?.[qq] ?? 0) -
+                (idx.value?.[p]?.[ids[1]]?.[t]?.[qq] ?? 0);
+              return qResult;
+            });
+            result[p][key][t] = { q, total: q.reduce((a, b) => a + b, 0) };
+          }
+        } else for (const t of types) result[p][key][t] = sumIds(p, ids, t);
+      }
+    }
+  }
+  for (const [catId, ids] of Object.entries(subsectorsByCategory)) {
+    const key = `cat-${catId}`;
+    for (const p of period) {
+      result[p][key] ||= {};
+      for (const t of types) result[p][key][t] = sumIds(p, ids, t);
+    }
+  }
+  const growth = { qtoq: {}, yony: {}, implisit: {} };
+  const current = result.current;
+  const previous = result.before;
+  const thisQuarter = Number(form.quarter) - 1;
+  for (const rowKey of Object.keys(current ?? {})) {
+    const currAdhk = Number(current?.[rowKey]?.adhk?.q[thisQuarter] ?? 0);
+    const currAdhb = Number(current?.[rowKey]?.adhb?.q[thisQuarter] ?? 0);
+    //qtoq
+    let dsQtoQ = 0;
+    if (thisQuarter == 0) {
+      dsQtoQ = Number(previous?.[rowKey]?.adhk?.q[3] ?? 0);
+    } else dsQtoQ = Number(current?.[rowKey]?.adhk?.q[thisQuarter - 1]);
+    growth.qtoq[rowKey] = dsQtoQ !== 0 ? (currAdhk / dsQtoQ) * 100 - 100 : 0;
+
+    //yony
+    let dsYonY = Number(previous?.[rowKey]?.adhk?.q[thisQuarter]);
+    growth.yony[rowKey] = dsYonY !== 0 ? (currAdhk / dsYonY) * 100 - 100 : 0;
+    // growth.yony[rowKey] = dsYonY;
+
+    //implisit
+    const dImplisit = currAdhk != 0 ? currAdhb / currAdhk : 0;
+    let dsImplisit = 0;
+    if (thisQuarter == 0) {
+      const prevAdhb = Number(previous?.[rowKey]?.adhb?.q[3] ?? 0);
+      const prevAdhk = Number(previous?.[rowKey]?.adhk?.q[3] ?? 0);
+      dsImplisit = prevAdhk != 0 ? prevAdhb / prevAdhk : 0;
+    } else {
+      const prevAdhb = Number(current?.[rowKey]?.adhb?.q[thisQuarter - 1] ?? 0);
+      const prevAdhk = Number(current?.[rowKey]?.adhk?.q[thisQuarter - 1] ?? 0);
+      dsImplisit = prevAdhk != 0 ? prevAdhb / prevAdhk : 0;
+    }
+    growth.implisit[rowKey] = dsImplisit != 0 ? (dImplisit / dsImplisit) * 100 - 100 : 0;
+  }
+  return { result, growth };
+});
 </script>
 
 <style scoped>

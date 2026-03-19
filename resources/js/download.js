@@ -100,6 +100,9 @@ const theDownload = ({ setdata, title = 'Hasil Download', yCount, RULES, diskrep
                     injectSecCat({ ws: worksheet, start: 26, end: 43, yCount: yCount, RULES: RULES, offset: OFFSET_PENG })
                 }
             }
+            if (sheetName = 'fenomena') {
+                worksheet['!merges'] = buildMergesFromAoa(data)
+            }
         }
         XLSX.utils.book_append_sheet(workbook, worksheet, sheetName)
     })
@@ -200,6 +203,9 @@ const buildRowDefsLapus = (subsectors) => {
         if (isCategoryHeader && catId) {
             defs.push({
                 rowKey: `cat-${catId}`,
+                catId: catId,
+                secId: null,
+                subId: null,
                 label: `${catCode}. ${catName}`,
             });
         }
@@ -208,6 +214,9 @@ const buildRowDefsLapus = (subsectors) => {
         if (isSectorHeader && secId) {
             defs.push({
                 rowKey: `sec-${secId}`,
+                catId: catId,
+                secId: secId,
+                subId: null,
                 label: `${secCode}. ${secName}`,
             });
         }
@@ -215,6 +224,9 @@ const buildRowDefsLapus = (subsectors) => {
         if (ns.code != null && ns.id) {
             defs.push({
                 rowKey: `sub-${ns.id}`,
+                catId: catId,
+                secId: secId,
+                subId: ns.id,
                 label: `${ns.code}. ${ns.name}`,
             });
             return;
@@ -223,6 +235,9 @@ const buildRowDefsLapus = (subsectors) => {
         if (ns.code == null && ns?.sector?.code != null && secId) {
             defs.push({
                 rowKey: `sec-${secId}`,
+                catId: catId,
+                secId: secId,
+                subId: ns.id,
                 label: `${ns.sector.code}. ${ns.sector.name}`,
             });
             return;
@@ -231,6 +246,9 @@ const buildRowDefsLapus = (subsectors) => {
         if (ns.code == null && ns?.sector?.code == null && catId) {
             defs.push({
                 rowKey: `cat-${catId}`,
+                catId: catId,
+                secId: secId,
+                subId: ns.id,
                 label: `${catCode}. ${ns.name}`,
             });
         }
@@ -265,6 +283,7 @@ const buildRowDefsPeng = (subsectors) => {
         const catType = ns?.sector?.category?.type;
         if (catType !== "Pengeluaran") return;
 
+        const catId = ns?.sector?.category_id;
         const secId = ns?.sector_id ?? ns?.sector?.id;
         const secCode = ns?.sector?.code;
         const secName = ns?.sector?.name;
@@ -273,6 +292,9 @@ const buildRowDefsPeng = (subsectors) => {
         if (isSectorHeader && secId) {
             defs.push({
                 rowKey: `sec-${secId}`,
+                catId: catId,
+                secId: secId,
+                subId: null,
                 label: `${secCode}. ${secName}`,
             });
         }
@@ -280,6 +302,9 @@ const buildRowDefsPeng = (subsectors) => {
         if (ns.code != null && ns.id) {
             defs.push({
                 rowKey: `sub-${ns.id}`,
+                catId: catId,
+                secId: secId,
+                subId: ns.id,
                 label: `${ns.code}. ${ns.name}`,
             });
             return;
@@ -288,6 +313,9 @@ const buildRowDefsPeng = (subsectors) => {
         if (ns.code == null && ns?.sector?.code != null && secId) {
             defs.push({
                 rowKey: `sec-${secId}`,
+                catId: catId,
+                secId: secId,
+                subId: ns.id,
                 label: `${ns.sector.code}. ${ns.sector.name}`,
             });
             return;
@@ -515,5 +543,78 @@ const buildFormula = (expr, col, off = 0) => {
     return sumExpr(s);
 };
 
+const buildAOAFenomena = ({ rowDefs, rowspanspec, growth, data }) => {
+    const aoa = []
+    const header1 = ['Komponen', 'Pertumbuhan', 'Nilai', 'Fenomena']
+    aoa.push(header1)
+    for (const def of rowDefs) {
+        const isFooter = def.rowKey.startsWith("FOOTER:");
+        if (!isFooter) {
+            for (const [index, spec] of rowspanspec.entries()) {
+                const row = index == 0 ? [def.label] : ['']
+                const isCat = (def.catId && !def.secId && !def.subId) ? true : false
+                const isSec = (def.catId && def.secId && !def.subId) ? true : false
+                const isSub = (def.catId && def.secId && def.subId) ? true : false
+                const theData = data.find((x) => {
+                    if (isCat) {
+                        return (x.category_id == def.catId && x.sector_id == null && x.subsector_id == null)
+                    }
+                    if (isSec) {
+                        return (x.category_id == def.catId && x.sector_id == def.secId && x.subsector_id == null)
+                    }
+                    if (isSub) {
+                        return (x.category_id == def.catId && x.sector_id == def.secId && x.subsector_id == def.subId)
+                    }
+                    return false
+                })
+                row.push(spec)
+                const gvalue = growth?.[spec]?.[def.rowKey] ?? '-'
+                row.push(gvalue)
+                row.push(theData?.[spec] ?? '')
+                aoa.push(row)
+            }
+        }
+    }
+    return aoa
+}
 
-export { tableToJson, theDownload, buildRowDefsLapus, buildAOAFromRowDefs, buildRowDefsPeng, newDownload, buildRowDefsSum, buildAOADiskrepansi } 
+const buildMergesFromAoa = (aoa) => {
+    const merges = [];
+    let startRow = null;
+
+    for (let r = 1; r < aoa.length; r++) {
+        const current = aoa[r];
+        const firstCell = current?.[0];
+
+        if (firstCell !== "" && firstCell != null) {
+            if (startRow !== null && r - 1 > startRow) {
+                merges.push({
+                    s: { r: startRow, c: 0 },
+                    e: { r: r - 1, c: 0 },
+                });
+            }
+            startRow = r;
+        }
+    }
+
+    if (startRow !== null && aoa.length - 1 > startRow) {
+        merges.push({
+            s: { r: startRow, c: 0 },
+            e: { r: aoa.length - 1, c: 0 },
+        });
+    }
+
+    return merges;
+};
+
+export {
+    tableToJson,
+    theDownload,
+    buildRowDefsLapus,
+    buildAOAFromRowDefs,
+    buildRowDefsPeng,
+    newDownload,
+    buildRowDefsSum,
+    buildAOADiskrepansi,
+    buildAOAFenomena
+} 
