@@ -16,7 +16,7 @@
               >
             </td>
           </template>
-          <td class="text-right">{{ node }}</td>
+          <td class="text-right">{{ node == "implisit" ? "ctoc" : node }}</td>
           <td class="text-center font-bold">
             {{
               formatNumberGerman(
@@ -89,7 +89,7 @@
               </p>
             </td>
           </template>
-          <td class="text-right">{{ node }}</td>
+          <td class="text-right">{{ node == "implisit" ? "ctoc" : node }}</td>
           <td class="text-center font-bold">
             {{
               formatNumberGerman(
@@ -163,7 +163,7 @@
               </label>
             </td>
           </template>
-          <td class="text-right">{{ node }}</td>
+          <td class="text-right">{{ node == "implisit" ? "ctoc" : node }}</td>
           <td class="text-center font-bold">
             {{
               formatNumberGerman(

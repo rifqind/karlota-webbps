@@ -101,7 +101,8 @@
               <template v-if="changeView">
                 <th v-if="!isYear">Fenomena Q-to-Q</th>
                 <th>Fenomena Y-on-Y</th>
-                <th>Fenomena Implisit</th>
+                <th v-if="page.props.type == 'Lapangan Usaha'">Fenomena Implisit</th>
+                <th v-if="page.props.type == 'Pengeluaran'">Fenomena C-to-C</th>
               </template>
               <template v-else>
                 <th class="w-[150px]">Pertumbuhan</th>
