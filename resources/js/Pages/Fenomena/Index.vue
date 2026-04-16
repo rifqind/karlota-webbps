@@ -306,8 +306,7 @@ const downloadHasil = async (id) => {
         }
       }
     }
-    // console.log(list);
-    theDownload(list);
+    theDownload({ setdata: list });
   } catch (error) {
     console.error(error);
   } finally {

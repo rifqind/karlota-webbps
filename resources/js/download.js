@@ -100,7 +100,7 @@ const theDownload = ({ setdata, title = 'Hasil Download', yCount, RULES, diskrep
                     injectSecCat({ ws: worksheet, start: 26, end: 43, yCount: yCount, RULES: RULES, offset: OFFSET_PENG })
                 }
             }
-            if (sheetName = 'fenomena') {
+            if (sheetName == 'fenomena') {
                 worksheet['!merges'] = buildMergesFromAoa(data)
             }
         }
