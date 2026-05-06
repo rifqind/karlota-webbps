@@ -6,18 +6,34 @@
     <FloatScrollDown />
 
     <div class="container px-[7.5px] mr-auto ml-auto">
-      <div class="bg-white shadow-md mb-2 rounded-sm border border-gray-200 mb-3">
-        <div class="flex items-center justify-between py-3 px-4 border-b card-header">
+      <div
+        class="bg-white shadow-md mb-2 rounded-sm border border-gray-200 mb-3"
+      >
+        <div
+          class="flex items-center justify-between py-3 px-4 border-b card-header"
+        >
           <label class="text-xl">Entri Fenomena</label>
         </div>
         <div class="p-5">
           <div class="mb-3 space-y-2">
-            <label for="type">Pilih PDRB<span class="text-danger">*</span></label>
-            <Multiselect v-model="form.type" :placeholder="form.type" disabled />
-            <div class="text-danger text-left" v-if="true" id="error-dinas"></div>
+            <label for="type"
+              >Pilih PDRB<span class="text-danger">*</span></label
+            >
+            <Multiselect
+              v-model="form.type"
+              :placeholder="form.type"
+              disabled
+            />
+            <div
+              class="text-danger text-left"
+              v-if="true"
+              id="error-dinas"
+            ></div>
           </div>
           <div class="mb-3 space-y-2">
-            <label for="year">Pilih Tahun<span class="text-danger">*</span></label>
+            <label for="year"
+              >Pilih Tahun<span class="text-danger">*</span></label
+            >
             <Multiselect
               v-model="form.year"
               :options="yearDrop.options"
@@ -30,7 +46,9 @@
             </div>
           </div>
           <div class="mb-3 space-y-2">
-            <label for="year">Pilih Triwulan<span class="text-danger">*</span></label>
+            <label for="year"
+              >Pilih Triwulan<span class="text-danger">*</span></label
+            >
             <Multiselect
               v-model="form.quarter"
               :options="[
@@ -48,7 +66,9 @@
             </div>
           </div>
           <div class="mb-3 space-y-2">
-            <label for="year">Kabupaten/Kota<span class="text-danger">*</span></label>
+            <label for="year"
+              >Kabupaten/Kota<span class="text-danger">*</span></label
+            >
             <Multiselect
               v-model="form.regions"
               :options="page.props.regions"
@@ -86,7 +106,10 @@
             >
               Ganti Tampilan
             </div>
-            <div class="btn-info-fordone w-[130px] text-center" @click.prevent="submit">
+            <div
+              class="btn-info-fordone w-[130px] text-center"
+              @click.prevent="submit"
+            >
               <font-awesome-icon icon="fa-solid fa-magnifying-glass" />
               Cari Data
             </div>
@@ -101,7 +124,9 @@
               <template v-if="changeView">
                 <th v-if="!isYear">Fenomena Q-to-Q</th>
                 <th>Fenomena Y-on-Y</th>
-                <th v-if="page.props.type == 'Lapangan Usaha'">Fenomena Implisit</th>
+                <th v-if="page.props.type == 'Lapangan Usaha'">
+                  Fenomena Implisit
+                </th>
                 <th v-if="page.props.type == 'Pengeluaran'">Fenomena C-to-C</th>
               </template>
               <template v-else>
@@ -211,7 +236,9 @@
     <template #modalBody>
       <div class="form-group">
         <div class="space-y-2 mb-3">
-          <label for="year">Pilih Triwulan<span class="text-danger">*</span></label>
+          <label for="year"
+            >Pilih Triwulan<span class="text-danger">*</span></label
+          >
           <Multiselect
             v-model="quarterDrop.selected"
             :options="quarterDrop.options"
@@ -372,10 +399,13 @@ const submit = async () => {
     showNotification(response.data.notification);
   } catch (error) {
     if (error.response.data.errors) {
-      formError.value = Object.keys(error.response.data.errors).reduce((acc, key) => {
-        acc[key] = error.response.data.errors[key][0];
-        return acc;
-      }, {});
+      formError.value = Object.keys(error.response.data.errors).reduce(
+        (acc, key) => {
+          acc[key] = error.response.data.errors[key][0];
+          return acc;
+        },
+        {}
+      );
     }
   }
 };
@@ -546,7 +576,8 @@ const fetchYearBefore = async (value) => {
 const errorModula = ref("");
 const fetchingData = async () => {
   if (!quarterDrop.value.selected || !form.regions) {
-    errorModula.value = "Form belum lengkap, cek kabupaten/kota, triwulan, dan putaran";
+    errorModula.value =
+      "Form belum lengkap, cek kabupaten/kota, triwulan, dan putaran";
     return;
   } else {
     errorModula.value = "";
@@ -683,6 +714,15 @@ const tableModel = computed(() => {
     growth.yony[rowKey] = dsYonY !== 0 ? (currAdhk / dsYonY) * 100 - 100 : 0;
     // growth.yony[rowKey] = dsYonY;
 
+    //ctoc
+    let dCtoC = 0,
+      dsCtoC = 0;
+    for (let c = 0; c <= thisQuarter; c++) {
+      dCtoC += Number(current?.[rowKey]?.adhk?.q[c] ?? 0);
+      dsCtoC += Number(previous?.[rowKey]?.adhk?.q[c] ?? 0);
+    }
+    let ctoc = dsCtoC != 0 ? (dCtoC / dsCtoC) * 100 - 100 : 0;
+
     //implisit
     const dImplisit = currAdhk != 0 ? currAdhb / currAdhk : 0;
     let dsImplisit = 0;
@@ -695,7 +735,9 @@ const tableModel = computed(() => {
       const prevAdhk = Number(current?.[rowKey]?.adhk?.q[thisQuarter - 1] ?? 0);
       dsImplisit = prevAdhk != 0 ? prevAdhb / prevAdhk : 0;
     }
-    growth.implisit[rowKey] = dsImplisit != 0 ? (dImplisit / dsImplisit) * 100 - 100 : 0;
+    let implisit = dsImplisit != 0 ? (dImplisit / dsImplisit) * 100 - 100 : 0;
+    growth.implisit[rowKey] =
+      page.props.type == "Lapangan Usaha" ? implisit : ctoc;
   }
   return { result, growth };
 });
