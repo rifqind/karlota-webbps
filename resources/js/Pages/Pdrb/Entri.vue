@@ -373,7 +373,22 @@
         class="bg-white shadow-md mb-2 rounded-sm border border-gray-200 mb-3"
       >
         <div class="p-5">
-          <div class="flex justify-end space-x-2">
+          <div class="flex justify-end items-center space-x-2">
+            <!-- Autosave indicator -->
+            <div v-if="showTabPanel && dataset.status != 'Submitted'" class="flex items-center space-x-2">
+              <span v-if="lastAutoSaved" class="text-xs text-gray-400 italic">
+                <font-awesome-icon icon="fa-solid fa-clock" class="mr-1" />
+                Autosaved: {{ lastAutoSaved }}
+              </span>
+              <button
+                @click.prevent="toggleAutoSave"
+                :class="autoSaveEnabled ? 'btn-success-fordone' : 'btn-secondary-fordone'"
+                :title="autoSaveEnabled ? 'Klik untuk menonaktifkan autosave' : 'Klik untuk mengaktifkan autosave setiap 5 menit'"
+              >
+                <font-awesome-icon :icon="autoSaveEnabled ? 'fa-solid fa-toggle-on' : 'fa-solid fa-toggle-off'" />
+                <span>Autosave: {{ autoSaveEnabled ? 'ON (5 mnt)' : 'OFF' }}</span>
+              </button>
+            </div>
             <button
               v-if="dataset.status != 'Submitted'"
               @click.prevent="saveEntri"
@@ -522,7 +537,7 @@ import SpinnerBorder from "@/Components/SpinnerBorder.vue";
 import GeneralLayout from "@/Layouts/GeneralLayout.vue";
 import { Head, useForm, usePage } from "@inertiajs/vue3";
 import Multiselect from "@vueform/multiselect";
-import { nextTick, onMounted, ref, watch } from "vue";
+import { nextTick, onMounted, onUnmounted, ref, watch } from "vue";
 
 const page = usePage();
 const dataset = ref({});
@@ -1402,7 +1417,9 @@ const isObjectEmpty = (obj) => {
   return !obj || Object.keys(obj).length == 0;
 };
 // #region Section: Save & Submit & Unsubmit
-const saveEntri = async () => {
+const saveEntri = async (isAuto = false) => {
+  // Guard: only save when data is loaded and not submitted
+  if (!showTabPanel.value || dataset.value.status === 'Submitted') return;
   const thisForm = useForm({
     dataContents: dataContents.value,
     type: page.props.type,
@@ -1413,10 +1430,53 @@ const saveEntri = async () => {
   if (thisForm.processing) return;
   thisForm.post(route("pdrb.save-entri"), {
     onSuccess: (response) => {
-      showNotification(response.props.notification);
+      if (isAuto) {
+        // Update last autosaved timestamp
+        const now = new Date();
+        lastAutoSaved.value = now.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+      } else {
+        showNotification(response.props.notification);
+      }
     },
   });
 };
+
+// #region Autosave
+const autoSaveEnabled = ref(false);
+const lastAutoSaved = ref(null);
+let autoSaveTimer = null;
+const AUTO_SAVE_INTERVAL_MS = 5 * 60 * 1000; // 5 minutes
+
+const toggleAutoSave = () => {
+  autoSaveEnabled.value = !autoSaveEnabled.value;
+  if (autoSaveEnabled.value) {
+    startAutoSave();
+    showNotification([{ message: 'Autosave diaktifkan. Data akan tersimpan otomatis setiap 5 menit.', type: 'success' }]);
+  } else {
+    stopAutoSave();
+    showNotification([{ message: 'Autosave dinonaktifkan.', type: 'info' }]);
+  }
+};
+
+const startAutoSave = () => {
+  stopAutoSave(); // Clear any existing timer first
+  autoSaveTimer = setInterval(() => {
+    saveEntri(true);
+  }, AUTO_SAVE_INTERVAL_MS);
+};
+
+const stopAutoSave = () => {
+  if (autoSaveTimer) {
+    clearInterval(autoSaveTimer);
+    autoSaveTimer = null;
+  }
+};
+
+// Stop autosave when component is unmounted
+onUnmounted(() => {
+  stopAutoSave();
+});
+// #endregion
 const submitEntri = async () => {
   const thisForm = useForm({
     id: dataset.value.id,
