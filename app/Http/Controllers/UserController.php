@@ -83,7 +83,7 @@ class UserController extends Controller
             if ($request->id) {
                 $request->validate([
                     'name' => [Rule::unique('users', 'name')->ignore($request->id)],
-                    'nip_lama' => [Rule::unique('users', 'nip_lama')->ignore($request->id)],
+                    'nip_lama' => ['nullable', Rule::unique('users', 'nip_lama')->ignore($request->id)],
                     'email' => ['required', 'string', 'lowercase', 'email', 'max:255', Rule::unique('users', 'email')->ignore($request->id)]
                 ]);
                 $updated_data = User::findOrFail($request->id);
@@ -108,7 +108,7 @@ class UserController extends Controller
                 $request->validate([
                     'name' => [Rule::unique('users', 'name')],
                     'email' => [Rule::unique('users', 'email')],
-                    'nip_lama' => [Rule::unique('users', 'nip_lama')],
+                    'nip_lama' => ['nullable', Rule::unique('users', 'nip_lama')],
                     'password' => ['required', 'confirmed', Rules\Password::defaults()]
                 ]);
                 $new_data = User::create([
