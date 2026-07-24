@@ -9,6 +9,8 @@ class Subsector extends Model
 {
     use HasFactory;
 
+    const IMPOR_ID = 69;
+
     protected $guarded = ['id'];
     public $timestamps = false; // Disable timestamps
     public function Sector()

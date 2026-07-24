@@ -41,4 +41,35 @@ class Pdrb extends Model
     {
         return $this->subsector->sector->category_id ?? null;
     }
+
+    public function scopeWithAdjustmentsAndDatasets($query)
+    {
+        return $query->leftJoin('adjustments as adj', 'adj.pdrb_id', '=', 'pdrbs.id')
+                     ->join('datasets as d', 'd.id', '=', 'pdrbs.dataset_id');
+    }
+
+    public function scopeSelectTotalPdrb($query)
+    {
+        return $query->selectRaw(
+            'pdrbs.year,
+            pdrbs.quarter,
+            SUM(pdrbs.adhb) as adhb,
+            SUM(pdrbs.adhk) as adhk,
+            SUM(adj.adhb) as adj_adhb,
+            SUM(adj.adhk) as adj_adhk,
+            d.region_id as region_id'
+        );
+    }
+
+    public function scopeSelectTotalPdrbProvinsi($query)
+    {
+        return $query->selectRaw(
+            'pdrbs.year,
+            pdrbs.quarter,
+            SUM(pdrbs.adhb) as adhb,
+            SUM(pdrbs.adhk) as adhk,
+            SUM(adj.adhb) as adj_adhb,
+            SUM(adj.adhk) as adj_adhk'
+        );
+    }
 }

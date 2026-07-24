@@ -9,6 +9,8 @@ class Sector extends Model
 {
     use HasFactory;
  
+    const EKSPOR_IMPOR_ID = 54;
+
     protected $guarded = ['id'];
     public $timestamps = false; // Disable timestamps
 

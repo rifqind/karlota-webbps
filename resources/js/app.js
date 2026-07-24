@@ -167,7 +167,7 @@ library.add(
     faTrashCan,
     faUser,
     faUserTie,
-    faUsers, 
+    faUsers,
     faXmark
 );
 config.autoAddCss = false;
