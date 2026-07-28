@@ -244,7 +244,20 @@
         class="bg-white shadow-md mb-2 rounded-sm border border-gray-200 mb-3"
       >
         <div class="p-5">
-          <div class="flex justify-end space-x-2">
+          <div class="flex justify-end items-center space-x-2">
+            <!-- Autosave indicator -->
+            <span v-if="lastAutoSaved" class="text-xs text-gray-400 italic">
+              <font-awesome-icon icon="fa-solid fa-clock" class="mr-1" />
+              Autosaved: {{ lastAutoSaved }}
+            </span>
+            <button
+              @click.prevent="toggleAutoSave"
+              :class="autoSaveEnabled ? 'btn-success-fordone' : 'btn-secondary-fordone'"
+              :title="autoSaveEnabled ? 'Klik untuk menonaktifkan autosave' : 'Klik untuk mengaktifkan autosave setiap 5 menit'"
+            >
+              <font-awesome-icon :icon="autoSaveEnabled ? 'fa-solid fa-toggle-on' : 'fa-solid fa-toggle-off'" />
+              <span>Autosave: {{ autoSaveEnabled ? 'ON (5 mnt)' : 'OFF' }}</span>
+            </button>
             <button @click.prevent="saveAdjustment" class="btn-info-fordone">
               <font-awesome-icon icon="fa fa-save" />
               Simpan Data
@@ -266,7 +279,7 @@ import SpinnerBorder from "@/Components/SpinnerBorder.vue";
 import GeneralLayout from "@/Layouts/GeneralLayout.vue";
 import { Head, useForm, usePage } from "@inertiajs/vue3";
 import Multiselect from "@vueform/multiselect";
-import { onMounted, ref } from "vue";
+import { onMounted, onUnmounted, ref } from "vue";
 
 const page = usePage();
 const form = useForm({
@@ -365,6 +378,7 @@ const subsectorDrop = ref([]);
 const mountThis = ref(false);
 onMounted(() => {
   fetchYear();
+  startAutoSave(); // start autosave on mount since autoSaveEnabled defaults to true
   // #region Section: subsector select
   let tempData = [];
   mountThis.value = true;
@@ -609,7 +623,8 @@ const submit = async () => {
     }
   }
 };
-const saveAdjustment = async () => {
+const saveAdjustment = async (isAuto = false) => {
+  if (!showTabPanel.value) return;
   const thisForm = useForm({
     _token: null,
     dataContents: dataContents.value,
@@ -621,10 +636,50 @@ const saveAdjustment = async () => {
   thisForm.post(route("pdrb.save-adjustment"), {
     preserveScroll: true,
     onSuccess: (response) => {
-      showNotification(response.props.notification, 1500);
+      if (isAuto) {
+        const now = new Date();
+        lastAutoSaved.value = now.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+      } else {
+        showNotification(response.props.notification, 1500);
+      }
     },
   });
 };
+// #region Autosave
+const autoSaveEnabled = ref(true);
+const lastAutoSaved = ref(null);
+let autoSaveTimer = null;
+const AUTO_SAVE_INTERVAL_MS = 5 * 60 * 1000; // 5 minutes
+
+const toggleAutoSave = () => {
+  autoSaveEnabled.value = !autoSaveEnabled.value;
+  if (autoSaveEnabled.value) {
+    startAutoSave();
+    showNotification([{ message: 'Autosave diaktifkan. Data akan tersimpan otomatis setiap 5 menit.', type: 'success' }]);
+  } else {
+    stopAutoSave();
+    showNotification([{ message: 'Autosave dinonaktifkan.', type: 'info' }]);
+  }
+};
+
+const startAutoSave = () => {
+  stopAutoSave();
+  autoSaveTimer = setInterval(() => {
+    if (!showTabPanel.value) return;
+    saveAdjustment(true);
+  }, AUTO_SAVE_INTERVAL_MS);
+};
+
+const stopAutoSave = () => {
+  if (autoSaveTimer) {
+    clearInterval(autoSaveTimer);
+    autoSaveTimer = null;
+  }
+};
+
+onUnmounted(() => {
+  stopAutoSave();
+});
 // #endregion
 </script>
 
