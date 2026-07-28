@@ -46,72 +46,86 @@ class SsoController extends Controller
         return redirect('https://sso.bps.go.id/auth/realms/pegawai-bps/protocol/openid-connect/auth?' . $query);
     }
 
+    /**
+     * Return the SSO authorization URL as JSON for Nuxt SPA.
+     * Note: state parameter dikelola di sisi Nuxt via cookie.
+     */
+    public function getSsoUrl(Request $request): \Illuminate\Http\JsonResponse
+    {
+        $state = \Illuminate\Support\Str::random(40);
+
+        $query = http_build_query([
+            'client_id'       => config('services.sso.client_id'),
+            'client_secret'   => config('services.sso.client_secret'),
+            'scope'           => 'profile-pegawai email',
+            'redirect_uri'    => config('services.sso.redirect_uri'),
+            'response_type'   => 'code',
+            'state'           => $state,
+            'approval_prompt' => 'auto',
+        ]);
+
+        $url = 'https://sso.bps.go.id/auth/realms/pegawai-bps/protocol/openid-connect/auth?' . $query;
+
+        // Kembalikan state juga agar Nuxt bisa simpan di cookie untuk verifikasi CSRF
+        return response()->json([
+            'url'   => $url,
+            'state' => $state,
+        ]);
+    }
+
     public function ssoCallback(Request $request)
     {
-
-        $state = $request->session()->pull('state');
-        $codeVerifier = $request->session()->pull('code_verifier');
-        // dd($state);
-        throw_unless(
-            strlen($state) > 0 && $state === $request->state,
-            InvalidArgumentException::class
-        );
+        // Catatan: state validation dilakukan di sisi Nuxt via cookie (sso_state).
+        // Web route ini tetap dipakai agar session tersedia untuk tukar code → token.
 
         $response = Http::asForm()->post('https://sso.bps.go.id/auth/realms/pegawai-bps/protocol/openid-connect/token', [
-            'grant_type' => 'authorization_code',
-            'client_id' => config("services.sso.client_id"),
-            'client_secret' => config("services.sso.client_secret"),
-            'redirect_uri' => config("services.sso.redirect_uri"),
-            'code_verifier' => $codeVerifier,
-            'code' => $request->code,
+            'grant_type'    => 'authorization_code',
+            'client_id'     => config('services.sso.client_id'),
+            'client_secret' => config('services.sso.client_secret'),
+            'redirect_uri'  => config('services.sso.redirect_uri'),
+            'code'          => $request->code,
         ]);
-        $tokens = $response->json();
-        // Store the tokens in the session or database
-        session(['access_token' => $tokens['access_token']]);
-        if (isset($tokens['refresh_token'])) {
-            session(['refresh_token' => $tokens['refresh_token']]);
+
+        if ($response->failed()) {
+            $nuxtUrl = config('services.nuxt_url', 'http://localhost:3000');
+            return redirect($nuxtUrl . '/login?sso_error=token_exchange_failed');
         }
-        $accessToken = session('access_token');
 
-        $userInfoResponse = Http::withToken($accessToken)->get('https://sso.bps.go.id/auth/realms/pegawai-bps/protocol/openid-connect/userinfo');
+        $tokens      = $response->json();
+        $accessToken = $tokens['access_token'] ?? null;
 
-        $userInfo = $userInfoResponse->json();
-        $current_user = User::where('nip_lama', $userInfo['nip-lama'])->first();
-        if ($current_user) {
-            Auth::login($current_user);
-            $request->session()->regenerate();
-            return redirect()->intended(route('dashboard', absolute: false));
+        if (!$accessToken) {
+            $nuxtUrl = config('services.nuxt_url', 'http://localhost:3000');
+            return redirect($nuxtUrl . '/login?sso_error=no_access_token');
         }
-        return redirect()->route('login')->with('error', 'Akun SSO mu belum terdaftar, tambahkan NIP lama di profilmu');
-        // $provider = $this->getProvider();
 
-        // // Cek state untuk mitigasi CSRF
-        // $sessionState = $request->session()->get('oauth2state');
-        // if (empty($request->state) || $request->state !== $sessionState) {
-        //     $request->session()->forget('oauth2state');
-        //     abort(403, 'Invalid state (CSRF detected)');
-        // }
+        // Ambil info user dari Keycloak
+        $userInfoResponse = Http::withToken($accessToken)
+            ->get('https://sso.bps.go.id/auth/realms/pegawai-bps/protocol/openid-connect/userinfo');
 
-        // try {
-        //     // Tukar authorization code dengan access token
-        //     $token = $provider->getAccessToken('authorization_code', [
-        //         'code' => $request->code,
-        //     ]);
-        // } catch (\Exception $e) {
-        //     return response('Gagal mendapatkan akses token: '.$e->getMessage(), 500);
-        // }
+        if ($userInfoResponse->failed()) {
+            $nuxtUrl = config('services.nuxt_url', 'http://localhost:3000');
+            return redirect($nuxtUrl . '/login?sso_error=userinfo_failed');
+        }
 
-        // try {
-        //     // Ambil data user dari Keycloak
-        //     $user = $provider->getResourceOwner($token);
+        $userInfo    = $userInfoResponse->json();
+        $nipLama     = $userInfo['nip-lama'] ?? null;
 
-        //     return response()->json([
-        //         'token' => $token->getToken(),
-        //         'user'  => $user->toArray(),
-        //     ]);
-        // } catch (\Exception $e) {
-        //     return response('Gagal mendapatkan data pengguna: '.$e->getMessage(), 500);
-        // }
+        $current_user = $nipLama
+            ? User::where('nip_lama', $nipLama)->first()
+            : null;
+
+        $nuxtUrl = config('services.nuxt_url', 'http://localhost:3000');
+
+        if (!$current_user) {
+            return redirect($nuxtUrl . '/login?sso_error=user_not_registered');
+        }
+
+        // Buat encrypted token (tidak butuh tabel personal_access_tokens)
+        $encryptedToken = \App\Http\Controllers\Api\AuthController::generateToken($current_user);
+
+        // Redirect ke halaman SSO callback Nuxt dengan token di URL
+        return redirect($nuxtUrl . '/sso-callback?token=' . urlencode($encryptedToken));
     }
 
     public function getTokenAPI()
