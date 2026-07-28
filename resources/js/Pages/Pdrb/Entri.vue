@@ -5,18 +5,34 @@
     <FlashFetch :notifications="notifications" />
     <FloatScrollDown />
     <div class="container px-[7.5px] mr-auto ml-auto">
-      <div class="bg-white shadow-md mb-2 rounded-sm border border-gray-200 mb-3">
-        <div class="flex items-center justify-between py-3 px-4 border-b card-header">
+      <div
+        class="bg-white shadow-md mb-2 rounded-sm border border-gray-200 mb-3"
+      >
+        <div
+          class="flex items-center justify-between py-3 px-4 border-b card-header"
+        >
           <label class="text-xl">Entri PDRB</label>
         </div>
         <div class="p-5">
           <div class="mb-3 space-y-2">
-            <label for="type">Pilih PDRB<span class="text-danger">*</span></label>
-            <Multiselect v-model="form.type" :placeholder="form.type" disabled />
-            <div class="text-danger text-left" v-if="true" id="error-dinas"></div>
+            <label for="type"
+              >Pilih PDRB<span class="text-danger">*</span></label
+            >
+            <Multiselect
+              v-model="form.type"
+              :placeholder="form.type"
+              disabled
+            />
+            <div
+              class="text-danger text-left"
+              v-if="true"
+              id="error-dinas"
+            ></div>
           </div>
           <div class="mb-3 space-y-2">
-            <label for="year">Pilih Tahun<span class="text-danger">*</span></label>
+            <label for="year"
+              >Pilih Tahun<span class="text-danger">*</span></label
+            >
             <Multiselect
               v-model="form.year"
               :options="yearDrop"
@@ -29,7 +45,9 @@
             </div>
           </div>
           <div class="mb-3 space-y-2">
-            <label for="year">Pilih Triwulan<span class="text-danger">*</span></label>
+            <label for="year"
+              >Pilih Triwulan<span class="text-danger">*</span></label
+            >
             <Multiselect
               v-model="form.quarter"
               :options="quarterDrop"
@@ -64,10 +82,16 @@
               :searchable="true"
               placeholder="-- Pilih Data Tahun Sebelumnya (opsional, jika tidak dipilih maka akan memilih data tahun paling terbaru/terakhir) --"
             />
-            <div class="text-danger text-left" v-if="true" id="error-dinas"></div>
+            <div
+              class="text-danger text-left"
+              v-if="true"
+              id="error-dinas"
+            ></div>
           </div>
           <div class="mb-3 space-y-2">
-            <label for="year">Kabupaten/Kota<span class="text-danger">*</span></label>
+            <label for="year"
+              >Kabupaten/Kota<span class="text-danger">*</span></label
+            >
             <Multiselect
               v-model="form.regions"
               :options="page.props.regions"
@@ -84,7 +108,11 @@
               v-if="showTabPanel"
               class="btn btn-success-fordone"
             >
-              {{ !watchPeriod ? "Watch Previous Data" : `Watching Data ${watchPeriod}` }}
+              {{
+                !watchPeriod
+                  ? "Watch Previous Data"
+                  : `Watching Data ${watchPeriod}`
+              }}
             </button>
             <div
               @click="openCopyHasil"
@@ -121,8 +149,12 @@
       >
         <div class="p-5">
           <div class="flex flex-wrap gap-2">
-            <button @click="showTab('adhb')" :class="setActiveTab('adhb')">ADHB</button>
-            <button @click="showTab('adhk')" :class="setActiveTab('adhk')">ADHK</button>
+            <button @click="showTab('adhb')" :class="setActiveTab('adhb')">
+              ADHB
+            </button>
+            <button @click="showTab('adhk')" :class="setActiveTab('adhk')">
+              ADHK
+            </button>
             <button @click="showTab('dist')" :class="setActiveTab('dist')">
               Distribusi
             </button>
@@ -138,10 +170,16 @@
             <button @click="showTab('indeks')" :class="setActiveTab('indeks')">
               Indeks Implisit
             </button>
-            <button @click="showTab('gi_qtoq')" :class="setActiveTab('gi_qtoq')">
+            <button
+              @click="showTab('gi_qtoq')"
+              :class="setActiveTab('gi_qtoq')"
+            >
               Laju Implisit (Q-to-Q)
             </button>
-            <button @click="showTab('gi_ytoy')" :class="setActiveTab('gi_ytoy')">
+            <button
+              @click="showTab('gi_ytoy')"
+              :class="setActiveTab('gi_ytoy')"
+            >
               Laju Implisit (Y-to-Y)
             </button>
             <button
@@ -375,18 +413,37 @@
         <div class="p-5">
           <div class="flex justify-end items-center space-x-2">
             <!-- Autosave indicator -->
-            <div v-if="showTabPanel && dataset.status != 'Submitted'" class="flex items-center space-x-2">
+            <div
+              v-if="showTabPanel && dataset.status != 'Submitted'"
+              class="flex items-center space-x-2"
+            >
               <span v-if="lastAutoSaved" class="text-xs text-gray-400 italic">
                 <font-awesome-icon icon="fa-solid fa-clock" class="mr-1" />
                 Autosaved: {{ lastAutoSaved }}
               </span>
               <button
                 @click.prevent="toggleAutoSave"
-                :class="autoSaveEnabled ? 'btn-success-fordone' : 'btn-secondary-fordone'"
-                :title="autoSaveEnabled ? 'Klik untuk menonaktifkan autosave' : 'Klik untuk mengaktifkan autosave setiap 5 menit'"
+                :class="
+                  autoSaveEnabled
+                    ? 'btn-success-fordone'
+                    : 'btn-secondary-fordone'
+                "
+                :title="
+                  autoSaveEnabled
+                    ? 'Klik untuk menonaktifkan autosave'
+                    : 'Klik untuk mengaktifkan autosave setiap 5 menit'
+                "
               >
-                <font-awesome-icon :icon="autoSaveEnabled ? 'fa-solid fa-toggle-on' : 'fa-solid fa-toggle-off'" />
-                <span>Autosave: {{ autoSaveEnabled ? 'ON (5 mnt)' : 'OFF' }}</span>
+                <font-awesome-icon
+                  :icon="
+                    autoSaveEnabled
+                      ? 'fa-solid fa-toggle-on'
+                      : 'fa-solid fa-toggle-off'
+                  "
+                />
+                <span
+                  >Autosave: {{ autoSaveEnabled ? "ON (5 mnt)" : "OFF" }}</span
+                >
               </button>
             </div>
             <button
@@ -436,7 +493,9 @@
             />
           </div>
           <div class="mb-3 space-y-2">
-            <label for="year">Pilih Triwulan<span class="text-danger">*</span></label>
+            <label for="year"
+              >Pilih Triwulan<span class="text-danger">*</span></label
+            >
             <Multiselect
               v-model="copyForm.quarter"
               :options="quarterCopyList"
@@ -444,7 +503,11 @@
               placeholder="-- Pilih Triwulan --"
               @change="(event) => fetchPeriod(event, 'copy')"
             />
-            <div class="text-danger text-left" v-if="true" id="error-dinas"></div>
+            <div
+              class="text-danger text-left"
+              v-if="true"
+              id="error-dinas"
+            ></div>
           </div>
           <div class="mb-3 space-y-2">
             <label for="year"
@@ -456,12 +519,20 @@
               :searchable="true"
               placeholder="-- Pilih Periode Putaran --"
             />
-            <div class="text-danger text-left" v-if="true" id="error-dinas"></div>
+            <div
+              class="text-danger text-left"
+              v-if="true"
+              id="error-dinas"
+            ></div>
           </div>
         </div>
       </template>
       <template #modalFunction>
-        <button type="button" class="btn-success-fordone btn-sm" @click.prevent="copy">
+        <button
+          type="button"
+          class="btn-success-fordone btn-sm"
+          @click.prevent="copy"
+        >
           Salin
         </button>
       </template>
@@ -485,7 +556,9 @@
             />
           </div>
           <div class="mb-3 space-y-2">
-            <label for="year">Pilih Triwulan<span class="text-danger">*</span></label>
+            <label for="year"
+              >Pilih Triwulan<span class="text-danger">*</span></label
+            >
             <Multiselect
               v-model="copyFormAdjustment.quarter"
               :options="quarterAdjList"
@@ -493,7 +566,11 @@
               placeholder="-- Pilih Triwulan --"
               @change="(event) => fetchPeriod(event, 'adj')"
             />
-            <div class="text-danger text-left" v-if="true" id="error-dinas"></div>
+            <div
+              class="text-danger text-left"
+              v-if="true"
+              id="error-dinas"
+            ></div>
           </div>
           <div class="mb-3 space-y-2">
             <label for="year"
@@ -505,7 +582,11 @@
               :searchable="true"
               placeholder="-- Pilih Periode Putaran --"
             />
-            <div class="text-danger text-left" v-if="true" id="error-dinas"></div>
+            <div
+              class="text-danger text-left"
+              v-if="true"
+              id="error-dinas"
+            ></div>
           </div>
         </div>
       </template>
@@ -626,6 +707,7 @@ const dataBeforeDrop = ref([]);
 onMounted(() => {
   fetchYear();
   setWarningToUser(true);
+  startAutoSave(); // start autosave on mount since autoSaveEnabled defaults to true
 });
 const updateDOD = (data) => {
   dataOnDemand.value[data.type] = data.data;
@@ -790,10 +872,13 @@ const submit = async () => {
 
     // Handle validation errors if they exist
     if (error.response.data.errors) {
-      formError.value = Object.keys(error.response.data.errors).reduce((acc, key) => {
-        acc[key] = error.response.data.errors[key][0];
-        return acc;
-      }, {});
+      formError.value = Object.keys(error.response.data.errors).reduce(
+        (acc, key) => {
+          acc[key] = error.response.data.errors[key][0];
+          return acc;
+        },
+        {}
+      );
     }
   }
   // triggerSpinner.value = false;
@@ -930,7 +1015,10 @@ const checkWatched = (dataset, watched) => {
         : 0;
       let diff = Math.abs(dataValue - watchedValue);
       let status = "not problem";
-      if ((dataValue > 0 && watchedValue < 0) || (dataValue < 0 && watchedValue > 0))
+      if (
+        (dataValue > 0 && watchedValue < 0) ||
+        (dataValue < 0 && watchedValue > 0)
+      )
         status = "beda arah";
       else if (diff >= 5) status = "ekstrim (> 5)";
       if (quarterCap.value - 1 == i) {
@@ -992,10 +1080,13 @@ const copy = async () => {
     const updatedDataContents = dataContents.value.map((item) => {
       const matched = response.data.current_data.find(
         (current) =>
-          current.subsector_id == item.subsector_id && current.quarter == item.quarter
+          current.subsector_id == item.subsector_id &&
+          current.quarter == item.quarter
       );
 
-      return matched ? { ...item, adhb: matched.adhb, adhk: matched.adhk } : item;
+      return matched
+        ? { ...item, adhb: matched.adhb, adhk: matched.adhk }
+        : item;
     });
     dataContents.value = updatedDataContents;
     showNotification(response.data.notification);
@@ -1006,10 +1097,13 @@ const copy = async () => {
       showNotification(error.response.data.notification);
     }
     if (error.response.data.errors) {
-      modalError.value = Object.keys(error.response.data.errors).reduce((acc, key) => {
-        acc[key] = error.response.data.errors[key][0];
-        return acc;
-      }, {});
+      modalError.value = Object.keys(error.response.data.errors).reduce(
+        (acc, key) => {
+          acc[key] = error.response.data.errors[key][0];
+          return acc;
+        },
+        {}
+      );
     }
   }
 };
@@ -1032,10 +1126,13 @@ const copyHasil = async () => {
     const updatedDataContents = dataContents.value.map((item) => {
       const matched = response.data.current_data.find(
         (current) =>
-          current.subsector_id == item.subsector_id && current.quarter == item.quarter
+          current.subsector_id == item.subsector_id &&
+          current.quarter == item.quarter
       );
 
-      return matched ? { ...item, adhb: matched.adhb, adhk: matched.adhk } : item;
+      return matched
+        ? { ...item, adhb: matched.adhb, adhk: matched.adhk }
+        : item;
     });
     dataContents.value = updatedDataContents;
     showNotification(response.data.notification);
@@ -1046,10 +1143,13 @@ const copyHasil = async () => {
       showNotification(error.response.data.notification);
     }
     if (error.response.data.errors) {
-      modalError.value = Object.keys(error.response.data.errors).reduce((acc, key) => {
-        acc[key] = error.response.data.errors[key][0];
-        return acc;
-      }, {});
+      modalError.value = Object.keys(error.response.data.errors).reduce(
+        (acc, key) => {
+          acc[key] = error.response.data.errors[key][0];
+          return acc;
+        },
+        {}
+      );
     }
   }
 };
@@ -1150,7 +1250,8 @@ const showTab = (tab) => {
         const datasets = reportWatching.value[type][rows];
         for (let i = 0; i < datasets.length; i++) {
           let words = null;
-          if (datasets[i] == "beda arah") words = `${rows} Triwulan ${i + 1} beda arah`;
+          if (datasets[i] == "beda arah")
+            words = `${rows} Triwulan ${i + 1} beda arah`;
           else if (datasets[i] == "ekstrim (> 5)")
             words = `${rows} Triwulan ${i + 1} ekstrim (> 5)`;
           if (words) reports.push(words);
@@ -1195,22 +1296,29 @@ const showGQtoQ = (current_dataset, previous_dataset) => {
     result[key] = current_dataset[key]
       .slice(0, stake) // Ensures only the required indexes are processed
       .map((value, index) => {
-        let dividend = value ? Number(value.replaceAll(".", "").replaceAll(",", ".")) : 0;
+        let dividend = value
+          ? Number(value.replaceAll(".", "").replaceAll(",", "."))
+          : 0;
         let divisor;
         if (index == 0) {
           // Use the previous dataset for the first quarter
           divisor = previous_dataset[key]
-            ? Number(previous_dataset[key].replaceAll(".", "").replaceAll(",", "."))
+            ? Number(
+                previous_dataset[key].replaceAll(".", "").replaceAll(",", ".")
+              )
             : 0;
         } else {
           // Use the previous index from the same dataset
           divisor = current_dataset[key][index - 1]
             ? Number(
-                current_dataset[key][index - 1].replaceAll(".", "").replaceAll(",", ".")
+                current_dataset[key][index - 1]
+                  .replaceAll(".", "")
+                  .replaceAll(",", ".")
               )
             : 0;
         }
-        let growth = divisor != 0 && dividend != 0 ? (dividend / divisor) * 100 - 100 : 0;
+        let growth =
+          divisor != 0 && dividend != 0 ? (dividend / divisor) * 100 - 100 : 0;
         return formatNumberGerman(growth.toFixed(4), 2, 4);
       });
   });
@@ -1221,7 +1329,9 @@ const showGYtoY = (current, previous) => {
   let current_dataset = removeSpaceOnKomponen(current);
   let previous_dataset = removeSpaceOnKomponen(previous);
   if (isObjectEmpty(previous_dataset)) {
-    let notif = [{ message: "Data Tahun sebelumnya masih kosong", type: "error" }];
+    let notif = [
+      { message: "Data Tahun sebelumnya masih kosong", type: "error" },
+    ];
     showNotification(notif);
     showPdrbAndResult.value.result = false;
     return;
@@ -1233,12 +1343,19 @@ const showGYtoY = (current, previous) => {
     result[key] = current_dataset[key]
       .slice(0, stake) // Only process relevant indexes
       .map((value, index) => {
-        let dividend = value ? Number(value.replaceAll(".", "").replaceAll(",", ".")) : 0;
+        let dividend = value
+          ? Number(value.replaceAll(".", "").replaceAll(",", "."))
+          : 0;
         let divisor = previous_dataset[key][index]
-          ? Number(previous_dataset[key][index].replaceAll(".", "").replaceAll(",", "."))
+          ? Number(
+              previous_dataset[key][index]
+                .replaceAll(".", "")
+                .replaceAll(",", ".")
+            )
           : 0;
 
-        let growth = divisor != 0 && dividend != 0 ? (dividend / divisor) * 100 - 100 : 0;
+        let growth =
+          divisor != 0 && dividend != 0 ? (dividend / divisor) * 100 - 100 : 0;
         return formatNumberGerman(growth.toFixed(4), 2, 4);
       });
   });
@@ -1250,7 +1367,9 @@ const showGCtoC = (current, previous) => {
   let current_dataset = removeSpaceOnKomponen(current);
   let previous_dataset = removeSpaceOnKomponen(previous);
   if (isObjectEmpty(previous_dataset)) {
-    let notif = [{ message: "Data Tahun sebelumnya masih kosong", type: "error" }];
+    let notif = [
+      { message: "Data Tahun sebelumnya masih kosong", type: "error" },
+    ];
     showNotification(notif);
     showPdrbAndResult.value.result = false;
     return;
@@ -1269,7 +1388,8 @@ const showGCtoC = (current, previous) => {
         dividend += parseNumber(current_dataset[key][cumulative]);
         divisor += parseNumber(previous_dataset[key][cumulative]);
       }
-      let growth = divisor != 0 && dividend != 0 ? (dividend / divisor) * 100 - 100 : 0;
+      let growth =
+        divisor != 0 && dividend != 0 ? (dividend / divisor) * 100 - 100 : 0;
       return formatNumberGerman(growth.toFixed(4), 2, 4);
     });
   });
@@ -1296,13 +1416,20 @@ const showIndeks = (current, previous) => {
   return removeSpaceOnKomponen(result);
 };
 
-const showGIQtoQ = (adhb_current, adhk_current, adhb_previous, adhk_previous) => {
+const showGIQtoQ = (
+  adhb_current,
+  adhk_current,
+  adhb_previous,
+  adhk_previous
+) => {
   let adhb_current_dataset = removeSpaceOnKomponen(adhb_current);
   let adhk_current_dataset = removeSpaceOnKomponen(adhk_current);
   let adhb_previous_dataset = removeSpaceOnKomponen(adhb_previous);
   let adhk_previous_dataset = removeSpaceOnKomponen(adhk_previous);
   if (isObjectEmpty(adhb_previous_dataset)) {
-    let notif = [{ message: "Data Tahun sebelumnya masih kosong", type: "error" }];
+    let notif = [
+      { message: "Data Tahun sebelumnya masih kosong", type: "error" },
+    ];
     showNotification(notif);
     showPdrbAndResult.value.result = false;
     return;
@@ -1346,19 +1473,27 @@ const showGIQtoQ = (adhb_current, adhk_current, adhb_previous, adhk_previous) =>
         // Use the previous index from the same dataset
         divisor = parseNumber(indeks_implisit_current[key][index - 1]);
       }
-      let growth = divisor != 0 && dividend != 0 ? (dividend / divisor) * 100 - 100 : 0;
+      let growth =
+        divisor != 0 && dividend != 0 ? (dividend / divisor) * 100 - 100 : 0;
       return formatNumberGerman(growth.toFixed(4), 2, 4);
     });
   });
   return result;
 };
-const showGIYtoY = (adhb_current, adhk_current, adhb_previous, adhk_previous) => {
+const showGIYtoY = (
+  adhb_current,
+  adhk_current,
+  adhb_previous,
+  adhk_previous
+) => {
   let adhb_current_dataset = removeSpaceOnKomponen(adhb_current);
   let adhk_current_dataset = removeSpaceOnKomponen(adhk_current);
   let adhb_previous_dataset = removeSpaceOnKomponen(adhb_previous);
   let adhk_previous_dataset = removeSpaceOnKomponen(adhk_previous);
   if (isObjectEmpty(adhb_previous_dataset)) {
-    let notif = [{ message: "Data Tahun sebelumnya masih kosong", type: "error" }];
+    let notif = [
+      { message: "Data Tahun sebelumnya masih kosong", type: "error" },
+    ];
     showNotification(notif);
     showPdrbAndResult.value.result = false;
     return;
@@ -1393,7 +1528,8 @@ const showGIYtoY = (adhb_current, adhk_current, adhb_previous, adhk_previous) =>
     result[key] = indeks_implisit_current[key].map((value, index) => {
       let dividend = parseNumber(value);
       let divisor = parseNumber(indeks_implisit_previous[key][index]);
-      let growth = divisor != 0 && dividend != 0 ? (dividend / divisor) * 100 - 100 : 0;
+      let growth =
+        divisor != 0 && dividend != 0 ? (dividend / divisor) * 100 - 100 : 0;
       return formatNumberGerman(growth.toFixed(4), 2, 4);
     });
   });
@@ -1403,7 +1539,10 @@ const showGIYtoY = (adhb_current, adhk_current, adhb_previous, adhk_previous) =>
 const removeSpaceOnKomponen = (object) => {
   let result;
   result = Object.fromEntries(
-    Object.entries(object).map(([key, value]) => [key.trim().replace(/\s+/g, ""), value])
+    Object.entries(object).map(([key, value]) => [
+      key.trim().replace(/\s+/g, ""),
+      value,
+    ])
   );
   return result;
 };
@@ -1419,7 +1558,7 @@ const isObjectEmpty = (obj) => {
 // #region Section: Save & Submit & Unsubmit
 const saveEntri = async (isAuto = false) => {
   // Guard: only save when data is loaded and not submitted
-  if (!showTabPanel.value || dataset.value.status === 'Submitted') return;
+  if (!showTabPanel.value || dataset.value.status === "Submitted") return;
   const thisForm = useForm({
     dataContents: dataContents.value,
     type: page.props.type,
@@ -1433,7 +1572,11 @@ const saveEntri = async (isAuto = false) => {
       if (isAuto) {
         // Update last autosaved timestamp
         const now = new Date();
-        lastAutoSaved.value = now.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+        lastAutoSaved.value = now.toLocaleTimeString("id-ID", {
+          hour: "2-digit",
+          minute: "2-digit",
+          second: "2-digit",
+        });
       } else {
         showNotification(response.props.notification);
       }
@@ -1442,7 +1585,7 @@ const saveEntri = async (isAuto = false) => {
 };
 
 // #region Autosave
-const autoSaveEnabled = ref(false);
+const autoSaveEnabled = ref(true);
 const lastAutoSaved = ref(null);
 let autoSaveTimer = null;
 const AUTO_SAVE_INTERVAL_MS = 5 * 60 * 1000; // 5 minutes
@@ -1451,10 +1594,16 @@ const toggleAutoSave = () => {
   autoSaveEnabled.value = !autoSaveEnabled.value;
   if (autoSaveEnabled.value) {
     startAutoSave();
-    showNotification([{ message: 'Autosave diaktifkan. Data akan tersimpan otomatis setiap 5 menit.', type: 'success' }]);
+    showNotification([
+      {
+        message:
+          "Autosave diaktifkan. Data akan tersimpan otomatis setiap 5 menit.",
+        type: "success",
+      },
+    ]);
   } else {
     stopAutoSave();
-    showNotification([{ message: 'Autosave dinonaktifkan.', type: 'info' }]);
+    showNotification([{ message: "Autosave dinonaktifkan.", type: "info" }]);
   }
 };
 
