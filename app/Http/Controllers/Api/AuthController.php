@@ -24,7 +24,7 @@ class AuthController extends Controller
             'email'    => $user->email,
             'role'     => $user->role,
             'nip_lama' => $user->nip_lama,
-            'exp'      => now()->addDays(7)->timestamp,
+            'exp'      => now()->addDay()->timestamp,
         ];
 
         return Crypt::encryptString(json_encode($payload));

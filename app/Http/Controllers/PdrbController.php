@@ -212,9 +212,14 @@ class PdrbController extends Controller
             ];
             array_push($notification, $message);
             DB::commit();
+            if ($request->wantsJson() || $request->is('api/*')) {
+                return response()->json([
+                    'message' => 'Berhasil Simpan Data PDRB',
+                    'notification' => $notification
+                ]);
+            }
             return redirect()->route($route . 'entri')->with('notification', $notification);
         } catch (\Throwable $th) {
-            //throw $th;
             DB::rollBack();
             $message = [
                 'type' => 'error',
@@ -222,6 +227,13 @@ class PdrbController extends Controller
                 'errors' => $th->getMessage()
             ];
             array_push($notification, $message);
+            if ($request->wantsJson() || $request->is('api/*')) {
+                return response()->json([
+                    'message' => $th->getMessage() ?: 'Ada Kesalahan dalam Data yang disimpan',
+                    'errors' => $th->getMessage(),
+                    'notification' => $notification
+                ], 422);
+            }
             return redirect()->route($route . 'entri')->with('notification', $notification);
         }
     }
@@ -325,16 +337,28 @@ class PdrbController extends Controller
             ];
             array_push($notification, $message);
             DB::commit();
+            if ($request->wantsJson() || $request->is('api/*')) {
+                return response()->json([
+                    'message' => 'Data sudah disubmit dan disimpan',
+                    'notification' => $notification
+                ]);
+            }
             return redirect()->route($route . 'entri')->with('notification', $notification);
         } catch (\Throwable $th) {
             //throw $th;
             DB::rollBack();
             $message = [
                 'type' => 'error',
-                'message' => 'Ada Kesalahan ketika submit',
+                'message' => 'Ada Kesalahan ketika submit: ' . $th->getMessage(),
                 'errors' => $th->getMessage()
             ];
             array_push($notification, $message);
+            if ($request->wantsJson() || $request->is('api/*')) {
+                return response()->json([
+                    'message' => 'Ada Kesalahan ketika submit: ' . $th->getMessage(),
+                    'notification' => $notification
+                ], 422);
+            }
             return redirect()->route($route . 'entri')->with('notification', $notification);
         }
     }
@@ -361,16 +385,28 @@ class PdrbController extends Controller
             ];
             array_push($notification, $message);
             DB::commit();
+            if ($request->wantsJson() || $request->is('api/*')) {
+                return response()->json([
+                    'message' => 'Data kembali ke status Entry',
+                    'notification' => $notification
+                ]);
+            }
             return redirect()->route($route . 'entri')->with('notification', $notification);
         } catch (\Throwable $th) {
             //throw $th;
             DB::rollBack();
             $message = [
                 'type' => 'error',
-                'message' => 'Ada Kesalahan ketika unsubmit',
+                'message' => 'Ada Kesalahan ketika unsubmit: ' . $th->getMessage(),
                 'errors' => $th->getMessage()
             ];
             array_push($notification, $message);
+            if ($request->wantsJson() || $request->is('api/*')) {
+                return response()->json([
+                    'message' => 'Ada Kesalahan ketika unsubmit: ' . $th->getMessage(),
+                    'notification' => $notification
+                ], 422);
+            }
             return redirect()->route($route . 'entri')->with('notification', $notification);
         }
     }

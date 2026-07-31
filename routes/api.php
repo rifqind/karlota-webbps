@@ -35,6 +35,8 @@ Route::get('/regions', function () {
 // PDRB Data Routes
 Route::get('/show-pdrb', [\App\Http\Controllers\PdrbController::class, 'show']);
 Route::post('/save-entri', [\App\Http\Controllers\PdrbController::class, 'saveEntri']);
+Route::post('/submit-entri', [\App\Http\Controllers\PdrbController::class, 'submitEntri']);
+Route::post('/unsubmit-entri', [\App\Http\Controllers\PdrbController::class, 'unsubmitEntri']);
 Route::get('/copy-entri', [\App\Http\Controllers\PdrbController::class, 'copyEntri']);
 Route::get('/copy-hasil', [\App\Http\Controllers\PdrbController::class, 'copyHasil']);
 Route::get('/watch-previous', [\App\Http\Controllers\PdrbController::class, 'watchPrevious']);
