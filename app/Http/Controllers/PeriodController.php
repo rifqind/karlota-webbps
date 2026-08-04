@@ -13,32 +13,34 @@ class PeriodController extends Controller
     //
     public function index(Request $request)
     {
-        if ($request->paginated) $paginated = $request->paginated;
-        else $paginated = 10;
-        if ($request->currentPage) $currentPage = $request->currentPage;
-        else $currentPage = 1;
+        $paginated = $request->paginated ? (int) $request->paginated : 10;
+        $currentPage = $request->currentPage ? (int) $request->currentPage : 1;
 
         $query = Period::query();
-        $number = 1;
-        $dataToCounted = $query
-            ->select('*');
 
-        if ($request->orderAttribute) {
-            $order = $request->orderAttribute;
-            if (sizeof($order) > 2) $query->orderBy($order['label'], $order['value']);
-            else $query->orderBy('created_at', 'desc');
-        } else $query->orderBy('created_at', 'desc');
+        $order = $request->orderAttribute;
+        if (is_string($order)) {
+            $order = json_decode($order, true);
+        }
+        if (is_array($order) && !empty($order['label']) && !empty($order['value'])) {
+            $query->orderBy($order['label'], $order['value']);
+        } else {
+            $query->orderBy('created_at', 'desc');
+        }
 
-        if ($request->ArrayFilter) {
-            $filter = $request->ArrayFilter;
+        $filter = $request->ArrayFilter;
+        if (is_string($filter)) {
+            $filter = json_decode($filter, true);
+        }
+        if (is_array($filter)) {
             if (!empty($filter['type'])) {
                 $query->where('type', 'like', '%' . $filter['type'] . '%');
             }
             if (!empty($filter['quarter'])) {
-                $query->where('quarter', 'like', '%' .  $filter['quarter'] . '%');
+                $query->where('quarter', 'like', '%' . $filter['quarter'] . '%');
             }
             if (!empty($filter['year'])) {
-                $query->where('year', 'like', '%' .  $filter['year'] . '%');
+                $query->where('year', 'like', '%' . $filter['year'] . '%');
             }
             if (!empty($filter['description'])) {
                 $query->where('description', 'like', '%' . $filter['description'] . '%');
@@ -54,19 +56,22 @@ class PeriodController extends Controller
             }
         }
 
-        $countData = $dataToCounted->count();
+        $countData = (clone $query)->count();
         $data = $query->paginate($paginated, ['*'], 'page', $currentPage);
+
+        $number = ($currentPage - 1) * $paginated + 1;
         foreach ($data as $key => $value) {
-            # code...
             $value->number = $number;
             $number++;
         }
-        if ($request->paginated) {
+
+        if ($request->paginated || $request->wantsJson() || $request->is('api/*')) {
             return response()->json([
                 'period' => $data,
                 'countData' => $countData
             ]);
         }
+
         return Inertia::render('Period/Index', [
             'period' => $data,
             'countData' => $countData
@@ -99,38 +104,50 @@ class PeriodController extends Controller
                 $updated_data = Period::findOrFail($request->id);
                 $updated_data->update($validated);
                 DB::commit();
+                if ($request->wantsJson() || $request->is('api/*')) {
+                    return response()->json(['message' => 'Berhasil mengedit periode putaran tersebut', 'data' => $updated_data]);
+                }
                 return redirect()->route('period.index')->with('message', 'Berhasil mengedit periode putaran tersebut');
             } else {
                 $validated['status'] = 'Aktif';
                 $new_data = Period::create($validated);
             }
             DB::commit();
+            if ($request->wantsJson() || $request->is('api/*')) {
+                return response()->json(['message' => 'Berhasil menambah periode putaran baru', 'data' => $new_data]);
+            }
             return redirect()->route('period.index')->with('message', 'Berhasil menambah periode putaran baru');
         } catch (\Throwable $th) {
-            //throw $th;
             DB::rollBack();
+            if ($request->wantsJson() || $request->is('api/*')) {
+                return response()->json(['error' => $th->getMessage()], 422);
+            }
             return redirect()->route('period.index')->with('error', $th->getMessage());
         }
     }
 
-    public function fetch(String $id)
+    public function fetch(string $id)
     {
         $fetched = Period::find($id);
         return response()->json(['data' => $fetched]);
     }
 
-    public function destroy(String $id)
+    public function destroy(Request $request, string $id)
     {
         try {
-            //code...
             DB::beginTransaction();
             $data_to_delete = Period::findOrFail($id);
             $data_to_delete->delete();
             DB::commit();
+            if ($request->wantsJson() || $request->is('api/*')) {
+                return response()->json(['message' => 'Berhasil menghapus periode putaran tersebut']);
+            }
             return redirect()->route('period.index')->with('message', 'Berhasil menghapus periode putaran tersebut');
         } catch (\Throwable $th) {
-            //throw $th;
             DB::rollBack();
+            if ($request->wantsJson() || $request->is('api/*')) {
+                return response()->json(['error' => $th->getMessage()], 422);
+            }
             return redirect()->route('period.index')->with('error', $th->getMessage());
         }
     }
