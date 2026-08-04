@@ -146,14 +146,24 @@ class SsoController extends Controller
 
     public function ssoAPI(Request $request)
     {
-        $token = $this->getTokenAPI();
-        $url_api = 'https://sso.bps.go.id/auth/realms/pegawai-bps/api-pegawai/username/' . $request->username;
-        $response = Http::withToken($token)
-            ->acceptJson()
-            ->get($url_api);
-        if ($response->failed()) {
-            throw new \Exception('Gagal request API: ' . $response->body());
+        try {
+            $username = $request->query('username') ?? $request->username;
+            if (!$username) {
+                return response()->json(['error' => 'Username SSO wajib diisi.'], 422);
+            }
+            $token = $this->getTokenAPI();
+            $url_api = 'https://sso.bps.go.id/auth/realms/pegawai-bps/api-pegawai/username/' . $username;
+            $response = Http::withToken($token)
+                ->acceptJson()
+                ->get($url_api);
+
+            if ($response->failed()) {
+                return response()->json([], 404);
+            }
+
+            return response()->json($response->json());
+        } catch (\Throwable $e) {
+            return response()->json(['error' => $e->getMessage()], 500);
         }
-        return $response->json();
     }
 }
