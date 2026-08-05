@@ -524,41 +524,44 @@ class PdrbController extends Controller
             ->pluck('id');
 
         $list_region = [];
+        $missing_prev = [];
+        $missing_curr = [];
+
         foreach ($regions as $key => $reg) {
-            # code...
             $cek_previous = Dataset::where('period_id', $previous_period)
                 ->where('region_id', $reg->value)
                 ->first();
             if (!$cek_previous) {
-                $message = [
-                    'type' => 'error',
-                    'message' => 'Data ' . $reg->label . ' periode sebelumnya tidak ada',
-                ];
-                array_push($notification, $message);
-            } else {
-                $message = [
-                    'type' => 'success',
-                    'message' => 'Data ' . $reg->label . ' periode sebelumnya berhasil diambil',
-                ];
-                array_push($notification, $message);
+                $missing_prev[] = $reg->label;
             }
+
             $cek_current = Dataset::where('period_id', $period_id)
                 ->where('region_id', $reg->value)
                 ->first();
             if (!$cek_current) {
-                $message = [
-                    'type' => 'error',
-                    'message' => 'Data ' . $reg->label . ' periode ini tidak ada',
-                ];
-                array_push($notification, $message);
+                $missing_curr[] = $reg->label;
             } else {
-                $message = [
-                    'type' => 'success',
-                    'message' => 'Data ' . $reg->label . ' periode ini berhasil diambil',
-                ];
-                array_push($notification, $message);
                 array_push($list_region, $reg->value);
             }
+        }
+
+        if (!empty($missing_prev)) {
+            array_push($notification, [
+                'type' => 'error',
+                'message' => 'Data periode sebelumnya tidak ada untuk: ' . implode(', ', $missing_prev),
+            ]);
+        }
+        if (!empty($missing_curr)) {
+            array_push($notification, [
+                'type' => 'error',
+                'message' => 'Data periode ini tidak ada untuk: ' . implode(', ', $missing_curr),
+            ]);
+        }
+        if (empty($missing_prev) && empty($missing_curr)) {
+            array_push($notification, [
+                'type' => 'success',
+                'message' => 'Berhasil mengambil Data Adjustment untuk seluruh wilayah',
+            ]);
         }
         $previous_data = collect(); // Ensure $previous_data is always initialized
         $current_data = collect();
@@ -1110,6 +1113,9 @@ class PdrbController extends Controller
             ];
             array_push($notification, $message);
             DB::commit();
+            if ($request->wantsJson() || $request->expectsJson()) {
+                return response()->json(['notification' => $notification]);
+            }
             return redirect()->route($route . 'adjustment')->with('notification', $notification);
         } catch (\Throwable $th) {
             //throw $th;
@@ -1120,6 +1126,9 @@ class PdrbController extends Controller
                 'errors' => $th->getMessage()
             ];
             array_push($notification, $message);
+            if ($request->wantsJson() || $request->expectsJson()) {
+                return response()->json(['notification' => $notification], 500);
+            }
             return redirect()->route($route . 'adjustment')->with('notification', $notification);
         }
     }
@@ -1528,6 +1537,7 @@ class PdrbController extends Controller
                 array_push($notification, $message);
             } else {
                 $current_data = [];
+                $current_summary_set = [];
                 $message = [
                     'type' => 'error',
                     'message' => 'Data PDRB Periode ini tidak ada'
@@ -1698,11 +1708,17 @@ class PdrbController extends Controller
     {
         $results = [];
         try {
-            //code...
-            foreach ($request->description as $desc) {
+            $descriptions = $request->description;
+            if (is_string($descriptions)) {
+                $descriptions = explode(',', $descriptions);
+            } elseif (!is_array($descriptions)) {
+                $descriptions = (array) $descriptions;
+            }
+            foreach ($descriptions as $desc) {
+                if (!$desc) continue;
                 $current_period = Period::findOrFail($desc);
                 $new_request = new Request([
-                    'year' => $request->year,
+                    'year' => $current_period->year,
                     'type' => $request->type,
                     'description' => $desc,
                     'regions' => $request->regions

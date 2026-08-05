@@ -73,6 +73,17 @@ Route::middleware('api.token')->group(function () {
     Route::get('/copy-hasil', [\App\Http\Controllers\PdrbController::class, 'copyHasil']);
     Route::get('/watch-previous', [\App\Http\Controllers\PdrbController::class, 'watchPrevious']);
 
+    // Adjustment Routes
+    Route::get('/get-adjustment', [\App\Http\Controllers\PdrbController::class, 'getAdjustment']);
+    Route::post('/save-adjustment', [\App\Http\Controllers\PdrbController::class, 'saveAdjustment']);
+
+    // Hasil Routes
+    Route::get('/get-hasil', [\App\Http\Controllers\PdrbController::class, 'getHasil']);
+    Route::get('/add-year-fetch', [\App\Http\Controllers\PdrbController::class, 'addYearFetch']);
+
+    // Diskrepansi Routes
+    Route::get('/get-diskrepansi', [\App\Http\Controllers\PdrbController::class, 'getDiskrepansi']);
+
     Route::get('/subsectors', function (\Illuminate\Http\Request $request) {
         $type = $request->query('type', 'Lapangan Usaha');
         $subsectors = \App\Models\Subsector::where('type', $type)
