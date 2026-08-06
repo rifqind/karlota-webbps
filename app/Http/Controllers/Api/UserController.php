@@ -223,4 +223,68 @@ class UserController extends Controller
 
         return response()->json($result);
     }
+
+    /**
+     * Update current authenticated user profile.
+     * POST /api/user/profile
+     */
+    public function updateProfile(Request $request): JsonResponse
+    {
+        try {
+            DB::beginTransaction();
+
+            $payload = $request->attributes->get('auth_payload');
+            $userId = $payload['sub'] ?? auth()->id();
+
+            if (!$userId) {
+                return response()->json(['message' => 'Unauthenticated.'], 401);
+            }
+
+            $user = User::findOrFail($userId);
+
+            $validated = $request->validate([
+                'name' => ['required', 'string', Rule::unique('users', 'name')->ignore($user->id)],
+                'email' => ['required', 'string', 'lowercase', 'email', 'max:255', Rule::unique('users', 'email')->ignore($user->id)],
+                'nip_lama' => ['sometimes', 'nullable', 'max:9', Rule::unique('users', 'nip_lama')->ignore($user->id)],
+                'password' => ['nullable', 'string', 'min:8', 'confirmed'],
+            ]);
+
+            $updateData = [
+                'name' => $validated['name'],
+                'email' => $validated['email'],
+                'nip_lama' => $validated['nip_lama'] ?? null,
+            ];
+
+            if (!empty($validated['password'])) {
+                $updateData['password'] = Hash::make($validated['password']);
+            }
+
+            $user->update($updateData);
+            DB::commit();
+
+            return response()->json([
+                'message' => 'Berhasil memperbarui profil akun',
+                'user' => [
+                    'id' => $user->id,
+                    'name' => $user->name,
+                    'email' => $user->email,
+                    'role' => $user->role,
+                    'nip_lama' => $user->nip_lama,
+                    'satker_id' => $user->satker_id,
+                ],
+            ]);
+        } catch (\Illuminate\Validation\ValidationException $ve) {
+            DB::rollBack();
+            return response()->json([
+                'message' => 'Validasi gagal',
+                'errors' => $ve->errors(),
+            ], 422);
+        } catch (\Throwable $th) {
+            DB::rollBack();
+            return response()->json([
+                'message' => 'Gagal memperbarui profil akun',
+                'error' => $th->getMessage(),
+            ], 500);
+        }
+    }
 }

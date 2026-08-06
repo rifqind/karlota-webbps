@@ -23,22 +23,61 @@ class SummaryController extends Controller
         $region = Region::pluck('id');
 
         $lapus_PERIOD = Period::where('type', 'Lapangan Usaha')
-            ->latest()
+            ->where('status', 'Aktif')
+            ->orderBy('year', 'desc')
+            ->orderBy('quarter', 'desc')
+            ->orderBy('created_at', 'desc')
             ->first();
+        if (!$lapus_PERIOD) {
+            $lapus_PERIOD = Period::where('type', 'Lapangan Usaha')
+                ->where('status', 'Final')
+                ->orderBy('year', 'desc')
+                ->orderBy('quarter', 'desc')
+                ->orderBy('created_at', 'desc')
+                ->first();
+        }
+        if (!$lapus_PERIOD) {
+            $lapus_PERIOD = Period::where('type', 'Lapangan Usaha')
+                ->orderBy('year', 'desc')
+                ->orderBy('quarter', 'desc')
+                ->orderBy('created_at', 'desc')
+                ->first();
+        }
         $lapus_period = $lapus_PERIOD->id;
+
         $lapus_period_before = Period::where('type', 'Lapangan Usaha')
             ->where('year', $lapus_PERIOD->year - 1)
             ->where('quarter', 4)
-            ->latest()
+            ->orderBy('created_at', 'desc')
             ->value('id');
+
         $peng_PERIOD = Period::where('type', 'Pengeluaran')
-            ->latest()
+            ->where('status', 'Aktif')
+            ->orderBy('year', 'desc')
+            ->orderBy('quarter', 'desc')
+            ->orderBy('created_at', 'desc')
             ->first();
+        if (!$peng_PERIOD) {
+            $peng_PERIOD = Period::where('type', 'Pengeluaran')
+                ->where('status', 'Final')
+                ->orderBy('year', 'desc')
+                ->orderBy('quarter', 'desc')
+                ->orderBy('created_at', 'desc')
+                ->first();
+        }
+        if (!$peng_PERIOD) {
+            $peng_PERIOD = Period::where('type', 'Pengeluaran')
+                ->orderBy('year', 'desc')
+                ->orderBy('quarter', 'desc')
+                ->orderBy('created_at', 'desc')
+                ->first();
+        }
         $peng_period = $peng_PERIOD->id;
+
         $peng_period_before = Period::where('type', 'Pengeluaran')
             ->where('year', $peng_PERIOD->year - 1)
             ->where('quarter', 4)
-            ->latest()
+            ->orderBy('created_at', 'desc')
             ->value('id');
         $dataset = Dataset::where('period_id', $lapus_period)
             ->orWhere('period_id', $peng_period)
@@ -67,42 +106,51 @@ class SummaryController extends Controller
         }
 
 
-        $data = SummaryPdrb::where('region_id', $request->region_id)
-            ->where('quarter', $request->quarter)
-            ->where(function ($query) {
-                $query->whereNotIn('subsector_id', [98, 99])
-                    ->orWhereNull('subsector_id'); // 👈 include NULL values
-            })
-            ->get();
+        $targetQuarter = $request->quarter ?? $lapus_PERIOD->quarter;
 
-        $total = SummaryPdrb::where('region_id', $request->region_id)
-            ->where('quarter', $request->quarter)
-            ->where(function ($query) {
-                $query->whereIn('subsector_id', [98, 99])
-                    ->orWhereNull('subsector_id'); // 👈 include NULL values
-            })
-            ->get();
-
-        $lapus_total = $total->where('subsector_id', 98)->value('adhb');
-        $peng_total = $total->where('subsector_id', 99)->value('adhb');
-
-        foreach ($data as $key => $value) {
-            # code...
-            if ($value->category_id < 18) {
-                $dist =  ($value->adhb != 0 && $lapus_total != 0) ? ($value->adhb / $lapus_total) * 100 : 0;
-            } else if ($value->category_id > 17) {
-                $dist =  ($value->adhb != 0 && $peng_total != 0) ? ($value->adhb / $peng_total) * 100 : 0;
-            }
-            SummaryPdrb::where('id', $value->id)->update(['dist' => $dist]);
-        }
-        SummaryPdrb::whereIn('subsector_id', [98, 99])
-            ->update(['dist' => 100]);
+        $this->calculateDistributions($request->region_id, $targetQuarter);
 
         return response()->json([
             'message' => $setup . ' done',
             'lapus_period' => $lapus_period,
             'peng_period' => $peng_period
         ]);
+    }
+
+    public function calculateDistributions($region_id, $quarter)
+    {
+        $lapus_total = SummaryPdrb::where('region_id', $region_id)
+            ->where('quarter', $quarter)
+            ->where('subsector_id', 98)
+            ->value('adhb');
+
+        $peng_total = SummaryPdrb::where('region_id', $region_id)
+            ->where('quarter', $quarter)
+            ->where('subsector_id', 99)
+            ->value('adhb');
+
+        $data = SummaryPdrb::where('region_id', $region_id)
+            ->where('quarter', $quarter)
+            ->where(function ($query) {
+                $query->whereNotIn('subsector_id', [98, 99])
+                    ->orWhereNull('subsector_id');
+            })
+            ->get();
+
+        foreach ($data as $value) {
+            $dist = 0;
+            if ($value->category_id < 18) {
+                $dist = ($value->adhb != 0 && $lapus_total != 0) ? ($value->adhb / $lapus_total) * 100 : 0;
+            } else if ($value->category_id > 17) {
+                $dist = ($value->adhb != 0 && $peng_total != 0) ? ($value->adhb / $peng_total) * 100 : 0;
+            }
+            SummaryPdrb::where('id', $value->id)->update(['dist' => $dist]);
+        }
+
+        SummaryPdrb::where('region_id', $region_id)
+            ->where('quarter', $quarter)
+            ->whereIn('subsector_id', [98, 99])
+            ->update(['dist' => 100]);
     }
 
     private function setupCategory($dataset_before, $dataset, $region)

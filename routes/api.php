@@ -50,6 +50,7 @@ Route::middleware('api.token')->group(function () {
     Route::prefix('user')->group(function () {
         Route::get('/index', [\App\Http\Controllers\Api\UserController::class, 'index']);
         Route::post('/store', [\App\Http\Controllers\Api\UserController::class, 'store']);
+        Route::post('/profile', [\App\Http\Controllers\Api\UserController::class, 'updateProfile']);
         Route::get('/fetch/{id}', [\App\Http\Controllers\Api\UserController::class, 'fetch']);
         Route::delete('/destroy/{id}', [\App\Http\Controllers\Api\UserController::class, 'destroy']);
         Route::get('/satker', [\App\Http\Controllers\Api\UserController::class, 'satker']);
@@ -83,6 +84,16 @@ Route::middleware('api.token')->group(function () {
 
     // Diskrepansi Routes
     Route::get('/get-diskrepansi', [\App\Http\Controllers\PdrbController::class, 'getDiskrepansi']);
+
+    // Monitoring Route
+    Route::get('/get-monitoring', [\App\Http\Controllers\PdrbController::class, 'getMonitoring']);
+
+    // Dashboard & SPV Routes
+    Route::get('/dashboard-data', [\App\Http\Controllers\HomeController::class, 'dashboardData']);
+    Route::get('/home/get-summary', [\App\Http\Controllers\HomeController::class, 'getSummary']);
+    Route::get('/home/get-graph', [\App\Http\Controllers\HomeController::class, 'getGraph']);
+    Route::post('/home/build-summaries', [\App\Http\Controllers\HomeController::class, 'buildSummaries']);
+    Route::get('/get-spv-data', [\App\Http\Controllers\SpvController::class, 'getSpvData']);
 
     Route::get('/subsectors', function (\Illuminate\Http\Request $request) {
         $type = $request->query('type', 'Lapangan Usaha');

@@ -1144,7 +1144,7 @@ class PdrbController extends Controller
     public function getMonitoring(Request $request)
     {
         $validated = $request->validate([
-            'type' => ['required', 'string'],
+            'type' => ['nullable', 'string'],
             'year' => ['required', 'integer'],
             'quarter' => ['required', 'integer'],
             'description' => ['required', 'integer'],

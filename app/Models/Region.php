@@ -19,13 +19,26 @@ class Region extends Model
         return $this->hasMany(Pdrb::class);
     }
 
+    private static function getAuthUser()
+    {
+        $user = auth()->user();
+        if (!$user && request()) {
+            $payload = request()->attributes->get('auth_payload');
+            if ($payload && isset($payload['sub'])) {
+                $user = User::find($payload['sub']);
+            }
+        }
+        return $user;
+    }
+
     public static function getMyRegion()
     {
-        if (auth()->user()->satker_id == 1) {
+        $user = self::getAuthUser();
+        if (!$user || $user->satker_id == 1) {
             $region = Region::select(['id as value', 'name as label'])
                 ->get();
         } else {
-            $region = Region::where('satker_id', auth()->user()->satker_id)
+            $region = Region::where('satker_id', $user->satker_id)
                 ->select(['id as value', 'name as label'])
                 ->get();
         }
@@ -35,7 +48,8 @@ class Region extends Model
 
     public static function getMyBps()
     {
-        if (auth()->user()->satker_id == 1) {
+        $user = self::getAuthUser();
+        if (!$user || $user->satker_id == 1) {
             $bps = Region::selectRaw('MIN(id) as id, satker_id')
                 ->groupBy('satker_id')
                 ->orderBy('id')
@@ -45,7 +59,7 @@ class Region extends Model
                 ->get();
         } else {
             $bps = Region::selectRaw('MIN(id) as id, satker_id')
-                ->where('satker_id', auth()->user()->satker_id)
+                ->where('satker_id', $user->satker_id)
                 ->groupBy('satker_id')
                 ->orderBy('id')
                 ->pluck('id');
@@ -59,10 +73,11 @@ class Region extends Model
 
     public static function getMyRegionId()
     {
-        if (auth()->user()->satker_id == 1) {
+        $user = self::getAuthUser();
+        if (!$user || $user->satker_id == 1) {
             $region = Region::all()->pluck('id');
         } else {
-            $region = Region::where('satker_id', auth()->user()->satker_id)->pluck('id');
+            $region = Region::where('satker_id', $user->satker_id)->pluck('id');
         }
 
         return $region;
