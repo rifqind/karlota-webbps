@@ -1,35 +1,43 @@
 <template>
   <!-- fixed top-0 w-full z-30 -->
-  <nav
-    class="bg-white flex h-[56px] border-b justify-between items-center p-4 w-full fixed top-0 z-30"
-  >
+  <nav class="bg-white flex h-[56px] border-b justify-between items-center p-4 w-full fixed top-0 z-30">
     <!-- Left navbar links -->
     <div class="flex items-center">
-      <a @click="triggerSidebar" class="nav-link" href="#"
-        ><font-awesome-icon icon="fas fa-bars"
-      /></a>
+      <a @click="triggerSidebar" class="nav-link" href="#"><font-awesome-icon icon="fas fa-bars" /></a>
     </div>
 
     <!-- Right navbar links -->
-    <div class="relative" :class="props.isSidebarVisible ? 'mr-[300px]' : 'mr-0'">
-      <!-- <button class="nav-item dropdown"> -->
-      <div class="nav-link cursor-pointer" @click="toggleDropdown">
-        {{ page.props.auth.user.name }}
-      </div>
-      <div
-        class="absolute right-0 mt-2 z-[1400] w-48 bg-white border border-gray-200 rounded shadow-lg z-10"
-        v-if="logoutDropdown"
-      >
-        <!-- <div @click="editProfile" class="dropdown-item px-2 py-2 cursor-pointer">
-          <div class="flex items-center justify-start">
-            <font-awesome class="w-1/12" icon="fa-user" />
-            <span class="ml-2"> Profile </span>
-          </div>
-        </div> -->
-        <div @click.prevent="submit" class="dropdown-item px-2 py-2 cursor-pointer">
-          <div class="flex items-center justify-start">
-            <font-awesome-icon class="w-1/12" icon="fa-sign-out-alt" />
-            <span class="ml-2"> Logout </span>
+    <div class="flex items-center gap-3" :class="props.isSidebarVisible ? 'mr-[300px]' : 'mr-0'">
+      <!-- Tombol Karlota V2 (Nuxt) -->
+      <a href="/v2/"
+        class="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-white bg-emerald-600 rounded-md hover:bg-emerald-700 transition-colors">
+        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none"
+          stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="m5 12 7-7 7 7" />
+          <path d="M12 19V5" />
+        </svg>
+        Versi 2.0
+      </a>
+
+      <!-- User dropdown wrapper -->
+      <div class="relative">
+        <!-- <button class="nav-item dropdown"> -->
+        <div class="nav-link cursor-pointer" @click="toggleDropdown">
+          {{ page.props.auth.user.name }}
+        </div>
+        <div class="absolute right-0 mt-2 z-[1400] w-48 bg-white border border-gray-200 rounded shadow-lg"
+          v-if="logoutDropdown">
+          <!-- <div @click="editProfile" class="dropdown-item px-2 py-2 cursor-pointer">
+            <div class="flex items-center justify-start">
+              <font-awesome class="w-1/12" icon="fa-user" />
+              <span class="ml-2"> Profile </span>
+            </div>
+          </div> -->
+          <div @click.prevent="submit" class="dropdown-item px-2 py-2 cursor-pointer">
+            <div class="flex items-center justify-start">
+              <font-awesome-icon class="w-1/12" icon="fa-sign-out-alt" />
+              <span class="ml-2"> Logout </span>
+            </div>
           </div>
         </div>
       </div>
