@@ -96,10 +96,21 @@ Route::middleware('api.token')->group(function () {
     Route::get('/get-spv-data', [\App\Http\Controllers\SpvController::class, 'getSpvData']);
 
     Route::get('/subsectors', function (\Illuminate\Http\Request $request) {
-        $type = $request->query('type', 'Lapangan Usaha');
-        $subsectors = \App\Models\Subsector::where('type', $type)
-            ->with(['sector.category'])
-            ->get();
-        return response()->json($subsectors);
+        $query = \App\Models\Subsector::with(['sector.category']);
+        if ($request->has('type') && !empty($request->query('type'))) {
+            $query->where('type', $request->query('type'));
+        }
+        return response()->json($query->get());
+    });
+
+    // Fenomena Routes
+    Route::prefix('fenomena')->group(function () {
+        Route::get('/show', [\App\Http\Controllers\FenomenaController::class, 'show']);
+        Route::post('/save-fenomena', [\App\Http\Controllers\FenomenaController::class, 'saveFenomena']);
+        Route::post('/submit-fenomena', [\App\Http\Controllers\FenomenaController::class, 'submitFenomena']);
+        Route::post('/unsubmit-fenomena', [\App\Http\Controllers\FenomenaController::class, 'unsubmitFenomena']);
+        Route::get('/get-monitoring', [\App\Http\Controllers\FenomenaController::class, 'getMonitoring']);
+        Route::get('/get-index', [\App\Http\Controllers\FenomenaController::class, 'getIndex']);
     });
 });
+
