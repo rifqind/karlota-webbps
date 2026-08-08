@@ -136,6 +136,9 @@ class FenomenaController extends Controller
             ];
             array_push($notification, $message);
             DB::commit();
+            if ($request->wantsJson() || $request->expectsJson() || $request->is('api/*')) {
+                return response()->json(['status' => 'success', 'notification' => $notification]);
+            }
             return redirect()->route($route . 'entri-fenomena')->with('notification', $notification);
         } catch (\Throwable $th) {
             //throw $th;
@@ -146,6 +149,9 @@ class FenomenaController extends Controller
                 'errors' => $th->getMessage()
             ];
             array_push($notification, $message);
+            if ($request->wantsJson() || $request->expectsJson() || $request->is('api/*')) {
+                return response()->json(['status' => 'error', 'notification' => $notification], 422);
+            }
             return redirect()->route($route . 'entri-fenomena')->with('notification', $notification);
         }
     }
@@ -209,6 +215,9 @@ class FenomenaController extends Controller
             ];
             array_push($notification, $message);
             DB::commit();
+            if ($request->wantsJson() || $request->expectsJson() || $request->is('api/*')) {
+                return response()->json(['status' => 'success', 'notification' => $notification]);
+            }
             return redirect()->route($route . 'entri-fenomena')->with('notification', $notification);
         } catch (\Throwable $th) {
             //throw $th;
@@ -219,6 +228,9 @@ class FenomenaController extends Controller
                 'errors' => $th->getMessage()
             ];
             array_push($notification, $message);
+            if ($request->wantsJson() || $request->expectsJson() || $request->is('api/*')) {
+                return response()->json(['status' => 'error', 'notification' => $notification], 422);
+            }
             return redirect()->route($route . 'entri-fenomena')->with('notification', $notification);
         }
     }
@@ -243,6 +255,9 @@ class FenomenaController extends Controller
             ];
             array_push($notification, $message);
             DB::commit();
+            if ($request->wantsJson() || $request->expectsJson() || $request->is('api/*')) {
+                return response()->json(['status' => 'success', 'notification' => $notification]);
+            }
             return redirect()->route($route . 'entri-fenomena')->with('notification', $notification);
         } catch (\Throwable $th) {
             //throw $th;
@@ -253,6 +268,9 @@ class FenomenaController extends Controller
                 'errors' => $th->getMessage()
             ];
             array_push($notification, $message);
+            if ($request->wantsJson() || $request->expectsJson() || $request->is('api/*')) {
+                return response()->json(['status' => 'error', 'notification' => $notification], 422);
+            }
             return redirect()->route($route . 'entri-fenomena')->with('notification', $notification);
         }
     }

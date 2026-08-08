@@ -35,8 +35,10 @@ return [
         ],
     ],
     'sso' => [
-        'client_id' => env('SSO_CLIENT_ID'),
+        'client_id'    => env('SSO_CLIENT_ID'),
         'client_secret' => env('SSO_CLIENT_SECRET'),
         'redirect_uri' => env('SSO_REDIRECT_URL'),
     ],
+
+    'nuxt_url' => env('NUXT_URL', 'http://localhost:3000'),
 ];

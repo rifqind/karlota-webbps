@@ -241,4 +241,14 @@ Route::middleware(['auth', 'verified'])->group(function () {
     });
 });
 
+// Nuxt SPA fallback — serves index.html for all /v2/* routes
+// so that client-side routing works on page refresh
+Route::get('/v2/{any?}', function () {
+    $path = public_path('v2/index.html');
+    if (!file_exists($path)) {
+        abort(404, 'Nuxt app not found. Run "npm run generate" and copy output to public/v2/.');
+    }
+    return Response::file($path);
+})->where('any', '.*');
+
 require __DIR__ . '/auth.php';
