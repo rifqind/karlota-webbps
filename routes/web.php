@@ -243,6 +243,24 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
 // Nuxt SPA fallback — serves index.html for all /v2/* routes
 // so that client-side routing works on page refresh
+// Nuxt session bridge. A valid Laravel/Inertia web session can be exchanged
+// for the Nuxt API token, avoiding a second login on the same domain.
+// Keep this route above the /v2/* SPA fallback.
+Route::get('/v2/auth/token', function (\Illuminate\Http\Request $request) {
+    $user = $request->user();
+
+    return response()->json([
+        'token' => \App\Http\Controllers\Api\AuthController::generateToken($user),
+        'user' => [
+            'id' => $user->id,
+            'name' => $user->name,
+            'email' => $user->email,
+            'role' => $user->role,
+            'nip_lama' => $user->nip_lama,
+        ],
+    ])->header('Cache-Control', 'no-store, private');
+})->middleware('auth')->name('v2.auth.token');
+
 Route::get('/v2/{any?}', function () {
     $path = public_path('v2/index.html');
     if (!file_exists($path)) {
