@@ -68,7 +68,7 @@ const showPassword = () => {
           required
           autofocus
           autocomplete="username"
-          placeholder="Isikan Username"
+          placeholder="Isikan Username (not supported)"
         />
 
         <InputError class="mt-2" :message="form.errors.name" />
@@ -83,7 +83,7 @@ const showPassword = () => {
             class="mt-1 block w-full pr-10"
             v-model="form.password"
             required
-            placeholder="Isikan Password"
+            placeholder="Isikan Password (not supported)"
             autocomplete="current-password"
           />
           <button
@@ -105,6 +105,7 @@ const showPassword = () => {
       </div>
       <div class="mt-4 flex items-center justify-end">
         <PrimaryButton
+          v-if="false"
           class="ms-4"
           :class="{ 'opacity-25': form.processing }"
           :disabled="form.processing"

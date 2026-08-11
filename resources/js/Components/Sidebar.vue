@@ -368,9 +368,7 @@ const setMaintenance = async () => {
   try {
     const token = await axios.get(route("token"));
     const response = await axios.post("/set-maintenance", {
-      params: {
-        _token: token.data,
-      },
+      _token: token.data,
     });
     const { data } = await axios.get("/maintenance-status");
     if (data.maintenance == "1") {
