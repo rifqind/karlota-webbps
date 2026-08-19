@@ -19,10 +19,10 @@ class SsoController extends Controller
     {
         return new Keycloak([
             'authServerUrl' => 'https://sso.bps.go.id',
-            'realm'         => 'pegawai-bps',
-            'clientId'      => config('services.sso.client_id'),
-            'clientSecret'  => config('services.sso.client_secret'),
-            'redirectUri'   => config('services.sso.redirect_uri'),
+            'realm' => 'pegawai-bps',
+            'clientId' => config('services.sso.client_id'),
+            'clientSecret' => config('services.sso.client_secret'),
+            'redirectUri' => config('services.sso.redirect_uri'),
         ]);
     }
     public function ssoRedirect(Request $request)
@@ -35,12 +35,12 @@ class SsoController extends Controller
         $request->session()->put('sso_source', $ssoSource);
 
         $query = http_build_query([
-            'client_id'       => config('services.sso.client_id'),
-            'client_secret'   => config('services.sso.client_secret'),
-            'scope'           => 'profile-pegawai email',
-            'redirect_uri'    => config('services.sso.redirect_uri'),
-            'response_type'   => 'code',
-            'state'           => $state,
+            'client_id' => config('services.sso.client_id'),
+            'client_secret' => config('services.sso.client_secret'),
+            'scope' => 'profile-pegawai email',
+            'redirect_uri' => config('services.sso.redirect_uri'),
+            'response_type' => 'code',
+            'state' => $state,
             'approval_prompt' => 'auto',
         ]);
         return redirect('https://sso.bps.go.id/auth/realms/pegawai-bps/protocol/openid-connect/auth?' . $query);
@@ -53,8 +53,8 @@ class SsoController extends Controller
     public function getSsoUrl(Request $request): \Illuminate\Http\JsonResponse
     {
         $state = 'nuxt_' . Str::random(40);
-        $request->session()->put('state', $state);
-        $request->session()->put('sso_source', 'nuxt');
+        // Tidak pakai session karena endpoint ini dipanggil dari API route (stateless).
+        // Nuxt harus menyimpan state di cookie/localStorage-nya sendiri untuk verifikasi CSRF.
 
         $query = http_build_query([
             'client_id'       => config('services.sso.client_id'),
@@ -67,8 +67,7 @@ class SsoController extends Controller
         ]);
 
         $url = 'https://sso.bps.go.id/auth/realms/pegawai-bps/protocol/openid-connect/auth?' . $query;
-
-        // Kembalikan state juga agar Nuxt bisa simpan di cookie untuk verifikasi CSRF
+        // Kembalikan state agar Nuxt simpan di cookie untuk verifikasi CSRF saat callback
         return response()->json([
             'url'   => $url,
             'state' => $state,
@@ -78,7 +77,7 @@ class SsoController extends Controller
     public function ssoCallback(Request $request)
     {
         $sessionState = $request->session()->pull('state');
-        $ssoSource    = $request->session()->pull('sso_source');
+        $ssoSource = $request->session()->pull('sso_source');
 
         // Deteksi apakah request SSO berasal dari Nuxt (v2) atau Karlota Biasa (Web)
         $isNuxt = ($ssoSource === 'nuxt') || Str::startsWith($request->state ?? '', 'nuxt_');
@@ -86,11 +85,11 @@ class SsoController extends Controller
         $nuxtUrl = config('services.nuxt_url', 'http://localhost:8000/v2');
 
         $response = Http::asForm()->post('https://sso.bps.go.id/auth/realms/pegawai-bps/protocol/openid-connect/token', [
-            'grant_type'    => 'authorization_code',
-            'client_id'     => config('services.sso.client_id'),
+            'grant_type' => 'authorization_code',
+            'client_id' => config('services.sso.client_id'),
             'client_secret' => config('services.sso.client_secret'),
-            'redirect_uri'  => config('services.sso.redirect_uri'),
-            'code'          => $request->code,
+            'redirect_uri' => config('services.sso.redirect_uri'),
+            'code' => $request->code,
         ]);
 
         if ($response->failed()) {
@@ -100,7 +99,7 @@ class SsoController extends Controller
             return redirect()->route('login')->with('error', 'Gagal melakukan login SSO (token exchange failed).');
         }
 
-        $tokens      = $response->json();
+        $tokens = $response->json();
         $accessToken = $tokens['access_token'] ?? null;
 
         if (!$accessToken) {
@@ -130,7 +129,7 @@ class SsoController extends Controller
         }
 
         $userInfo = $userInfoResponse->json();
-        $nipLama  = $userInfo['nip-lama'] ?? null;
+        $nipLama = $userInfo['nip-lama'] ?? null;
 
         $current_user = $nipLama
             ? User::where('nip_lama', $nipLama)->first()
@@ -157,9 +156,9 @@ class SsoController extends Controller
 
     public function getTokenAPI()
     {
-        $client_id     = config('services.sso.client_id');
+        $client_id = config('services.sso.client_id');
         $client_secret = config('services.sso.client_secret');
-        $url_token     = 'https://sso.bps.go.id/auth/realms/pegawai-bps/protocol/openid-connect/token';
+        $url_token = 'https://sso.bps.go.id/auth/realms/pegawai-bps/protocol/openid-connect/token';
 
         $response = Http::asForm()
             ->withBasicAuth($client_id, $client_secret)

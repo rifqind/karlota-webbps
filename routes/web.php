@@ -261,6 +261,15 @@ Route::get('/v2/auth/token', function (\Illuminate\Http\Request $request) {
     ])->header('Cache-Control', 'no-store, private');
 })->middleware('auth')->name('v2.auth.token');
 
+// Nuxt v2 session logout — tidak butuh CSRF karena GET request
+// Nuxt memanggil ini saat logout untuk mematikan web session Laravel
+Route::get('/v2/auth/logout', function (\Illuminate\Http\Request $request) {
+    \Illuminate\Support\Facades\Auth::guard('web')->logout();
+    $request->session()->invalidate();
+    $request->session()->regenerateToken();
+    return response()->json(['message' => 'Logged out']);
+})->middleware('web')->name('v2.auth.logout');
+
 Route::get('/v2/{any?}', function () {
     $path = public_path('v2/index.html');
     if (!file_exists($path)) {
