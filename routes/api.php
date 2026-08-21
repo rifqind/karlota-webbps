@@ -60,6 +60,31 @@ Route::middleware('api.token')->group(function () {
     Route::get('/sso-api', [\App\Http\Controllers\SsoController::class, 'ssoAPI']);
     Route::get('/sso-search', [\App\Http\Controllers\SsoController::class, 'ssoAPI']);
 
+    // Produsen (Daftar Dinas) Routes
+    Route::prefix('produsen')->group(function () {
+        Route::get('/index', [\App\Http\Controllers\Api\ProdusenController::class, 'index']);
+        Route::post('/store', [\App\Http\Controllers\Api\ProdusenController::class, 'store']);
+        Route::get('/fetch/{id}', [\App\Http\Controllers\Api\ProdusenController::class, 'fetch']);
+        Route::delete('/delete/{id}', [\App\Http\Controllers\Api\ProdusenController::class, 'destroy']);
+        Route::get('/wilayah', [\App\Http\Controllers\Api\ProdusenController::class, 'wilayah']);
+    });
+
+    // Master Rows Routes
+    Route::prefix('master/rows')->group(function () {
+        Route::get('/index', [\App\Http\Controllers\Api\MasterRowController::class, 'index']);
+        Route::post('/store', [\App\Http\Controllers\Api\MasterRowController::class, 'store']);
+        Route::get('/fetch/{id}', [\App\Http\Controllers\Api\MasterRowController::class, 'fetch']);
+        Route::delete('/delete/{id}', [\App\Http\Controllers\Api\MasterRowController::class, 'destroy']);
+    });
+
+    // Master Sekunder (Master Data) Routes
+    Route::prefix('master/sekunder')->group(function () {
+        Route::get('/index', [\App\Http\Controllers\Api\MasterSekunderController::class, 'index']);
+        Route::get('/fetch/{id}', [\App\Http\Controllers\Api\MasterSekunderController::class, 'fetch']);
+        Route::post('/update', [\App\Http\Controllers\Api\MasterSekunderController::class, 'update']);
+        Route::delete('/delete/{id}', [\App\Http\Controllers\Api\MasterSekunderController::class, 'destroy']);
+    });
+
     // Region Routes
     Route::get('/regions', function () {
         return response()->json(\App\Models\Region::select(['id as value', 'name as label'])->get());
