@@ -85,6 +85,15 @@ Route::middleware('api.token')->group(function () {
         Route::delete('/delete/{id}', [\App\Http\Controllers\Api\MasterSekunderController::class, 'destroy']);
     });
 
+    // Sekunder Data Routes (Daftar Data Sekunder)
+    Route::prefix('sekunder')->group(function () {
+        Route::get('/index', [\App\Http\Controllers\Api\SekunderDataController::class, 'index']);
+        Route::get('/create-data', [\App\Http\Controllers\Api\SekunderDataController::class, 'createData']);
+        Route::post('/store', [\App\Http\Controllers\Api\SekunderDataController::class, 'store']);
+        Route::delete('/delete/{id}', [\App\Http\Controllers\Api\SekunderDataController::class, 'destroy']);
+        Route::post('/add-year', [\App\Http\Controllers\Api\SekunderDataController::class, 'addYear']);
+    });
+
     // Region Routes
     Route::get('/regions', function () {
         return response()->json(\App\Models\Region::select(['id as value', 'name as label'])->get());
