@@ -16,7 +16,7 @@
           <path d="m5 12 7-7 7 7" />
           <path d="M12 19V5" />
         </svg>
-        Versi 2.0
+        Cek Karlota Versi 2.1 (NUXT-UI)
       </a>
 
       <!-- User dropdown wrapper -->
