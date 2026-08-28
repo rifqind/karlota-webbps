@@ -26,7 +26,8 @@ Route::get('/sso-login', [SsoController::class, 'ssoRedirect'])->name('sso-login
 Route::get('/sso-callback', [SsoController::class, 'ssoCallback'])->name('sso-callback');
 Route::get('/sso-search', [SsoController::class, 'ssoAPI'])->name('sso-api');
 
-Route::middleware(['auth', 'verified'])->group(function () {
+// Route::middleware(['auth', 'verified'])->group(function () {
+Route::middleware(['local.auth', 'verified'])->group(function () {
     Route::get('/dashboard', [HomeController::class, 'index'])
         ->name('dashboard');
     Route::get('/index', [SummaryController::class, 'index'])->name('home.index');

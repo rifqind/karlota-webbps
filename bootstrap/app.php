@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Middleware\LocalAuthenticate;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -18,7 +19,8 @@ return Application::configure(basePath: dirname(__DIR__))
             // \App\Http\Middleware\RoleCheck::class,
         ]);
         $middleware->alias([
-            'role'      => \App\Http\Middleware\RoleCheck::class,
+            'local.auth' => LocalAuthenticate::class,
+            'role' => \App\Http\Middleware\RoleCheck::class,
             'api.token' => \App\Http\Middleware\VerifyApiToken::class,
         ]);
 
