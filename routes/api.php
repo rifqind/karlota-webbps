@@ -85,13 +85,18 @@ Route::middleware('api.token')->group(function () {
         Route::delete('/delete/{id}', [\App\Http\Controllers\Api\MasterSekunderController::class, 'destroy']);
     });
 
-    // Sekunder Data Routes (Daftar Data Sekunder)
+    // Sekunder Data Routes (Daftar Data Sekunder & Entri)
     Route::prefix('sekunder')->group(function () {
         Route::get('/index', [\App\Http\Controllers\Api\SekunderDataController::class, 'index']);
         Route::get('/create-data', [\App\Http\Controllers\Api\SekunderDataController::class, 'createData']);
         Route::post('/store', [\App\Http\Controllers\Api\SekunderDataController::class, 'store']);
         Route::delete('/delete/{id}', [\App\Http\Controllers\Api\SekunderDataController::class, 'destroy']);
         Route::post('/add-year', [\App\Http\Controllers\Api\SekunderDataController::class, 'addYear']);
+        Route::get('/entri/{id}', [\App\Http\Controllers\Api\SekunderDataController::class, 'entri']);
+        Route::post('/update', [\App\Http\Controllers\Api\SekunderDataController::class, 'update']);
+        Route::get('/data-by-dinas', [\App\Http\Controllers\Api\SekunderDataController::class, 'dataByDinas']);
+        Route::get('/data-by-dinas/{id}', [\App\Http\Controllers\Api\SekunderDataController::class, 'byDinasView']);
+        Route::get('/data-by-dinas-change-year', [\App\Http\Controllers\Api\SekunderDataController::class, 'byDinasChangeYear']);
     });
 
     // Region Routes
