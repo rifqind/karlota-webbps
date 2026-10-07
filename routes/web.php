@@ -25,6 +25,7 @@ Route::get('/token', function () {
 Route::get('/sso-login', [SsoController::class, 'ssoRedirect'])->name('sso-login');
 Route::get('/sso-callback', [SsoController::class, 'ssoCallback'])->name('sso-callback');
 Route::get('/sso-search', [SsoController::class, 'ssoAPI'])->name('sso-api');
+Route::get('/sso-logout', [SsoController::class, 'ssoLogout'])->name('sso-logout');
 
 // Route::middleware(['auth', 'verified'])->group(function () {
 Route::middleware(['local.auth', 'verified'])->group(function () {
