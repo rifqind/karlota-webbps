@@ -17,6 +17,8 @@ Route::prefix('auth')->group(function () {
     Route::post('/login', [AuthController::class, 'login']);
     Route::post('/logout', [AuthController::class, 'logout']);
     Route::get('/sso-url', [SsoController::class, 'getSsoUrl']);
+    Route::get('/local-users', [AuthController::class, 'localUsers']);
+    Route::post('/local-login', [AuthController::class, 'localLogin']);
 });
 
 // ─── Protected Routes (wajib menyertakan Bearer token) ────────────────────────

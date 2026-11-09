@@ -250,6 +250,10 @@ Route::middleware(['local.auth', 'verified'])->group(function () {
 Route::get('/v2/auth/token', function (\Illuminate\Http\Request $request) {
     $user = $request->user();
 
+    if (!$user) {
+        return response()->json(['message' => 'Unauthenticated.'], 401);
+    }
+
     return response()->json([
         'token' => \App\Http\Controllers\Api\AuthController::generateToken($user),
         'user' => [
@@ -260,7 +264,7 @@ Route::get('/v2/auth/token', function (\Illuminate\Http\Request $request) {
             'nip_lama' => $user->nip_lama,
         ],
     ])->header('Cache-Control', 'no-store, private');
-})->middleware('auth')->name('v2.auth.token');
+})->middleware('web')->name('v2.auth.token');
 
 // Nuxt v2 session logout — tidak butuh CSRF karena GET request
 // Nuxt memanggil ini saat logout untuk mematikan web session Laravel

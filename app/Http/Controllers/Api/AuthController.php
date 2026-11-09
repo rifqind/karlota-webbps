@@ -19,12 +19,12 @@ class AuthController extends Controller
     public static function generateToken(User $user): string
     {
         $payload = [
-            'sub'      => $user->id,
-            'name'     => $user->name,
-            'email'    => $user->email,
-            'role'     => $user->role,
+            'sub' => $user->id,
+            'name' => $user->name,
+            'email' => $user->email,
+            'role' => $user->role,
             'nip_lama' => $user->nip_lama,
-            'exp'      => now()->addDay()->timestamp,
+            'exp' => now()->addDay()->timestamp,
         ];
 
         return Crypt::encryptString(json_encode($payload));
@@ -65,7 +65,7 @@ class AuthController extends Controller
             ->orWhere('email', $loginKey)
             ->first();
 
-        if (! $user || ! Hash::check($request->password, $user->password)) {
+        if (!$user || !Hash::check($request->password, $user->password)) {
             throw ValidationException::withMessages([
                 'username' => ['Username atau password salah.'],
             ]);
@@ -75,11 +75,11 @@ class AuthController extends Controller
 
         return response()->json([
             'token' => $token,
-            'user'  => [
-                'id'       => $user->id,
-                'name'     => $user->name,
-                'email'    => $user->email,
-                'role'     => $user->role,
+            'user' => [
+                'id' => $user->id,
+                'name' => $user->name,
+                'email' => $user->email,
+                'role' => $user->role,
                 'nip_lama' => $user->nip_lama,
             ],
         ]);
@@ -100,26 +100,101 @@ class AuthController extends Controller
     public function me(Request $request): JsonResponse
     {
         $authHeader = $request->header('Authorization', '');
-        $token      = str_starts_with($authHeader, 'Bearer ')
+        $token = str_starts_with($authHeader, 'Bearer ')
             ? substr($authHeader, 7)
             : null;
 
-        if (! $token) {
+        if (!$token) {
             return response()->json(['message' => 'Unauthenticated'], 401);
         }
 
         $payload = self::verifyToken($token);
 
-        if (! $payload) {
+        if (!$payload) {
             return response()->json(['message' => 'Token invalid atau expired'], 401);
         }
 
         return response()->json([
-            'id'       => $payload['sub'],
-            'name'     => $payload['name'],
-            'email'    => $payload['email'],
-            'role'     => $payload['role'],
+            'id' => $payload['sub'],
+            'name' => $payload['name'],
+            'email' => $payload['email'],
+            'role' => $payload['role'],
             'nip_lama' => $payload['nip_lama'],
+        ]);
+    }
+
+    /**
+     * Ambil daftar user untuk pilihan Login Lokal (hanya diizinkan di localhost/development).
+     */
+    public function localUsers(Request $request): JsonResponse
+    {
+        $host = $request->getHost();
+        $isLocal = in_array($host, ['localhost', '127.0.0.1', '::1'])
+            || str_ends_with($host, '.test')
+            || str_ends_with($host, '.local');
+
+        if (!$isLocal) {
+            return response()->json([
+                'message' => 'Akses ditolak. Fitur ini hanya tersedia di lingkungan lokal / development.',
+            ], 403);
+        }
+
+        $regions = \App\Models\Region::select('satker_id', 'name')
+            ->groupBy('satker_id', 'name')
+            ->pluck('name', 'satker_id');
+
+        $users = User::all(['id', 'name', 'email', 'role', 'satker_id'])
+            ->sortBy(['role', 'name'])
+            ->values()
+            ->map(function ($u) use ($regions) {
+                $satkerName = $regions[$u->satker_id] ?? '-';
+                return [
+                    'id' => $u->id,
+                    'name' => $u->name,
+                    'email' => $u->email,
+                    'role' => $u->role,
+                    'satker_name' => $satkerName,
+                    'label' => "{$u->name} [{$u->role}] - {$satkerName}",
+                ];
+            });
+
+        return response()->json($users);
+    }
+
+    /**
+     * Login lokal dengan user yang dipilih (hanya diizinkan di localhost/development).
+     */
+    public function localLogin(Request $request): JsonResponse
+    {
+        $host = $request->getHost();
+        $isLocal = in_array($host, ['localhost', '127.0.0.1', '::1'])
+            || str_ends_with($host, '.test')
+            || str_ends_with($host, '.local');
+
+        if (!$isLocal) {
+            return response()->json([
+                'message' => 'Akses ditolak. Fitur ini hanya tersedia di lingkungan lokal / development.',
+            ], 403);
+        }
+
+        $userId = $request->input('user_id');
+        $user = User::find($userId);
+
+        if (!$user) {
+            return response()->json(['message' => 'User tidak ditemukan.'], 404);
+        }
+
+        $token = self::generateToken($user);
+
+        return response()->json([
+            'token' => $token,
+            'user' => [
+                'id' => $user->id,
+                'name' => $user->name,
+                'email' => $user->email,
+                'role' => $user->role,
+                'nip_lama' => $user->nip_lama,
+            ],
         ]);
     }
 }
