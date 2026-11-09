@@ -115,7 +115,7 @@ Route::middleware('api.token')->group(function () {
 
     // Adjustment Routes
     Route::get('/get-adjustment', [\App\Http\Controllers\PdrbController::class, 'getAdjustment']);
-    Route::post('/save-adjustment', [\App\Http\Controllers\PdrbController::class, 'saveAdjustment']);
+    Route::middleware('role:admin')->post('/save-adjustment', [\App\Http\Controllers\PdrbController::class, 'saveAdjustment']);
 
     // Hasil Routes
     Route::get('/get-hasil', [\App\Http\Controllers\PdrbController::class, 'getHasil']);
