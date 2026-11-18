@@ -81,7 +81,9 @@ class SsoController extends Controller
         if ($request->has('token') && !$request->has('code')) {
             $path = public_path('_nuxt/index.html');
             if (file_exists($path)) {
-                return response()->file($path);
+                return response(file_get_contents($path), 200, [
+                    'Content-Type' => 'text/html; charset=UTF-8',
+                ]);
             }
         }
 
