@@ -290,5 +290,7 @@ Route::get('/{any?}', function () {
     if (!file_exists($path)) {
         abort(404, 'Nuxt app not found. Run "pnpm run deploy" in karlota-nuxt to copy output to public/_nuxt/.');
     }
-    return Response::file($path);
+    return response(file_get_contents($path), 200, [
+        'Content-Type' => 'text/html; charset=UTF-8',
+    ]);
 })->where('any', '^(?!api|v1|_nuxt).*$');
