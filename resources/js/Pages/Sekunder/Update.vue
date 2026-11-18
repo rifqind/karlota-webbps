@@ -208,7 +208,7 @@ const submit = async () => {
   form._token = token.data;
   form.order = tableRef.value.datas.map((item) => item.value);
   try {
-    form.post("/master/sekunder/update", {
+    form.post("/v1/master/sekunder/update", {
       onSuccess: (response) => {
         showNotification(response.props.notification);
         if (response.props.notification[0].type == "success") {
