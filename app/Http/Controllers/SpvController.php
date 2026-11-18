@@ -15,7 +15,7 @@ class SpvController extends Controller
     {
         $data = SummaryPdrb::get();
         $regions = Region::select(['id', 'name'])->get();
-        $prefix = request()->route()?->getPrefix();
+        $prefix = basename(request()->route()?->getPrefix() ?? '');
         if ($prefix == 'lapus') $type = 'Lapangan Usaha';
         else if ($prefix == 'peng') $type = 'Pengeluaran';
         else $type = 'Lapangan Usaha';

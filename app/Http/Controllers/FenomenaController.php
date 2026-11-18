@@ -15,8 +15,7 @@ class FenomenaController extends Controller
     //
     public function entri()
     {
-        $prefix = ltrim(request()->route()->getPrefix() ?? '', '/');
-        // dd($prefix);
+        $prefix = basename(request()->route()->getPrefix() ?? '');
         if ($prefix == 'lapus') $type = 'Lapangan Usaha';
         else if ($prefix == 'peng') $type = 'Pengeluaran';
         $regions = Region::getMyRegion();
