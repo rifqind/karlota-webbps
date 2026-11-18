@@ -19,7 +19,7 @@ class PdrbController extends Controller
     //
     public function entri()
     {
-        $prefix = request()->route()->getPrefix();
+        $prefix = basename(request()->route()->getPrefix() ?? '');
         if ($prefix == 'lapus') $type = 'Lapangan Usaha';
         else if ($prefix == 'peng') $type = 'Pengeluaran';
         $regions = Region::getMyRegion();
@@ -464,7 +464,7 @@ class PdrbController extends Controller
 
     public function adjustment()
     {
-        $prefix = request()->route()->getPrefix();
+        $prefix = basename(request()->route()->getPrefix() ?? '');
         if ($prefix == 'lapus') $type = 'Lapangan Usaha';
         else if ($prefix == 'peng') $type = 'Pengeluaran';
         $regions = Region::select(['id as value', 'name as label'])->get();
@@ -1163,7 +1163,7 @@ class PdrbController extends Controller
 
     public function hasil()
     {
-        $prefix = request()->route()->getPrefix();
+        $prefix = basename(request()->route()->getPrefix() ?? '');
         if ($prefix == 'lapus') $type = 'Lapangan Usaha';
         else if ($prefix == 'peng') $type = 'Pengeluaran';
         $regions = Region::getMyRegion();
@@ -1195,7 +1195,7 @@ class PdrbController extends Controller
 
     public function diskrepansi()
     {
-        $prefix = request()->route()->getPrefix();
+        $prefix = basename(request()->route()->getPrefix() ?? '');
         if ($prefix == 'lapus') $type = 'Lapangan Usaha';
         else if ($prefix == 'peng') $type = 'Pengeluaran';
         $regions = Region::select('id as value', 'name as label')->get();

@@ -31,8 +31,8 @@ Route::prefix('v1')->group(function () {
     Route::get('/sso-login', [SsoController::class, 'ssoRedirect']);
     Route::get('/sso-search', [SsoController::class, 'ssoAPI'])->name('sso-api');
 
-    Route::middleware(['auth', 'verified'])->group(function () {
-        // Route::middleware(['local.auth', 'verified'])->group(function () {
+    // Route::middleware(['auth', 'verified'])->group(function () {
+    Route::middleware(['local.auth', 'verified'])->group(function () {
         Route::get('/dashboard', [HomeController::class, 'index'])
             ->name('dashboard');
         Route::get('/index', [SummaryController::class, 'index'])->name('home.index');
@@ -42,8 +42,12 @@ Route::prefix('v1')->group(function () {
         Route::get('/home/get-graph', [HomeController::class, 'getGraph'])->name('home.get-graph');
 
         Route::name('spv.')->group(function () {
-            Route::get('/lapus/spv', [SpvController::class, 'index'])->name('lapus');
-            Route::get('/peng/spv', [SpvController::class, 'index'])->name('peng');
+            Route::prefix('lapus')->group(function () {
+                Route::get('/spv', [SpvController::class, 'index'])->name('lapus');
+            });
+            Route::prefix('peng')->group(function () {
+                Route::get('/spv', [SpvController::class, 'index'])->name('peng');
+            });
         });
         Route::prefix('period')->name('period.')->group(function () {
             Route::middleware(['role:admin'])->group(function () {
