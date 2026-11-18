@@ -142,7 +142,7 @@ const submit = async () => {
   const response = await axios.get(route("token"));
   form._token = response.data;
   if (form.processing) return;
-  form.post("/user/edit", {
+  form.post("/v1/user/edit", {
     onSuccess: (response) => {
       showNotification(response.props.notification);
     },
