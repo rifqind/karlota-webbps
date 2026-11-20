@@ -46,6 +46,7 @@ Route::middleware('api.token')->group(function () {
         Route::get('/fetchQuarter', [\App\Http\Controllers\PeriodController::class, 'fetchQuarter']);
         Route::get('/fetchPeriod', [\App\Http\Controllers\PeriodController::class, 'fetchPeriod']);
         Route::get('/fetchYearBefore', [\App\Http\Controllers\PeriodController::class, 'fetchYearBefore']);
+        Route::get('/fetchKbli', [\App\Http\Controllers\PeriodController::class, 'fetchKbli']);
     });
 
     // User Routes

@@ -36,6 +36,9 @@ class PeriodController extends Controller
             if (!empty($filter['type'])) {
                 $query->where('type', 'like', '%' . $filter['type'] . '%');
             }
+            if (!empty($filter['kbli'])) {
+                $query->where('kbli', 'like', '%' . $filter['kbli'] . '%');
+            }
             if (!empty($filter['quarter'])) {
                 $query->where('quarter', 'like', '%' . $filter['quarter'] . '%');
             }
@@ -82,6 +85,7 @@ class PeriodController extends Controller
     {
         $validated = $request->validate([
             'type' => ['required', 'string'],
+            'kbli' => ['sometimes', 'nullable', 'string'],
             'year' => ['required', 'integer'],
             'quarter' => ['required', 'integer'],
             'description' => ['required', 'string'],
@@ -95,6 +99,9 @@ class PeriodController extends Controller
             DB::beginTransaction();
             $validated['started_at'] = Carbon::parse($validated['datepicker']['startDate'])->format('Y-m-d');
             $validated['ended_at'] = Carbon::parse($validated['datepicker']['endDate'])->format('Y-m-d');
+            if (empty($validated['kbli'])) {
+                $validated['kbli'] = 'kbli_2020';
+            }
 
             if ($request->id) {
                 $request->validate([
@@ -153,22 +160,34 @@ class PeriodController extends Controller
     }
 
     //fetchStage
+    public function fetchKbli(Request $request)
+    {
+        $query = Period::selectRaw('DISTINCT kbli as value, kbli as label')
+            ->where('type', $request->type);
+        $data = $query->get();
+        return response()->json($data);
+    }
+
     public function fetchYear(Request $request)
     {
-        $data = Period::selectRaw('DISTINCT year as value, year as label')
-            ->where('type', $request->type)
-            ->orderBy('year', 'DESC')
-            ->get();
+        $query = Period::selectRaw('DISTINCT year as value, year as label')
+            ->where('type', $request->type);
+        if ($request->filled('kbli')) {
+            $query->where('kbli', $request->kbli);
+        }
+        $data = $query->orderBy('year', 'DESC')->get();
         return response()->json($data);
     }
 
     public function fetchQuarter(Request $request)
     {
-        $data = Period::selectRaw('DISTINCT quarter as value, quarter as label')
+        $query = Period::selectRaw('DISTINCT quarter as value, quarter as label')
             ->where('type', $request->type)
-            ->where('year', $request->year)
-            ->orderBy('quarter', 'asc')
-            ->get();
+            ->where('year', $request->year);
+        if ($request->filled('kbli')) {
+            $query->where('kbli', $request->kbli);
+        }
+        $data = $query->orderBy('quarter', 'asc')->get();
         return response()->json($data);
     }
 
@@ -177,6 +196,9 @@ class PeriodController extends Controller
         $query = Period::query();
         if ($request->start == 'true') {
             $query->whereNot('status', 'Final');
+        }
+        if ($request->filled('kbli')) {
+            $query->where('kbli', $request->kbli);
         }
         $data = $query->where('type', $request->type)
             ->where('year', $request->year)
@@ -193,9 +215,12 @@ class PeriodController extends Controller
 
     public function fetchYearBefore(Request $request)
     {
-        $data = Period::where('type', $request->type)
-            ->where('year', $request->year - 1)
-            ->orderBy('id', 'desc')
+        $query = Period::where('type', $request->type)
+            ->where('year', $request->year - 1);
+        if ($request->filled('kbli')) {
+            $query->where('kbli', $request->kbli);
+        }
+        $data = $query->orderBy('id', 'desc')
             ->get()
             ->map(function ($item) {
                 return [
