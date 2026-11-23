@@ -506,6 +506,7 @@ class PdrbController extends Controller
     public function getAdjustment(Request $request)
     {
         $validated = $request->validate([
+            'kbli' => ['required', 'string'],
             'type' => ['required', 'string'],
             'year' => ['required', 'integer'],
             'quarter' => ['required', 'integer'],
@@ -991,7 +992,7 @@ class PdrbController extends Controller
                         });
                 }
             } else if ($type == 'Pengeluaran') {
-                $importId = ['69'];
+                $importId = ['69', '166', '167', '170', '170', '171', '174', '175'];
                 if ($previous_dataset->isNotEmpty()) {
                     $total = Pdrb::leftJoin('adjustments as adj', 'adj.pdrb_id', '=', 'pdrbs.id')
                         ->join('datasets as d', 'd.id', '=', 'pdrbs.dataset_id')
