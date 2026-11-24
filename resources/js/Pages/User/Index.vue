@@ -325,9 +325,14 @@ const searchSSO = async () => {
       });
       resultSSO.value = response.data;
       if (resultSSO.value.length > 0) {
-        form.name = resultSSO.value[0].username;
-        form.email = resultSSO.value[0].email;
-        form.nip_lama = resultSSO.value[0].attributes["attribute-nip-lama"][0];
+        const u = resultSSO.value[0];
+        form.name = u.username;
+        form.email = u.email || u.attributes?.email?.[0] || "";
+        form.nip_lama =
+          u.attributes?.["attribute-nip-lama"]?.[0] ||
+          u.attributes?.employeeID?.[0] ||
+          u.attributes?.nip?.[0] ||
+          "";
       }
     } catch (error) {
       console.error(error);

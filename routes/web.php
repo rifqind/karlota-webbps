@@ -19,7 +19,8 @@ use Illuminate\Support\Facades\Route;
 // SSO (tetap di root agar sesuai dengan SSO_REDIRECT_URL Keycloak & dapat diakses Nuxt maupun V1)
 Route::get('/sso-login', [SsoController::class, 'ssoRedirect'])->name('sso-login');
 Route::get('/sso-callback', [SsoController::class, 'ssoCallback'])->name('sso-callback');
-Route::get('/sso-search', [SsoController::class, 'ssoAPI']);
+Route::get('/sso-search', [SsoController::class, 'ssoAPI'])->name('sso-api');
+Route::get('/sso-logout', [SsoController::class, 'ssoLogout'])->name('sso-logout');
 
 // ─── Versi 1 (Legacy Inertia + Vue 3) di bawah prefix /v1 ────────────────────
 Route::prefix('v1')->group(function () {
