@@ -16,240 +16,254 @@ use App\Models\Maintenance;
 use Illuminate\Support\Facades\Response;
 use Illuminate\Support\Facades\Route;
 
-Route::middleware('guest')->get('/', [AuthenticatedSessionController::class, 'create']);
-Route::get('/token', function () {
-    return csrf_token();
-})->name('token');
-
-//SSO
+// SSO (tetap di root agar sesuai dengan SSO_REDIRECT_URL Keycloak & dapat diakses Nuxt maupun V1)
 Route::get('/sso-login', [SsoController::class, 'ssoRedirect'])->name('sso-login');
 Route::get('/sso-callback', [SsoController::class, 'ssoCallback'])->name('sso-callback');
 Route::get('/sso-search', [SsoController::class, 'ssoAPI'])->name('sso-api');
 Route::get('/sso-logout', [SsoController::class, 'ssoLogout'])->name('sso-logout');
 
-// Route::middleware(['auth', 'verified'])->group(function () {
-Route::middleware(['local.auth', 'verified'])->group(function () {
-    Route::get('/dashboard', [HomeController::class, 'index'])
-        ->name('dashboard');
-    Route::get('/index', [SummaryController::class, 'index'])->name('home.index');
-    Route::get('/get-progress', [SummaryController::class, 'getProgress'])->name('home.get-progress');
-    Route::post('/update-time', [HomeController::class, 'updateSummaryTime'])->name('home.update-time');
-    Route::get('/home/get-summary', [HomeController::class, 'getSummary'])->name('home.get-summary');
-    Route::get('/home/get-graph', [HomeController::class, 'getGraph'])->name('home.get-graph');
+// ─── Versi 1 (Legacy Inertia + Vue 3) di bawah prefix /v1 ────────────────────
+Route::prefix('v1')->group(function () {
+    Route::middleware('guest')->get('/', [AuthenticatedSessionController::class, 'create']);
+    Route::get('/token', function () {
+        return csrf_token();
+    })->name('token');
 
-    Route::name('spv.')->group(function () {
-        Route::prefix('lapus')->get('/spv', [SpvController::class, 'index'])->name('lapus');
-        Route::prefix('peng')->get('/spv', [SpvController::class, 'index'])->name('peng');
-    });
-    Route::prefix('period')->name('period.')->group(function () {
-        Route::middleware(['role:admin'])->group(function () {
-            Route::get('/index', [PeriodController::class, 'index'])
-                ->name('index');
-            Route::post('/store', [PeriodController::class, 'store'])
-                ->name('store');
-            Route::get('/fetch/{id}', [PeriodController::class, 'fetch'])
-                ->name('fetch');
-            Route::delete('/destroy/{id}', [PeriodController::class, 'destroy'])
-                ->name('destroy');
+    Route::get('/sso-login', [SsoController::class, 'ssoRedirect']);
+    Route::get('/sso-search', [SsoController::class, 'ssoAPI'])->name('sso-api');
+
+    // Route::middleware(['auth', 'verified'])->group(function () {
+    Route::middleware(['local.auth', 'verified'])->group(function () {
+        Route::get('/dashboard', [HomeController::class, 'index'])
+            ->name('dashboard');
+        Route::get('/index', [SummaryController::class, 'index'])->name('home.index');
+        Route::get('/get-progress', [SummaryController::class, 'getProgress'])->name('home.get-progress');
+        Route::post('/update-time', [HomeController::class, 'updateSummaryTime'])->name('home.update-time');
+        Route::get('/home/get-summary', [HomeController::class, 'getSummary'])->name('home.get-summary');
+        Route::get('/home/get-graph', [HomeController::class, 'getGraph'])->name('home.get-graph');
+
+        Route::name('spv.')->group(function () {
+            Route::prefix('lapus')->group(function () {
+                Route::get('/spv', [SpvController::class, 'index'])->name('lapus');
+            });
+            Route::prefix('peng')->group(function () {
+                Route::get('/spv', [SpvController::class, 'index'])->name('peng');
+            });
         });
+        Route::prefix('period')->name('period.')->group(function () {
+            Route::middleware(['role:admin'])->group(function () {
+                Route::get('/index', [PeriodController::class, 'index'])
+                    ->name('index');
+                Route::post('/store', [PeriodController::class, 'store'])
+                    ->name('store');
+                Route::get('/fetch/{id}', [PeriodController::class, 'fetch'])
+                    ->name('fetch');
+                Route::delete('/destroy/{id}', [PeriodController::class, 'destroy'])
+                    ->name('destroy');
+            });
 
-        //fetching periods for rekons
-        Route::get('/fetchYear', [PeriodController::class, 'fetchYear'])
-            ->name('fetchYear');
-        Route::get('/fetchQuarter', [PeriodController::class, 'fetchQuarter'])
-            ->name('fetchQuarter');
-        Route::get('/fetchPeriod', [PeriodController::class, 'fetchPeriod'])
-            ->name('fetchPeriod');
-        Route::get('/fetchYearBefore', [PeriodController::class, 'fetchYearBefore'])
-            ->name('fetchYearBefore');
-    });
-    Route::middleware(['role:admin|user'])->prefix('lapus')->name('lapus.')->group(function () {
-        Route::get('/entri', [PdrbController::class, 'entri'])
-            ->name('entri');
-        Route::get('/adjustment', [PdrbController::class, 'adjustment'])
-            ->name('adjustment');
-        Route::get('/hasil', [PdrbController::class, 'hasil'])
-            ->name('hasil');
-        Route::get('/diskrepansi', [PdrbController::class, 'diskrepansi'])
-            ->name('diskrepansi');
-        Route::get('/entri-fenomena', [FenomenaController::class, 'entri'])
-            ->name('entri-fenomena');
-    });
-    Route::middleware(['role:admin|user|viewer'])->prefix('peng')->name('peng.')->group(function () {
-        Route::middleware(['role:admin|user'])->group(function () {
+            //fetching periods for rekons
+            Route::get('/fetchYear', [PeriodController::class, 'fetchYear'])
+                ->name('fetchYear');
+            Route::get('/fetchQuarter', [PeriodController::class, 'fetchQuarter'])
+                ->name('fetchQuarter');
+            Route::get('/fetchPeriod', [PeriodController::class, 'fetchPeriod'])
+                ->name('fetchPeriod');
+            Route::get('/fetchYearBefore', [PeriodController::class, 'fetchYearBefore'])
+                ->name('fetchYearBefore');
+        });
+        Route::middleware(['role:admin|user'])->prefix('lapus')->name('lapus.')->group(function () {
             Route::get('/entri', [PdrbController::class, 'entri'])
                 ->name('entri');
             Route::get('/adjustment', [PdrbController::class, 'adjustment'])
                 ->name('adjustment');
+            Route::get('/hasil', [PdrbController::class, 'hasil'])
+                ->name('hasil');
+            Route::get('/diskrepansi', [PdrbController::class, 'diskrepansi'])
+                ->name('diskrepansi');
             Route::get('/entri-fenomena', [FenomenaController::class, 'entri'])
                 ->name('entri-fenomena');
         });
-        Route::get('/hasil', [PdrbController::class, 'hasil'])
-            ->name('hasil');
-        Route::get('/diskrepansi', [PdrbController::class, 'diskrepansi'])
-            ->name('diskrepansi');
-    });
-
-    //Entri
-    Route::middleware(['role:admin|user'])->group(function () {
-        Route::get('/show-pdrb', [PdrbController::class, 'show'])
-            ->name('pdrb.show');
-        Route::post('/save-entri', [PdrbController::class, 'saveEntri'])
-            ->name('pdrb.save-entri');
-        Route::post('/submit-entri', [PdrbController::class, 'submitEntri'])
-            ->name('pdrb.submit-entri');
-        Route::post('/unsubmit-entri', [PdrbController::class, 'unsubmitEntri'])
-            ->name('pdrb.unsubmit-entri');
-        Route::get('/copy-entri', [PdrbController::class, 'copyEntri'])
-            ->name('pdrb.copy-entri');
-        Route::get('/copy-hasil', [PdrbController::class, 'copyHasil'])
-            ->name('pdrb.copy-hasil');
-        Route::get('/watch-previous', [PdrbController::class, 'watchPrevious'])
-            ->name('pdrb.watch-previous');
-    });
-
-    //Adjustment
-    Route::middleware(['role:admin|user'])->get('/get-adjustment', [PdrbController::class, 'getAdjustment'])
-        ->name('pdrb.get-adjustment');
-    Route::middleware(['role:admin'])->post('/save-adjustment', [PdrbController::class, 'saveAdjustment'])
-        ->name('pdrb.save-adjustment');
-
-    //Monitoring
-    Route::middleware(['role:admin'])->group(function () {
-        Route::get('/get-monitoring', [PdrbController::class, 'getMonitoring'])
-            ->name('pdrb.get-monitoring');
-        Route::get('/monitoring', [PdrbController::class, 'monitoring'])
-            ->name('pdrb.monitoring');
-        Route::get('/cek-tahunan', [PdrbController::class, 'cekTahunan'])
-            ->name('pdrb.cek-tahunan');
-    });
-
-    Route::middleware(['role:admin|user'])->group(function () {
-        //Hasil
-        Route::get('/get-hasil', [PdrbController::class, 'getHasil'])
-            ->name('pdrb.get-hasil');
-
-        Route::get('/add-year-fetch', [PdrbController::class, 'addYearFetch'])
-            ->name('pdrb.add-year-fetch');
-        //Diskrepansi
-        Route::get('/get-diskrepansi', [PdrbController::class, 'getDiskrepansi'])
-            ->name('pdrb.get-diskrepansi');
-    });
-
-    //Fenomena
-    Route::prefix('fenomena')->name('fenomena.')->group(function () {
-        Route::middleware(['role:admin|user|viewer'])->group(function () {
-            Route::get('/show', [FenomenaController::class, 'show'])
-                ->name('show');
-            Route::get('/index', [FenomenaController::class, 'index'])
-                ->name('index');
-            Route::get('/get-index', [FenomenaController::class, 'getIndex'])
-                ->name('get-index');
+        Route::middleware(['role:admin|user|viewer'])->prefix('peng')->name('peng.')->group(function () {
             Route::middleware(['role:admin|user'])->group(function () {
-                Route::post('/save-fenomena', [FenomenaController::class, 'saveFenomena'])
-                    ->name('save-fenomena');
-                Route::post('/submit-fenomena', [FenomenaController::class, 'submitFenomena'])
-                    ->name('submit-fenomena');
-                Route::post('/unsubmit-fenomena', [FenomenaController::class, 'unsubmitFenomena'])
-                    ->name('unsubmit-fenomena');
+                Route::get('/entri', [PdrbController::class, 'entri'])
+                    ->name('entri');
+                Route::get('/adjustment', [PdrbController::class, 'adjustment'])
+                    ->name('adjustment');
+                Route::get('/entri-fenomena', [FenomenaController::class, 'entri'])
+                    ->name('entri-fenomena');
+            });
+            Route::get('/hasil', [PdrbController::class, 'hasil'])
+                ->name('hasil');
+            Route::get('/diskrepansi', [PdrbController::class, 'diskrepansi'])
+                ->name('diskrepansi');
+        });
+
+        //Entri
+        Route::middleware(['role:admin|user'])->group(function () {
+            Route::get('/show-pdrb', [PdrbController::class, 'show'])
+                ->name('pdrb.show');
+            Route::post('/save-entri', [PdrbController::class, 'saveEntri'])
+                ->name('pdrb.save-entri');
+            Route::post('/submit-entri', [PdrbController::class, 'submitEntri'])
+                ->name('pdrb.submit-entri');
+            Route::post('/unsubmit-entri', [PdrbController::class, 'unsubmitEntri'])
+                ->name('pdrb.unsubmit-entri');
+            Route::get('/copy-entri', [PdrbController::class, 'copyEntri'])
+                ->name('pdrb.copy-entri');
+            Route::get('/copy-hasil', [PdrbController::class, 'copyHasil'])
+                ->name('pdrb.copy-hasil');
+            Route::get('/watch-previous', [PdrbController::class, 'watchPrevious'])
+                ->name('pdrb.watch-previous');
+        });
+
+        //Adjustment
+        Route::middleware(['role:admin|user'])->get('/get-adjustment', [PdrbController::class, 'getAdjustment'])
+            ->name('pdrb.get-adjustment');
+        Route::middleware(['role:admin'])->post('/save-adjustment', [PdrbController::class, 'saveAdjustment'])
+            ->name('pdrb.save-adjustment');
+
+        //Monitoring
+        Route::middleware(['role:admin'])->group(function () {
+            Route::get('/get-monitoring', [PdrbController::class, 'getMonitoring'])
+                ->name('pdrb.get-monitoring');
+            Route::get('/monitoring', [PdrbController::class, 'monitoring'])
+                ->name('pdrb.monitoring');
+            Route::get('/cek-tahunan', [PdrbController::class, 'cekTahunan'])
+                ->name('pdrb.cek-tahunan');
+        });
+
+        Route::middleware(['role:admin|user'])->group(function () {
+            //Hasil
+            Route::get('/get-hasil', [PdrbController::class, 'getHasil'])
+                ->name('pdrb.get-hasil');
+
+            Route::get('/add-year-fetch', [PdrbController::class, 'addYearFetch'])
+                ->name('pdrb.add-year-fetch');
+            //Diskrepansi
+            Route::get('/get-diskrepansi', [PdrbController::class, 'getDiskrepansi'])
+                ->name('pdrb.get-diskrepansi');
+        });
+
+        //Fenomena
+        Route::prefix('fenomena')->name('fenomena.')->group(function () {
+            Route::middleware(['role:admin|user|viewer'])->group(function () {
+                Route::get('/show', [FenomenaController::class, 'show'])
+                    ->name('show');
+                Route::get('/index', [FenomenaController::class, 'index'])
+                    ->name('index');
+                Route::get('/get-index', [FenomenaController::class, 'getIndex'])
+                    ->name('get-index');
+                Route::middleware(['role:admin|user'])->group(function () {
+                    Route::post('/save-fenomena', [FenomenaController::class, 'saveFenomena'])
+                        ->name('save-fenomena');
+                    Route::post('/submit-fenomena', [FenomenaController::class, 'submitFenomena'])
+                        ->name('submit-fenomena');
+                    Route::post('/unsubmit-fenomena', [FenomenaController::class, 'unsubmitFenomena'])
+                        ->name('unsubmit-fenomena');
+                });
+            });
+            Route::middleware(['role:admin'])->group(function () {
+                Route::get('/monitoring', [FenomenaController::class, 'monitoring'])
+                    ->name('monitoring');
+                Route::get('/get-monitoring', [FenomenaController::class, 'getMonitoring'])
+                    ->name('get-monitoring');
             });
         });
-        Route::middleware(['role:admin'])->group(function () {
-            Route::get('/monitoring', [FenomenaController::class, 'monitoring'])
-                ->name('monitoring');
-            Route::get('/get-monitoring', [FenomenaController::class, 'getMonitoring'])
-                ->name('get-monitoring');
+        //User
+        Route::prefix('user')->name('user.')->group(function () {
+            Route::middleware(['role:admin'])->group(function () {
+                Route::get('/index', [UserController::class, 'index'])->name('index');
+                Route::post('/store', [UserController::class, 'store'])
+                    ->name('store');
+                Route::get('/fetch/{id}', [UserController::class, 'fetch'])
+                    ->name('fetch');
+                Route::delete('/destroy/{id}', [UserController::class, 'destroy'])
+                    ->name('destroy');
+            });
+            Route::middleware(['role:admin|user|viewer'])->group(function () {
+                Route::get('/edit/{id}', [UserController::class, 'edit'])
+                    ->name('edit');
+                Route::post('/edit', [UserController::class, 'edit']);
+            });
+            Route::get('/question', [UserController::class, 'question'])->name('question');
+            Route::post('/question', [UserController::class, 'question']);
+            Route::delete('/delete-question/{id}', [UserController::class, 'question']);
+            Route::get('/fetch-question/{id}', [UserController::class, 'fetchQuestion'])->name('fetch-question');
+        });
+        Route::get('/download-guide', function () {
+            $filePath = public_path('document/Panduan Aplikasi Karlota.pdf');
+            return Response::download($filePath);
+        })->name('download-guide');
+        Route::get('/download-template/rows', function () {
+            $filePath = public_path('document/Template Baris.xlsx');
+            return Response::download($filePath);
+        })->name('download-template-rows');
+        //maintenance
+        Route::post('/set-maintenance', function () {
+            $maintenance = Maintenance::findOrFail(1);
+            $maintenance->maintenance = !$maintenance->maintenance;
+            $maintenance->save();
+            return $maintenance->maintenance;
+        })->name('set-maintenance');
+        Route::get('/maintenance-status', function () {
+            $maintenance = Maintenance::find(1);
+
+            $result = $maintenance ? $maintenance->maintenance : false;
+
+            return response()->json([
+                'maintenance' => $result
+            ]);
+        })->name('maintenance-status');
+        //produsen
+        Route::middleware(['role:admin|user'])->name('produsen.')->group(function () {
+            Route::get('/produsen/index', [ProdusenController::class, 'index'])->name('index');
+            Route::post('/produsen/store', [ProdusenController::class, 'store'])->name('store');
+            Route::get('/produsen/fetch/{id}', [ProdusenController::class, 'fetch'])->name('fetch');
+            Route::delete('/produsen/delete/{id}', [ProdusenController::class, 'destroy'])->name('destroy');
+        });
+        //master
+        Route::prefix('master')->middleware(['role:admin|user'])->name('master.')->group(function () {
+            Route::get('/rows/index', [MasterController::class, 'RowIndex'])->name('rows.index');
+            Route::post('/rows/store', [MasterController::class, 'RowStore'])->name('rows.store');
+            Route::get('/rows/fetch/{id}', [MasterController::class, 'RowFetch'])->name('rows.fetch');
+            Route::delete('/rows/delete/{id}', [MasterController::class, 'RowDestroy'])->name('rows.destroy');
+
+            Route::get('/sekunder/index', [MasterController::class, 'SekunderIndex'])->name('sekunder.index');
+            Route::get('/sekunder/update/{id}', [MasterController::class, 'SekunderUpdate'])->name('sekunder.update');
+            Route::post('/sekunder/update', [MasterController::class, 'SekunderUpdate']);
+            Route::post('/sekunder/addYear', [MasterController::class, 'SekunderAddYear'])->name('sekunder.addyear');
+            Route::delete('/sekunder/delete/{id}', [MasterController::class, 'SekunderDestroy'])->name('sekunder.destroy');
+        });
+        //sekunder
+        Route::middleware(['role:admin|user|viewer'])->name('sekunder.')->group(function () {
+            Route::get('/sekunder/entri/{id}', [SekunderController::class, 'entri'])->name('entri');
+
+            Route::get('/sekunder/data-by-dinas', [SekunderController::class, 'dataByDinas'])->name('data-by-dinas');
+            Route::get('/sekunder/data-by-dinas/{id}', [SekunderController::class, 'byDinasView'])->name('by-dinas-view');
+            Route::get('/data-by-dinas/changeYear', [SekunderController::class, 'byDinasChangeYear'])->name('by-dinas-change');
+            Route::get('/sekunder/index', [SekunderController::class, 'index'])->name('index');
+            Route::middleware(['role:admin|user'])->group(function () {
+                Route::get('/sekunder/create', [SekunderController::class, 'create'])->name('create');
+                Route::post('/sekunder/store', [SekunderController::class, 'store'])->name('store');
+                Route::post('/sekunder/update', [SekunderController::class, 'update'])->name('update');
+                Route::delete('/sekunder/delete/{id}', [SekunderController::class, 'destroy'])->name('destroy');
+            });
         });
     });
-    //User
-    Route::prefix('user')->name('user.')->group(function () {
-        Route::middleware(['role:admin'])->group(function () {
-            Route::get('/index', [UserController::class, 'index'])->name('index');
-            Route::post('/store', [UserController::class, 'store'])
-                ->name('store');
-            Route::get('/fetch/{id}', [UserController::class, 'fetch'])
-                ->name('fetch');
-            Route::delete('/destroy/{id}', [UserController::class, 'destroy'])
-                ->name('destroy');
-        });
-        Route::middleware(['role:admin|user|viewer'])->group(function () {
-            Route::get('/edit/{id}', [UserController::class, 'edit'])
-                ->name('edit');
-            Route::post('/edit', [UserController::class, 'edit']);
-        });
-        Route::get('/question', [UserController::class, 'question'])->name('question');
-        Route::post('/question', [UserController::class, 'question']);
-        Route::delete('/delete-question/{id}', [UserController::class, 'question']);
-        Route::get('/fetch-question/{id}', [UserController::class, 'fetchQuestion'])->name('fetch-question');
-    });
-    Route::get('/download-guide', function () {
-        $filePath = public_path('document/Panduan Aplikasi Karlota.pdf');
-        return Response::download($filePath);
-    })->name('download-guide');
-    Route::get('/download-template/rows', function () {
-        $filePath = public_path('document/Template Baris.xlsx');
-        return Response::download($filePath);
-    })->name('download-template-rows');
-    //maintenance
-    Route::post('/set-maintenance', function () {
-        $maintenance = Maintenance::findOrFail(1);
-        $maintenance->maintenance = !$maintenance->maintenance;
-        $maintenance->save();
-        return $maintenance->maintenance;
-    });
-    Route::get('/maintenance-status', function () {
-        $maintenance = Maintenance::find(1);
 
-        $result = $maintenance ? $maintenance->maintenance : false;
-
-        return response()->json([
-            'maintenance' => $result
-        ]);
-    });
-    //produsen
-    Route::middleware(['role:admin|user'])->name('produsen.')->group(function () {
-        Route::get('/produsen/index', [ProdusenController::class, 'index'])->name('index');
-        Route::post('/produsen/store', [ProdusenController::class, 'store'])->name('store');
-        Route::get('/produsen/fetch/{id}', [ProdusenController::class, 'fetch'])->name('fetch');
-        Route::delete('/produsen/delete/{id}', [ProdusenController::class, 'destroy'])->name('destroy');
-    });
-    //master
-    Route::prefix('master')->middleware(['role:admin|user'])->name('master.')->group(function () {
-        Route::get('/rows/index', [MasterController::class, 'RowIndex'])->name('rows.index');
-        Route::post('/rows/store', [MasterController::class, 'RowStore'])->name('rows.store');
-        Route::get('/rows/fetch/{id}', [MasterController::class, 'RowFetch'])->name('rows.fetch');
-        Route::delete('/rows/delete/{id}', [MasterController::class, 'RowDestroy'])->name('rows.destroy');
-
-        Route::get('/sekunder/index', [MasterController::class, 'SekunderIndex'])->name('sekunder.index');
-        Route::get('/sekunder/update/{id}', [MasterController::class, 'SekunderUpdate'])->name('sekunder.update');
-        Route::post('/sekunder/update', [MasterController::class, 'SekunderUpdate']);
-        Route::post('/sekunder/addYear', [MasterController::class, 'SekunderAddYear'])->name('sekunder.addyear');
-        Route::delete('/sekunder/delete/{id}', [MasterController::class, 'SekunderDestroy'])->name('sekunder.destroy');
-    });
-    //sekunder
-    Route::middleware(['role:admin|user|viewer'])->name('sekunder.')->group(function () {
-        Route::get('/sekunder/entri/{id}', [SekunderController::class, 'entri'])->name('entri');
-
-        Route::get('/sekunder/data-by-dinas', [SekunderController::class, 'dataByDinas'])->name('data-by-dinas');
-        Route::get('/sekunder/data-by-dinas/{id}', [SekunderController::class, 'byDinasView'])->name('by-dinas-view');
-        Route::get('/data-by-dinas/changeYear', [SekunderController::class, 'byDinasChangeYear'])->name('by-dinas-change');
-        Route::get('/sekunder/index', [SekunderController::class, 'index'])->name('index');
-        Route::middleware(['role:admin|user'])->group(function () {
-            Route::get('/sekunder/create', [SekunderController::class, 'create'])->name('create');
-            Route::post('/sekunder/store', [SekunderController::class, 'store'])->name('store');
-            Route::post('/sekunder/update', [SekunderController::class, 'update'])->name('update');
-            Route::delete('/sekunder/delete/{id}', [SekunderController::class, 'destroy'])->name('destroy');
-        });
-    });
+    require __DIR__ . '/auth.php';
 });
 
-// Nuxt SPA fallback — serves index.html for all /v2/* routes
-// so that client-side routing works on page refresh
-// Nuxt session bridge. A valid Laravel/Inertia web session can be exchanged
-// for the Nuxt API token, avoiding a second login on the same domain.
-// Keep this route above the /v2/* SPA fallback.
-Route::get('/v2/auth/token', function (\Illuminate\Http\Request $request) {
+// ─── Nuxt Session Bridge & SPA Fallback (Root /) ─────────────────────────────
+// A valid Laravel/Inertia web session can be exchanged for the Nuxt API token,
+// avoiding a second login on the same domain.
+Route::get('/auth/token', function (\Illuminate\Http\Request $request) {
     $user = $request->user();
+
+    if (!$user) {
+        return response()->json(['message' => 'Unauthenticated.'], 401);
+    }
 
     return response()->json([
         'token' => \App\Http\Controllers\Api\AuthController::generateToken($user),
@@ -261,23 +275,23 @@ Route::get('/v2/auth/token', function (\Illuminate\Http\Request $request) {
             'nip_lama' => $user->nip_lama,
         ],
     ])->header('Cache-Control', 'no-store, private');
-})->middleware('auth')->name('v2.auth.token');
+})->middleware('web')->name('nuxt.auth.token');
 
-// Nuxt v2 session logout — tidak butuh CSRF karena GET request
-// Nuxt memanggil ini saat logout untuk mematikan web session Laravel
-Route::get('/v2/auth/logout', function (\Illuminate\Http\Request $request) {
+// Nuxt session logout — mematikan web session Laravel saat logout dari Nuxt
+Route::get('/auth/logout', function (\Illuminate\Http\Request $request) {
     \Illuminate\Support\Facades\Auth::guard('web')->logout();
     $request->session()->invalidate();
     $request->session()->regenerateToken();
     return response()->json(['message' => 'Logged out']);
-})->middleware('web')->name('v2.auth.logout');
+})->middleware('web')->name('nuxt.auth.logout');
 
-Route::get('/v2/{any?}', function () {
-    $path = public_path('v2/index.html');
+// Nuxt SPA fallback — serves public/_nuxt/index.html for all root SPA routes
+Route::get('/{any?}', function () {
+    $path = public_path('_nuxt/index.html');
     if (!file_exists($path)) {
-        abort(404, 'Nuxt app not found. Run "npm run generate" and copy output to public/v2/.');
+        abort(404, 'Nuxt app not found. Run "pnpm run deploy" in karlota-nuxt to copy output to public/_nuxt/.');
     }
-    return Response::file($path);
-})->where('any', '.*');
-
-require __DIR__ . '/auth.php';
+    return response(file_get_contents($path), 200, [
+        'Content-Type' => 'text/html; charset=UTF-8',
+    ]);
+})->where('any', '^(?!api|v1|_nuxt).*$');

@@ -335,7 +335,7 @@ const submit = async () => {
     const response = await axios.get(route("token"));
     form._token = response.data;
     if (form.processing) return;
-    form.post("/user/question", {
+    form.post("/v1/user/question", {
       onSuccess: (response) => {
         showNotification(response.props.notification);
         if (response.props.notification[0].type == "message") {
@@ -354,7 +354,7 @@ const deleteSubmit = async () => {
     const response = await axios.get(route("token"));
     form._token = response.data;
     if (form.processing) return;
-    form.delete("/user/delete-question/" + form.id, {
+    form.delete("/v1/user/delete-question/" + form.id, {
       onSuccess: (response) => {
         showNotification(response.props.notification);
         if (response.props.notification[0].type == "message") {

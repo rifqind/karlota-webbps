@@ -107,11 +107,24 @@ class SsoController extends Controller
     public function ssoCallback(Request $request)
     {
         $sessionState = $request->session()->pull('oauth_state') ?? $request->session()->pull('state');
+        // Jika request memiliki parameter ?token= (tanpa ?code= dari Keycloak),
+        // berarti ini adalah redirect balik ke halaman Nuxt SPA /sso-callback?token=...
+        if ($request->has('token') && !$request->has('code')) {
+            $path = public_path('_nuxt/index.html');
+            if (file_exists($path)) {
+                return response(file_get_contents($path), 200, [
+                    'Content-Type' => 'text/html; charset=UTF-8',
+                ]);
+            }
+        }
+
+        $sessionState = $request->session()->pull('state');
         $ssoSource = $request->session()->pull('sso_source');
 
         // Deteksi apakah request SSO berasal dari Nuxt (v2) atau Karlota Biasa (Web)
         $isNuxt = ($ssoSource === 'nuxt') || Str::startsWith($request->state ?? '', 'nuxt_');
-        $nuxtUrl = config('services.nuxt_url', 'http://localhost:8000/v2');
+
+        $nuxtUrl = rtrim(config('services.nuxt_url', url('/')), '/');
 
         // Validasi state (mencegah login CSRF) untuk Web session
         if (!$isNuxt) {

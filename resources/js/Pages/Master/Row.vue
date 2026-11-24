@@ -281,7 +281,7 @@ const form = useForm({
 });
 const uploadModal = ref(false);
 const downloadTemplate = () => {
-  window.location.href = "/download-template/rows";
+  window.location.href = route("download-template-rows");
 };
 const handleUpload = (e) => {
   let fileS = e.target.files ? e.target.files[0] : null;

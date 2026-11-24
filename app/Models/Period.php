@@ -16,6 +16,7 @@ class Period extends Model
 
     protected $fillable = [
         'type',
+        'kbli',
         'year',
         'status',
         'quarter',

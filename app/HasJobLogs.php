@@ -43,14 +43,15 @@ trait HasJobLogs
                 break;
         }
 
+        $userId = Auth::id() ?? (request()?->attributes->get('auth_payload')['sub'] ?? null);
         SuperLog::create([
             'table_name' => $this->getTable(),
-            'record_id'  => $this->getKey(),
-            'action'     => $action,
-            'before'     => $before,
-            'after'      => $after,
-            'user_id'    => Auth::id(), // bisa null kalau tidak ada user
-            'logged_at'  => now(),
+            'record_id' => $this->getKey(),
+            'action' => $action,
+            'before' => $before,
+            'after' => $after,
+            'user_id' => $userId,
+            'logged_at' => now(),
         ]);
     }
 }

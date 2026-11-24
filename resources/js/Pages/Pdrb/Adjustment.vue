@@ -378,7 +378,9 @@ const subsectorDrop = ref([]);
 const mountThis = ref(false);
 onMounted(() => {
   fetchYear();
-  startAutoSave(); // start autosave on mount since autoSaveEnabled defaults to true
+  if (page.props.auth.user.role == "admin") {
+    startAutoSave(); // start autosave on mount since autoSaveEnabled defaults to true
+  }
   // #region Section: subsector select
   let tempData = [];
   mountThis.value = true;
@@ -624,7 +626,7 @@ const submit = async () => {
   }
 };
 const saveAdjustment = async (isAuto = false) => {
-  if (!showTabPanel.value) return;
+  if (!showTabPanel.value || page.props.auth.user.role != "admin") return;
   const thisForm = useForm({
     _token: null,
     dataContents: dataContents.value,
@@ -663,6 +665,7 @@ const toggleAutoSave = () => {
 };
 
 const startAutoSave = () => {
+  if (page.props.auth.user.role != "admin") return;
   stopAutoSave();
   autoSaveTimer = setInterval(() => {
     if (!showTabPanel.value) return;

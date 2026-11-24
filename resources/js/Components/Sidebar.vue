@@ -367,10 +367,10 @@ const maintenanceStat = ref(false);
 const setMaintenance = async () => {
   try {
     const token = await axios.get(route("token"));
-    const response = await axios.post("/set-maintenance", {
+    const response = await axios.post("/v1/set-maintenance", {
       _token: token.data,
     });
-    const { data } = await axios.get("/maintenance-status");
+    const { data } = await axios.get("/v1/maintenance-status");
     if (data.maintenance == "1") {
       maintenanceStat.value = true;
     } else maintenanceStat.value = false;
@@ -379,13 +379,13 @@ const setMaintenance = async () => {
   }
 };
 onMounted(async () => {
-  const { data } = await axios.get("/maintenance-status");
+  const { data } = await axios.get("/v1/maintenance-status");
   if (data.maintenance == "1") {
     maintenanceStat.value = true;
   } else maintenanceStat.value = false;
 });
 const downloadGuide = () => {
-  window.location.href = "/download-guide";
+  window.location.href = route("download-guide");
 };
 const isNeraca =
   page.props.auth.user.role == "admin" || page.props.auth.user.role == "user";

@@ -3,16 +3,14 @@
 namespace App\Http\Middleware;
 
 use App\Http\Controllers\Api\AuthController;
+use App\Models\User;
 use Closure;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Symfony\Component\HttpFoundation\Response;
 
 class VerifyApiToken
 {
-    /**
-     * Handle an incoming request.
-     * Validates the encrypted Bearer token issued by AuthController::generateToken().
-     */
     public function handle(Request $request, Closure $next): Response
     {
         $authHeader = $request->header('Authorization', '');
@@ -20,7 +18,7 @@ class VerifyApiToken
             ? substr($authHeader, 7)
             : null;
 
-        if (! $token) {
+        if (!$token) {
             return response()->json([
                 'message' => 'Unauthenticated. Token tidak ditemukan.',
             ], 401);
@@ -28,13 +26,25 @@ class VerifyApiToken
 
         $payload = AuthController::verifyToken($token);
 
-        if (! $payload) {
+        if (!$payload) {
             return response()->json([
                 'message' => 'Token tidak valid atau sudah kadaluarsa. Silahkan login kembali.',
             ], 401);
         }
 
-        // Inject payload ke request agar controller bisa akses jika diperlukan
+        // 1. Ambil model User berdasarkan UUID (sub) dari payload token
+        $user = User::find($payload['sub']);
+        if (!$user) {
+            return response()->json([
+                'message' => 'User tidak ditemukan atau sudah tidak aktif.',
+            ], 401);
+        }
+
+        // 2. Set user ke Laravel Auth Guard & Request User Resolver
+        Auth::setUser($user);
+        $request->setUserResolver(fn() => $user);
+
+        // 3. Tetap simpan auth_payload untuk kompatibilitas jika ada controller yang pakai
         $request->attributes->set('auth_payload', $payload);
 
         return $next($request);

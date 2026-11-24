@@ -17,6 +17,8 @@ Route::prefix('auth')->group(function () {
     Route::post('/login', [AuthController::class, 'login']);
     Route::post('/logout', [AuthController::class, 'logout']);
     Route::get('/sso-url', [SsoController::class, 'getSsoUrl']);
+    Route::get('/local-users', [AuthController::class, 'localUsers']);
+    Route::post('/local-login', [AuthController::class, 'localLogin']);
 });
 
 // ─── Protected Routes (wajib menyertakan Bearer token) ────────────────────────
@@ -44,6 +46,7 @@ Route::middleware('api.token')->group(function () {
         Route::get('/fetchQuarter', [\App\Http\Controllers\PeriodController::class, 'fetchQuarter']);
         Route::get('/fetchPeriod', [\App\Http\Controllers\PeriodController::class, 'fetchPeriod']);
         Route::get('/fetchYearBefore', [\App\Http\Controllers\PeriodController::class, 'fetchYearBefore']);
+        Route::get('/fetchKbli', [\App\Http\Controllers\PeriodController::class, 'fetchKbli']);
     });
 
     // User Routes
@@ -115,7 +118,7 @@ Route::middleware('api.token')->group(function () {
 
     // Adjustment Routes
     Route::get('/get-adjustment', [\App\Http\Controllers\PdrbController::class, 'getAdjustment']);
-    Route::post('/save-adjustment', [\App\Http\Controllers\PdrbController::class, 'saveAdjustment']);
+    Route::middleware('role:admin')->post('/save-adjustment', [\App\Http\Controllers\PdrbController::class, 'saveAdjustment']);
 
     // Hasil Routes
     Route::get('/get-hasil', [\App\Http\Controllers\PdrbController::class, 'getHasil']);
