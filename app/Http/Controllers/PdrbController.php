@@ -20,8 +20,10 @@ class PdrbController extends Controller
     public function entri()
     {
         $prefix = basename(request()->route()->getPrefix() ?? '');
-        if ($prefix == 'lapus') $type = 'Lapangan Usaha';
-        else if ($prefix == 'peng') $type = 'Pengeluaran';
+        if ($prefix == 'lapus')
+            $type = 'Lapangan Usaha';
+        else if ($prefix == 'peng')
+            $type = 'Pengeluaran';
         $regions = Region::getMyRegion();
         $subsectors = Subsector::where('type', $type)
             ->with(['sector.category'])
@@ -35,9 +37,12 @@ class PdrbController extends Controller
 
     public function show(Request $request)
     {
-        $subsectors = Subsector::where('type', $request->type)->pluck('id');
+        $subsectors = Subsector::where('type', $request->type)
+            ->where('kbli', $request->kbli)
+            ->pluck('id');
         $validated = $request->validate([
             'type' => ['required', 'string'],
+            'kbli' => ['required', 'string'],
             'year' => ['required', 'integer'],
             'quarter' => ['required', 'integer'],
             'description' => ['required', 'integer'],
@@ -53,19 +58,23 @@ class PdrbController extends Controller
             $current_period = Period::where('id', $period_id)->first();
             if (!$period_before) {
                 if ($current_period->status == 'Aktif') {
-                    $previous_period = Period::where('type', $validated['type'])->where('year', $validated['year'] - 1)
+                    $previous_period = Period::where('type', $validated['type'])
+                        ->where('kbli', $validated['kbli'])
+                        ->where('year', $validated['year'] - 1)
                         ->where('quarter', 4)
                         ->latest('id')
                         ->value('id');
                 } else {
                     $previous_period = Period::where('type', $validated['type'])
+                        ->where('kbli', $validated['kbli'])
                         ->where('year', $validated['year'] - 1)
                         ->where('quarter', 4)
                         ->where('status', '<>', 'Aktif')
                         ->latest('id')
                         ->value('id');
                 }
-            } else $previous_period = $period_before;
+            } else
+                $previous_period = $period_before;
 
             $periode_before_year = Period::find($previous_period);
             $current_dataset = Dataset::where('period_id', $period_id)
@@ -77,6 +86,7 @@ class PdrbController extends Controller
 
             if ($previous_dataset) {
                 $previous_data = Pdrb::where('dataset_id', $previous_dataset)
+                    ->whereIn('subsector_id', $subsectors)
                     ->orderBy('subsector_id')
                     ->get();
                 $message = [
@@ -110,6 +120,7 @@ class PdrbController extends Controller
 
             if ($current_dataset) {
                 $current_data = Pdrb::where('dataset_id', $current_dataset)
+                    ->whereIn('subsector_id', $subsectors)
                     ->orderBy('subsector_id')
                     ->get();
                 $message = [
@@ -146,6 +157,7 @@ class PdrbController extends Controller
                     }
                 }
                 $current_data = Pdrb::where('dataset_id', $current_object_dataset->id)
+                    ->whereIn('subsector_id', $subsectors)
                     ->orderBy('subsector_id')
                     ->get();
                 $current_dataset = $current_object_dataset->id;
@@ -157,7 +169,7 @@ class PdrbController extends Controller
             }
             $dataset = Dataset::find($current_dataset);
             DB::commit();
-            return  response()->json([
+            return response()->json([
                 'current_data' => $current_data,
                 'previous_data' => $previous_data,
                 'notification' => $notification,
@@ -179,8 +191,10 @@ class PdrbController extends Controller
     {
         $notification = [];
         $type = $request->type;
-        if ($type == 'Lapangan Usaha') $route = 'lapus.';
-        else if ($type == 'Pengeluaran') $route = 'peng.';
+        if ($type == 'Lapangan Usaha')
+            $route = 'lapus.';
+        else if ($type == 'Pengeluaran')
+            $route = 'peng.';
         try {
             //code...
             DB::beginTransaction();
@@ -197,14 +211,15 @@ class PdrbController extends Controller
             foreach ($data['dataContents'] as $key => $value) {
                 # code...
                 $pdrb = Pdrb::find($value['id']);
-                if ($pdrb) $pdrb->update([
-                    'dataset_id' => $value['dataset_id'],
-                    'year' => $value['year'],
-                    'quarter' => $value['quarter'],
-                    'subsector_id' => $value['subsector_id'],
-                    'adhb' => $value['adhb'],
-                    'adhk' => $value['adhk'],
-                ]);
+                if ($pdrb)
+                    $pdrb->update([
+                        'dataset_id' => $value['dataset_id'],
+                        'year' => $value['year'],
+                        'quarter' => $value['quarter'],
+                        'subsector_id' => $value['subsector_id'],
+                        'adhb' => $value['adhb'],
+                        'adhk' => $value['adhk'],
+                    ]);
             }
             $message = [
                 'type' => 'success',
@@ -241,6 +256,7 @@ class PdrbController extends Controller
     public function watchPrevious(Request $request)
     {
         $validated = $request->validate([
+            'kbli' => ['required', 'kbli'],
             'type' => ['required', 'string'],
             'year' => ['required', 'integer'],
             'quarter' => ['required', 'integer'],
@@ -299,13 +315,17 @@ class PdrbController extends Controller
     {
         $notification = [];
         $type = $request->type;
-        if ($type == 'Lapangan Usaha') $route = 'lapus.';
-        else if ($type == 'Pengeluaran') $route = 'peng.';
+        if ($type == 'Lapangan Usaha')
+            $route = 'lapus.';
+        else if ($type == 'Pengeluaran')
+            $route = 'peng.';
         try {
             //code...
             DB::beginTransaction();
-            if ($type == 'Lapangan Usaha') $route = 'lapus.';
-            else if ($type == 'Pengeluaran') $route = 'peng.';
+            if ($type == 'Lapangan Usaha')
+                $route = 'lapus.';
+            else if ($type == 'Pengeluaran')
+                $route = 'peng.';
             $request->validate([
                 'id' => ['required', 'integer'],
                 'dataContents' => ['required', 'array'],
@@ -318,18 +338,20 @@ class PdrbController extends Controller
                 'dataContents.*.adhk' => ['sometimes', 'numeric', 'nullable'],
             ]);
             $dataset = Dataset::find($request->id);
-            if ($dataset) $dataset->update(['status' => 'Submitted', 'edited_by' => Auth::id()]);
+            if ($dataset)
+                $dataset->update(['status' => 'Submitted', 'edited_by' => Auth::id()]);
             foreach ($request->dataContents as $key => $value) {
                 # code...
                 $pdrb = Pdrb::find($value['id']);
-                if ($pdrb) $pdrb->update([
-                    'dataset_id' => $value['dataset_id'],
-                    'year' => $value['year'],
-                    'quarter' => $value['quarter'],
-                    'subsector_id' => $value['subsector_id'],
-                    'adhb' => $value['adhb'],
-                    'adhk' => $value['adhk'],
-                ]);
+                if ($pdrb)
+                    $pdrb->update([
+                        'dataset_id' => $value['dataset_id'],
+                        'year' => $value['year'],
+                        'quarter' => $value['quarter'],
+                        'subsector_id' => $value['subsector_id'],
+                        'adhb' => $value['adhb'],
+                        'adhk' => $value['adhk'],
+                    ]);
             }
             $message = [
                 'type' => 'success',
@@ -367,18 +389,23 @@ class PdrbController extends Controller
     {
         $notification = [];
         $type = $request->type;
-        if ($type == 'Lapangan Usaha') $route = 'lapus.';
-        else if ($type == 'Pengeluaran') $route = 'peng.';
+        if ($type == 'Lapangan Usaha')
+            $route = 'lapus.';
+        else if ($type == 'Pengeluaran')
+            $route = 'peng.';
         try {
             //code...
             DB::beginTransaction();
-            if ($type == 'Lapangan Usaha') $route = 'lapus.';
-            else if ($type == 'Pengeluaran') $route = 'peng.';
+            if ($type == 'Lapangan Usaha')
+                $route = 'lapus.';
+            else if ($type == 'Pengeluaran')
+                $route = 'peng.';
             $request->validate([
                 'id' => ['required', 'integer']
             ]);
             $dataset = Dataset::find($request->id);
-            if ($dataset) $dataset->update(['status' => 'Entry', 'edited_by' => Auth::id()]);
+            if ($dataset)
+                $dataset->update(['status' => 'Entry', 'edited_by' => Auth::id()]);
             $message = [
                 'type' => 'success',
                 'message' => 'Data kembali ke status Entry'
@@ -414,6 +441,7 @@ class PdrbController extends Controller
     public function copyEntri(Request $request)
     {
         $validated = $request->validate([
+            'kbli' => ['required', 'string'],
             'type' => ['required', 'string'],
             'year' => ['required', 'integer'],
             'quarter' => ['required', 'integer'],
@@ -446,7 +474,7 @@ class PdrbController extends Controller
                 return response()->json(['notification' => $notification], 500);
             }
             DB::commit();
-            return  response()->json([
+            return response()->json([
                 'current_data' => $current_data,
                 'notification' => $notification,
             ]);
@@ -465,8 +493,10 @@ class PdrbController extends Controller
     public function adjustment()
     {
         $prefix = basename(request()->route()->getPrefix() ?? '');
-        if ($prefix == 'lapus') $type = 'Lapangan Usaha';
-        else if ($prefix == 'peng') $type = 'Pengeluaran';
+        if ($prefix == 'lapus')
+            $type = 'Lapangan Usaha';
+        else if ($prefix == 'peng')
+            $type = 'Pengeluaran';
         $regions = Region::select(['id as value', 'name as label'])->get();
         $subsectors = Subsector::where('type', $type)
             ->with(['sector.category'])
@@ -481,6 +511,7 @@ class PdrbController extends Controller
     public function getAdjustment(Request $request)
     {
         $validated = $request->validate([
+            'kbli' => ['required', 'string'],
             'type' => ['required', 'string'],
             'year' => ['required', 'integer'],
             'quarter' => ['required', 'integer'],
@@ -497,19 +528,22 @@ class PdrbController extends Controller
         if (!$period_before) {
             if ($current_period->status == 'Aktif') {
                 $previous_period = Period::where('type', $type)
+                    ->where('kbli', $validated['kbli'])
                     ->where('year', $validated['year'] - 1)
                     ->where('quarter', 4)
                     ->latest('id')
                     ->value('id');
             } else {
                 $previous_period = Period::where('type', $type)
+                    ->where('kbli', $validated['kbli'])
                     ->where('year', $validated['year'] - 1)
                     ->where('quarter', 4)
                     ->where('status', '<>', 'Aktif')
                     ->latest('id')
                     ->value('id');
             }
-        } else $previous_period = $period_before;
+        } else
+            $previous_period = $period_before;
 
         $exploded_subsectors = explode('-', $validated['subsectors']);
         $typeOfSubsector = $exploded_subsectors[0];
@@ -965,7 +999,7 @@ class PdrbController extends Controller
                         });
                 }
             } else if ($type == 'Pengeluaran') {
-                $importId = ['69'];
+                $importId = ['69', '166', '167', '170', '170', '171', '174', '175'];
                 if ($previous_dataset->isNotEmpty()) {
                     $total = Pdrb::leftJoin('adjustments as adj', 'adj.pdrb_id', '=', 'pdrbs.id')
                         ->join('datasets as d', 'd.id', '=', 'pdrbs.dataset_id')
@@ -1091,8 +1125,10 @@ class PdrbController extends Controller
     {
         $notification = [];
         $type = $request->type;
-        if ($type == 'Lapangan Usaha') $route = 'lapus.';
-        else if ($type == 'Pengeluaran') $route = 'peng.';
+        if ($type == 'Lapangan Usaha')
+            $route = 'lapus.';
+        else if ($type == 'Pengeluaran')
+            $route = 'peng.';
         try {
             //code...
             DB::beginTransaction();
@@ -1164,8 +1200,10 @@ class PdrbController extends Controller
     public function hasil()
     {
         $prefix = basename(request()->route()->getPrefix() ?? '');
-        if ($prefix == 'lapus') $type = 'Lapangan Usaha';
-        else if ($prefix == 'peng') $type = 'Pengeluaran';
+        if ($prefix == 'lapus')
+            $type = 'Lapangan Usaha';
+        else if ($prefix == 'peng')
+            $type = 'Pengeluaran';
         $regions = Region::getMyRegion();
         $subsectors = Subsector::where('type', $type)
             ->with(['sector.category'])
@@ -1183,7 +1221,7 @@ class PdrbController extends Controller
         if ($result['status'] == 500) {
             return response()->json(['notification' => $result['notification']], 500);
         } else {
-            return  response()->json([
+            return response()->json([
                 'current_data' => $result['current_data'],
                 'previous_data' => $result['previous_data'],
                 'current_summary_set' => $result['current_summary_set'],
@@ -1196,8 +1234,10 @@ class PdrbController extends Controller
     public function diskrepansi()
     {
         $prefix = basename(request()->route()->getPrefix() ?? '');
-        if ($prefix == 'lapus') $type = 'Lapangan Usaha';
-        else if ($prefix == 'peng') $type = 'Pengeluaran';
+        if ($prefix == 'lapus')
+            $type = 'Lapangan Usaha';
+        else if ($prefix == 'peng')
+            $type = 'Pengeluaran';
         $regions = Region::select('id as value', 'name as label')->get();
         $subsectors = Subsector::where('type', $type)
             ->with(['sector.category'])
@@ -1242,7 +1282,8 @@ class PdrbController extends Controller
                         ->latest('id')
                         ->value('id');
                 }
-            } else $previous_period = $period_before;
+            } else
+                $previous_period = $period_before;
 
             $regions = Region::select('id as value', 'name as label')->get();
             $current_dataset = Dataset::where('period_id', $period_id)
@@ -1326,11 +1367,13 @@ class PdrbController extends Controller
 
     private function fetchHasil(Request $request)
     {
-        $subsectors = Subsector::where('type', $request->type)->pluck('id');
+        $subsectors = Subsector::where('type', $request->type)
+            ->where('kbli', $request->kbli)
+            ->pluck('id');
         $validated = $request->validate([
+            'kbli' => ['required', 'string'],
             'type' => ['required', 'string'],
             'year' => ['required', 'integer'],
-            // 'quarter' => ['required', 'integer'],
             'description' => ['required', 'integer'],
             'dataBefore' => ['sometimes', 'integer', 'nullable'],
             'regions' => ['required', 'integer'],
@@ -1344,19 +1387,23 @@ class PdrbController extends Controller
             $current_period = Period::where('id', $period_id)->first();
             if (!$period_before) {
                 if ($current_period->status == 'Aktif') {
-                    $previous_period = Period::where('type', $validated['type'])->where('year', $validated['year'] - 1)
+                    $previous_period = Period::where('type', $validated['type'])
+                        ->where('kbli', $validated['kbli'])
+                        ->where('year', $validated['year'] - 1)
                         ->where('quarter', 4)
                         ->latest('id')
                         ->value('id');
                 } else {
                     $previous_period = Period::where('type', $validated['type'])
+                        ->where('kbli', $validated['kbli'])
                         ->where('year', $validated['year'] - 1)
                         ->where('quarter', 4)
                         ->where('status', '<>', 'Aktif')
                         ->latest('id')
                         ->value('id');
                 }
-            } else $previous_period = $period_before;
+            } else
+                $previous_period = $period_before;
 
             $periode_before_year = Period::find($previous_period);
             $current_dataset = Dataset::where('period_id', $period_id)
@@ -1370,61 +1417,81 @@ class PdrbController extends Controller
                 $previous_data = Pdrb::where('dataset_id', $previous_dataset)
                     ->orderBy('subsector_id')
                     ->get();
-                if ($type == 'Lapangan Usaha') {
-                    $previous_summary_set = Pdrb::where('dataset_id', $previous_dataset)
-                        ->groupBy('dataset_id', 'year', 'quarter', 'setdata')
-                        ->selectRaw("
-                            dataset_id,
-                            year,
-                            quarter,
-                            SUM(pdrbs.adhb) as adhb,
-                            SUM(pdrbs.adhk) as adhk,
-                            CASE 
-                                WHEN subsector_id BETWEEN 1 AND 30 THEN 'primer'
-                                WHEN subsector_id BETWEEN 31 AND 34 THEN 'sekunder'
-                                WHEN subsector_id BETWEEN 35 AND 55 THEN 'tersier'
-                            END as setdata
-                            ")
-                        ->get();
-                } else if ($type == 'Pengeluaran') {
-                    $previous_summary_set = Pdrb::where('dataset_id', $previous_dataset)
-                        ->groupBy('dataset_id', 'year', 'quarter', 'setdata')
-                        ->selectRaw("
-                            dataset_id,
-                            year,
-                            quarter,
-                            SUM(pdrbs.adhb) as adhb,
-                            SUM(pdrbs.adhk) as adhk,
-                            CASE 
-                                WHEN subsector_id BETWEEN 56 AND 62 THEN 'krt'
-                                WHEN subsector_id = 64 THEN 'kap'
-                                WHEN subsector_id BETWEEN 65 AND 66 THEN 'pmtb'
-                                WHEN subsector_id = 63 OR subsector_id = 67 THEN 'lainnya'
-                                WHEN subsector_id = 68 THEN 'export'
-                                WHEN subsector_id = 69 THEN 'import'
-                            END as setdata
-                            ")
-                        ->get();
-                    $grouped = $previous_summary_set->groupBy(fn($item) => "{$item->dataset_id}_{$item->year}_{$item->quarter}");
-                    $previous_summary_set = $grouped->flatMap(function ($group) {
-                        $export = $group->where('setdata', 'export')->first();
-                        $import = $group->where('setdata', 'import')->first();
-                        $lainnya = $group->where('setdata', 'lainnya')->first();
+                if ($validated['kbli'] == 'kbli_2020') {
+                    if ($type == 'Lapangan Usaha') {
+                        //masih belum tau summary set untuk PDRB Rebasing
+                        $previous_summary_set = Pdrb::where('dataset_id', $previous_dataset)
+                            ->groupBy('dataset_id', 'year', 'quarter', 'setdata')
+                            ->selectRaw("
+                                    dataset_id,
+                                    year,
+                                    quarter,
+                                    SUM(pdrbs.adhb) as adhb,
+                                    SUM(pdrbs.adhk) as adhk,
+                                    CASE 
+                                    WHEN subsector_id BETWEEN 1 AND 30 THEN 'primer'
+                                    WHEN subsector_id BETWEEN 31 AND 34 THEN 'sekunder'
+                                    WHEN subsector_id BETWEEN 35 AND 55 THEN 'tersier'
+                                    END as setdata
+                                    ")
+                            ->get();
+                    } else if ($type == 'Pengeluaran') {
+                        //masih belum tau summary set untuk PDRB Rebasing
+                        $previous_summary_set = Pdrb::where('dataset_id', $previous_dataset)
+                            ->groupBy('dataset_id', 'year', 'quarter', 'setdata')
+                            ->selectRaw("
+                                    dataset_id,
+                                    year,
+                                    quarter,
+                                    SUM(pdrbs.adhb) as adhb,
+                                    SUM(pdrbs.adhk) as adhk,
+                                    CASE 
+                                        WHEN subsector_id BETWEEN 56 AND 62 THEN 'krt'
+                                        WHEN subsector_id = 64 THEN 'kap'
+                                        WHEN subsector_id BETWEEN 65 AND 66 THEN 'pmtb'
+                                        WHEN subsector_id = 63 OR subsector_id = 67 THEN 'lainnya'
+                                        WHEN subsector_id = 68 THEN 'export'
+                                        WHEN subsector_id = 69 THEN 'import'
+                                    END as setdata
+                                    ")
+                            ->get();
+                        $grouped = $previous_summary_set->groupBy(fn($item) => "{$item->dataset_id}_{$item->year}_{$item->quarter}");
+                        $previous_summary_set = $grouped->flatMap(function ($group) {
+                            $export = $group->where('setdata', 'export')->first();
+                            $import = $group->where('setdata', 'import')->first();
+                            $lainnya = $group->where('setdata', 'lainnya')->first();
 
-                        $netExportImport = (object) [
-                            'dataset_id' => $export->dataset_id ?? $import->dataset_id,
-                            'year' => $export->year ?? $import->year,
-                            'quarter' => $export->quarter ?? $import->quarter,
-                            'adhb' => ($export->adhb ?? 0) - ($import->adhb ?? 0),
-                            'adhk' => ($export->adhk ?? 0) - ($import->adhk ?? 0),
-                            'setdata' => 'net_export_import',
-                        ];
-                        if ($lainnya) {
-                            $lainnya->adhb += $netExportImport->adhb;
-                            $lainnya->adhk += $netExportImport->adhk;
+                            $netExportImport = (object) [
+                                'dataset_id' => $export->dataset_id ?? $import->dataset_id,
+                                'year' => $export->year ?? $import->year,
+                                'quarter' => $export->quarter ?? $import->quarter,
+                                'adhb' => ($export->adhb ?? 0) - ($import->adhb ?? 0),
+                                'adhk' => ($export->adhk ?? 0) - ($import->adhk ?? 0),
+                                'setdata' => 'net_export_import',
+                            ];
+                            if ($lainnya) {
+                                $lainnya->adhb += $netExportImport->adhb;
+                                $lainnya->adhk += $netExportImport->adhk;
+                            }
+                            return $group->filter(fn($item) => in_array($item->setdata, ['krt', 'kap', 'pmtb', 'lainnya']));
+                        });
+                    }
+                } else {
+                    $previous_summary_set = [];
+                    for ($index = 1; $index <= 4; $index++) {
+                        foreach ($subsectors as $subsector_id) {
+                            $singleData = [
+                                'subsector_id' => $subsector_id,
+                                'type' => $validated['type'],
+                                'year' => $validated['year'] - 1,
+                                'quarter' => $index,
+                                'region_id' => $validated['regions'],
+                                'adhb' => null,
+                                'adhk' => null,
+                            ];
+                            array_push($previous_summary_set, $singleData);
                         }
-                        return $group->filter(fn($item) => in_array($item->setdata, ['krt', 'kap', 'pmtb', 'lainnya']));
-                    });
+                    }
                 }
                 $message = [
                     'type' => 'success',
@@ -1474,61 +1541,66 @@ class PdrbController extends Controller
                             'adhk' => ($item->adhk ?? 0) + ($item->adj_adhk ?? 0),
                         ];
                     });
-                if ($type == 'Lapangan Usaha') {
-                    $current_summary_set = Pdrb::where('dataset_id', $current_dataset)
-                        ->groupBy('dataset_id', 'year', 'quarter', 'setdata')
-                        ->selectRaw("
-                            dataset_id,
-                            year,
-                            quarter,
-                            SUM(pdrbs.adhb) as adhb,
-                            SUM(pdrbs.adhk) as adhk,
-                            CASE 
-                                WHEN subsector_id BETWEEN 1 AND 30 THEN 'primer'
-                                WHEN subsector_id BETWEEN 31 AND 34 THEN 'sekunder'
-                                WHEN subsector_id BETWEEN 35 AND 55 THEN 'tersier'
-                            END as setdata
-                                ")
-                        ->get();
-                } else if ($type == 'Pengeluaran') {
-                    $current_summary_set = Pdrb::where('dataset_id', $current_dataset)
-                        ->groupBy('dataset_id', 'year', 'quarter', 'setdata')
-                        ->selectRaw("
-                            dataset_id,
-                            year,
-                            quarter,
-                            SUM(pdrbs.adhb) as adhb,
-                            SUM(pdrbs.adhk) as adhk,
-                            CASE 
-                                WHEN subsector_id BETWEEN 56 AND 62 THEN 'krt'
-                                WHEN subsector_id = 64 THEN 'kap'
-                                WHEN subsector_id BETWEEN 65 AND 66 THEN 'pmtb'
-                                WHEN subsector_id = 63 OR subsector_id = 67 THEN 'lainnya'
-                                WHEN subsector_id = 68 THEN 'export'
-                                WHEN subsector_id = 69 THEN 'import'
-                            END as setdata
-                                ")
-                        ->get();
-                    $grouped = $current_summary_set->groupBy(fn($item) => "{$item->dataset_id}_{$item->year}_{$item->quarter}");
-                    $current_summary_set = $grouped->flatMap(function ($group) {
-                        $export = $group->where('setdata', 'export')->first();
-                        $import = $group->where('setdata', 'import')->first();
-                        $lainnya = $group->where('setdata', 'lainnya')->first();
-
-                        $netExportImport = (object) [
-                            'dataset_id' => $export->dataset_id ?? $import->dataset_id,
-                            'year' => $export->year ?? $import->year,
-                            'quarter' => $export->quarter ?? $import->quarter,
-                            'adhb' => ($export->adhb ?? 0) - ($import->adhb ?? 0),
-                            'adhk' => ($export->adhk ?? 0) - ($import->adhk ?? 0),
-                            'setdata' => 'net_export_import',
-                        ];
-                        if ($lainnya) {
-                            $lainnya->adhb += $netExportImport->adhb;
-                            $lainnya->adhk += $netExportImport->adhk;
-                        }
-                        return $group->filter(fn($item) => in_array($item->setdata, ['krt', 'kap', 'pmtb', 'lainnya']));
-                    });
+                if ($validated['kbli'] == 'kbli_2020') {
+                    if ($type == 'Lapangan Usaha') {
+                        //masih belum tau summary set untuk PDRB Rebasing
+                        $current_summary_set = Pdrb::where('dataset_id', $current_dataset)
+                            ->groupBy('dataset_id', 'year', 'quarter', 'setdata')
+                            ->selectRaw("
+                                    dataset_id,
+                                    year,
+                                    quarter,
+                                    SUM(pdrbs.adhb) as adhb,
+                                    SUM(pdrbs.adhk) as adhk,
+                                    CASE 
+                                        WHEN subsector_id BETWEEN 1 AND 30 THEN 'primer'
+                                        WHEN subsector_id BETWEEN 31 AND 34 THEN 'sekunder'
+                                        WHEN subsector_id BETWEEN 35 AND 55 THEN 'tersier'
+                                    END as setdata
+                                        ")
+                            ->get();
+                    } else if ($type == 'Pengeluaran') {
+                        //masih belum tau summary set untuk PDRB Rebasing
+                        $current_summary_set = Pdrb::where('dataset_id', $current_dataset)
+                            ->groupBy('dataset_id', 'year', 'quarter', 'setdata')
+                            ->selectRaw("
+                                    dataset_id,
+                                    year,
+                                    quarter,
+                                    SUM(pdrbs.adhb) as adhb,
+                                    SUM(pdrbs.adhk) as adhk,
+                                    CASE 
+                                        WHEN subsector_id BETWEEN 56 AND 62 THEN 'krt'
+                                        WHEN subsector_id = 64 THEN 'kap'
+                                        WHEN subsector_id BETWEEN 65 AND 66 THEN 'pmtb'
+                                        WHEN subsector_id = 63 OR subsector_id = 67 THEN 'lainnya'
+                                        WHEN subsector_id = 68 THEN 'export'
+                                        WHEN subsector_id = 69 THEN 'import'
+                                    END as setdata
+                                        ")
+                            ->get();
+                        $grouped = $current_summary_set->groupBy(fn($item) => "{$item->dataset_id}_{$item->year}_{$item->quarter}");
+                        $current_summary_set = $grouped->flatMap(function ($group) {
+                            $export = $group->where('setdata', 'export')->first();
+                            $import = $group->where('setdata', 'import')->first();
+                            $lainnya = $group->where('setdata', 'lainnya')->first();
+                            $netExportImport = (object) [
+                                'dataset_id' => $export->dataset_id ?? $import->dataset_id,
+                                'year' => $export->year ?? $import->year,
+                                'quarter' => $export->quarter ?? $import->quarter,
+                                'adhb' => ($export->adhb ?? 0) - ($import->adhb ?? 0),
+                                'adhk' => ($export->adhk ?? 0) - ($import->adhk ?? 0),
+                                'setdata' => 'net_export_import',
+                            ];
+                            if ($lainnya) {
+                                $lainnya->adhb += $netExportImport->adhb;
+                                $lainnya->adhk += $netExportImport->adhk;
+                            }
+                            return $group->filter(fn($item) => in_array($item->setdata, ['krt', 'kap', 'pmtb', 'lainnya']));
+                        });
+                    }
+                } else {
+                    $current_summary_set = [];
                 }
                 $message = [
                     'type' => 'success',
@@ -1552,7 +1624,7 @@ class PdrbController extends Controller
                 'notification' => $notification,
                 'status' => 400
             ];
-            return  $result;
+            return $result;
         } catch (\Throwable $th) {
             //throw $th;
             $message = [
@@ -1572,6 +1644,7 @@ class PdrbController extends Controller
     public function copyHasil(Request $request)
     {
         $validated = $request->validate([
+            'kbli' => ['required', 'string'],
             'type' => ['required', 'string'],
             'description' => ['required', 'integer'],
             'regions' => ['required', 'integer'],
@@ -1639,13 +1712,14 @@ class PdrbController extends Controller
                         $adhb_change = !($cur->adhb == $comp->adhb);
                         $adhk_change = !($cur->adhk == $comp->adhk);
                         $subs = Subsector::find($cur->subsector_id);
-                        if (!$adhb_change || !$adhk_change) return null;
+                        if (!$adhb_change || !$adhk_change)
+                            return null;
                         return [
                             'subsector' => $subs->name,
                             'year' => $cur->year,
                             'quarter' => $cur->quarter,
                             'adhb_current' => $adhb_change ? $cur->adhb : false,
-                            'adhb_comparison' => $adhb_change ?  $comp->adhb : false,
+                            'adhb_comparison' => $adhb_change ? $comp->adhb : false,
                             'adhk_current' => $adhk_change ? $cur->adhk : false,
                             'adhk_comparison' => $adhk_change ? $comp->adhk : false,
                         ];
@@ -1670,15 +1744,17 @@ class PdrbController extends Controller
                     $perubahan_total = $allTotalKeys->map(function ($key) use ($curTotalMap, $compTotalMap) {
                         $cur = $curTotalMap->get($key);
                         $comp = $compTotalMap->get($key);
-                        if (!$cur || !$comp) return null;
+                        if (!$cur || !$comp)
+                            return null;
                         $adhb_change = !($cur->adhb == $comp->adhb);
                         $adhk_change = !($cur->adhk == $comp->adhk);
-                        if (!$adhb_change && !$adhk_change) return null;
+                        if (!$adhb_change && !$adhk_change)
+                            return null;
                         return [
                             'year' => $cur->year,
                             'quarter' => $cur->quarter,
                             'adhb_current' => $adhb_change ? $cur->adhb : false,
-                            'adhb_comparison' => $adhb_change ?  $comp->adhb : false,
+                            'adhb_comparison' => $adhb_change ? $comp->adhb : false,
                             'adhk_current' => $adhk_change ? $cur->adhk : false,
                             'adhk_comparison' => $adhk_change ? $comp->adhk : false,
                         ];
@@ -1715,11 +1791,13 @@ class PdrbController extends Controller
                 $descriptions = (array) $descriptions;
             }
             foreach ($descriptions as $desc) {
-                if (!$desc) continue;
+                if (!$desc)
+                    continue;
                 $current_period = Period::findOrFail($desc);
                 $new_request = new Request([
                     'year' => $current_period->year,
                     'type' => $request->type,
+                    'kbli' => $request->kbli,
                     'description' => $desc,
                     'regions' => $request->regions
                 ]);
