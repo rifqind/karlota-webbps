@@ -118,7 +118,7 @@ class SsoController extends Controller
             }
         }
 
-        $sessionState = $request->session()->pull('state');
+        // $sessionState = $request->session()->pull('state');
         $ssoSource = $request->session()->pull('sso_source');
 
         // Deteksi apakah request SSO berasal dari Nuxt (v2) atau Karlota Biasa (Web)
