@@ -109,8 +109,64 @@ class HomeController extends Controller
     {
         set_time_limit(0);
         try {
-            // Pre-step: Reset all summary records to 0 so un-uploaded regions stay 0 instead of holding stale data
-            SummaryPdrb::query()->update([
+            $user = auth()->user();
+            if (!$user && $request->attributes->get('auth_payload')) {
+                $payload = $request->attributes->get('auth_payload');
+                $user = User::find($payload['sub'] ?? null);
+            }
+
+            if ($user && $user->role !== 'admin' && (int) $user->satker_id !== 1) {
+                return response()->json([
+                    'message' => 'Hanya user Admin atau Provinsi yang dapat menjalankan Build Summaries.',
+                ], 403);
+            }
+
+            $kbli = $request->input('kbli', 'kbli_2020');
+            $reqYear = $request->input('year');
+            $reqQuarter = $request->input('quarter');
+            $reqDescLapus = $request->input('description_lapus');
+            $reqDescPeng = $request->input('description_peng');
+
+            // Resolve Lapus period
+            $lapus_period = null;
+            if ($request->filled('lapus_period_id')) {
+                $lapus_period = $request->input('lapus_period_id');
+            } elseif ($reqYear && $reqQuarter && $reqDescLapus) {
+                $lapus_period = Period::where('type', 'Lapangan Usaha')
+                    ->where('kbli', $kbli)
+                    ->where('year', $reqYear)
+                    ->where('quarter', $reqQuarter)
+                    ->where('description', $reqDescLapus)
+                    ->orderBy('created_at', 'desc')
+                    ->value('id');
+            }
+            if (!$lapus_period) {
+                $lapus_period = Period::where('type', 'Lapangan Usaha')->where('kbli', $kbli)->where('status', 'Aktif')->orderBy('year', 'desc')->orderBy('quarter', 'desc')->orderBy('created_at', 'desc')->first()?->id
+                    ?? Period::where('type', 'Lapangan Usaha')->where('kbli', $kbli)->where('status', 'Final')->orderBy('year', 'desc')->orderBy('quarter', 'desc')->orderBy('created_at', 'desc')->first()?->id
+                    ?? Period::where('type', 'Lapangan Usaha')->where('kbli', $kbli)->orderBy('year', 'desc')->orderBy('quarter', 'desc')->orderBy('created_at', 'desc')->first()?->id;
+            }
+
+            // Resolve Pengeluaran period
+            $peng_period = null;
+            if ($request->filled('peng_period_id')) {
+                $peng_period = $request->input('peng_period_id');
+            } elseif ($reqYear && $reqQuarter && $reqDescPeng) {
+                $peng_period = Period::where('type', 'Pengeluaran')
+                    ->where('kbli', $kbli)
+                    ->where('year', $reqYear)
+                    ->where('quarter', $reqQuarter)
+                    ->where('description', $reqDescPeng)
+                    ->orderBy('created_at', 'desc')
+                    ->value('id');
+            }
+            if (!$peng_period) {
+                $peng_period = Period::where('type', 'Pengeluaran')->where('kbli', $kbli)->where('status', 'Aktif')->orderBy('year', 'desc')->orderBy('quarter', 'desc')->orderBy('created_at', 'desc')->first()?->id
+                    ?? Period::where('type', 'Pengeluaran')->where('kbli', $kbli)->where('status', 'Final')->orderBy('year', 'desc')->orderBy('quarter', 'desc')->orderBy('created_at', 'desc')->first()?->id
+                    ?? Period::where('type', 'Pengeluaran')->where('kbli', $kbli)->orderBy('year', 'desc')->orderBy('quarter', 'desc')->orderBy('created_at', 'desc')->first()?->id;
+            }
+
+            // Pre-step: Reset summary records ONLY for the selected KBLI so other KBLI cache stays intact
+            SummaryPdrb::where('kbli', $kbli)->update([
                 'adhb' => 0,
                 'adhk' => 0,
                 'qtoq' => 0,
@@ -131,16 +187,9 @@ class HomeController extends Controller
 
             $setups = ['category', 'sector', 'subsector', 'total'];
 
-            $lapus_period = Period::where('type', 'Lapangan Usaha')->where('status', 'Aktif')->orderBy('year', 'desc')->orderBy('quarter', 'desc')->orderBy('created_at', 'desc')->first()?->id
-                ?? Period::where('type', 'Lapangan Usaha')->where('status', 'Final')->orderBy('year', 'desc')->orderBy('quarter', 'desc')->orderBy('created_at', 'desc')->first()?->id
-                ?? Period::where('type', 'Lapangan Usaha')->orderBy('year', 'desc')->orderBy('quarter', 'desc')->orderBy('created_at', 'desc')->first()?->id;
-
-            $peng_period = Period::where('type', 'Pengeluaran')->where('status', 'Aktif')->orderBy('year', 'desc')->orderBy('quarter', 'desc')->orderBy('created_at', 'desc')->first()?->id
-                ?? Period::where('type', 'Pengeluaran')->where('status', 'Final')->orderBy('year', 'desc')->orderBy('quarter', 'desc')->orderBy('created_at', 'desc')->first()?->id
-                ?? Period::where('type', 'Pengeluaran')->orderBy('year', 'desc')->orderBy('quarter', 'desc')->orderBy('created_at', 'desc')->first()?->id;
-
-            $activeLapusPeriod = Period::find($lapus_period);
-            $targetQuarter = $activeLapusPeriod ? $activeLapusPeriod->quarter : 1;
+            $activeLapusPeriod = $lapus_period ? Period::find($lapus_period) : null;
+            $activePengPeriod = $peng_period ? Period::find($peng_period) : null;
+            $targetQuarter = $reqQuarter ? (int) $reqQuarter : ($activeLapusPeriod?->quarter ?? $activePengPeriod?->quarter ?? 1);
 
             foreach ($regions as $regId) {
                 foreach ($setups as $setup) {
@@ -148,24 +197,23 @@ class HomeController extends Controller
                         'setup' => $setup,
                         'region_id' => $regId,
                         'quarter' => $targetQuarter,
+                        'kbli' => $kbli,
+                        'lapus_period_id' => $lapus_period,
+                        'peng_period_id' => $peng_period,
                     ]);
                     $summaryController->index($subRequest);
                 }
-                $summaryController->calculateDistributions($regId, $targetQuarter);
+                $summaryController->calculateDistributions($regId, $targetQuarter, $kbli);
             }
 
-            $user = auth()->user();
-            if (!$user && $request->attributes->get('auth_payload')) {
-                $payload = $request->attributes->get('auth_payload');
-                $user = User::find($payload['sub'] ?? null);
-            }
             $userId = $user ? $user->id : (User::first()?->id);
 
             if ($lapus_period) {
                 SummaryTime::updateOrCreate(
-                    ['type' => 'Lapangan Usaha'],
+                    ['type' => 'Lapangan Usaha', 'kbli' => $kbli],
                     [
                         'type' => 'Lapangan Usaha',
+                        'kbli' => $kbli,
                         'period_id' => $lapus_period,
                         'id_user' => $userId,
                         'timestamp' => Carbon::now(),
@@ -174,9 +222,10 @@ class HomeController extends Controller
             }
             if ($peng_period) {
                 SummaryTime::updateOrCreate(
-                    ['type' => 'Pengeluaran'],
+                    ['type' => 'Pengeluaran', 'kbli' => $kbli],
                     [
                         'type' => 'Pengeluaran',
+                        'kbli' => $kbli,
                         'period_id' => $peng_period,
                         'id_user' => $userId,
                         'timestamp' => Carbon::now(),
@@ -184,8 +233,9 @@ class HomeController extends Controller
                 );
             }
 
+            $kbliLabel = $kbli === 'kbli_2025' ? 'KBLI 2025' : 'KBLI 2020';
             return response()->json([
-                'message' => 'Berhasil menjalankan Build Summaries untuk seluruh wilayah!',
+                'message' => "Berhasil menjalankan Build Summaries ({$kbliLabel}) untuk seluruh wilayah!",
             ]);
         } catch (\Throwable $th) {
             return response()->json([

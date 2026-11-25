@@ -14,6 +14,7 @@ class SummaryTime extends Model
     public $timestamps = false;
     protected $fillable = [
         'type',
+        'kbli',
         'period_id',
         'id_user',
         'timestamp'
