@@ -13,6 +13,12 @@ class SummaryPdrb extends Model
     protected $guarded = ['id'];
     public $timestamps = false;
     protected $fillable = [
+        'kbli',
+        'category_id',
+        'sector_id',
+        'subsector_id',
+        'region_id',
+        'quarter',
         'adhb',
         'adhk',
         'dist',

@@ -21,15 +21,20 @@ class SummaryController extends Controller
     {
         set_time_limit(0);
         $region = Region::pluck('id');
+        $kbli = $request->kbli ?? 'kbli_2020';
 
-        $lapus_PERIOD = Period::where('type', 'Lapangan Usaha')
-            ->where('status', 'Aktif')
-            ->orderBy('year', 'desc')
-            ->orderBy('quarter', 'desc')
-            ->orderBy('created_at', 'desc')
-            ->first();
+        $lapus_PERIOD = $request->lapus_period_id
+            ? Period::find($request->lapus_period_id)
+            : Period::where('type', 'Lapangan Usaha')
+                ->where('kbli', $kbli)
+                ->where('status', 'Aktif')
+                ->orderBy('year', 'desc')
+                ->orderBy('quarter', 'desc')
+                ->orderBy('created_at', 'desc')
+                ->first();
         if (!$lapus_PERIOD) {
             $lapus_PERIOD = Period::where('type', 'Lapangan Usaha')
+                ->where('kbli', $kbli)
                 ->where('status', 'Final')
                 ->orderBy('year', 'desc')
                 ->orderBy('quarter', 'desc')
@@ -38,27 +43,35 @@ class SummaryController extends Controller
         }
         if (!$lapus_PERIOD) {
             $lapus_PERIOD = Period::where('type', 'Lapangan Usaha')
+                ->where('kbli', $kbli)
                 ->orderBy('year', 'desc')
                 ->orderBy('quarter', 'desc')
                 ->orderBy('created_at', 'desc')
                 ->first();
         }
-        $lapus_period = $lapus_PERIOD->id;
+        $lapus_period = $lapus_PERIOD?->id;
 
-        $lapus_period_before = Period::where('type', 'Lapangan Usaha')
-            ->where('year', $lapus_PERIOD->year - 1)
-            ->where('quarter', 4)
-            ->orderBy('created_at', 'desc')
-            ->value('id');
+        $lapus_period_before = $lapus_PERIOD
+            ? Period::where('type', 'Lapangan Usaha')
+                ->where('kbli', $kbli)
+                ->where('year', $lapus_PERIOD->year - 1)
+                ->where('quarter', 4)
+                ->orderBy('created_at', 'desc')
+                ->value('id')
+            : null;
 
-        $peng_PERIOD = Period::where('type', 'Pengeluaran')
-            ->where('status', 'Aktif')
-            ->orderBy('year', 'desc')
-            ->orderBy('quarter', 'desc')
-            ->orderBy('created_at', 'desc')
-            ->first();
+        $peng_PERIOD = $request->peng_period_id
+            ? Period::find($request->peng_period_id)
+            : Period::where('type', 'Pengeluaran')
+                ->where('kbli', $kbli)
+                ->where('status', 'Aktif')
+                ->orderBy('year', 'desc')
+                ->orderBy('quarter', 'desc')
+                ->orderBy('created_at', 'desc')
+                ->first();
         if (!$peng_PERIOD) {
             $peng_PERIOD = Period::where('type', 'Pengeluaran')
+                ->where('kbli', $kbli)
                 ->where('status', 'Final')
                 ->orderBy('year', 'desc')
                 ->orderBy('quarter', 'desc')
@@ -67,48 +80,52 @@ class SummaryController extends Controller
         }
         if (!$peng_PERIOD) {
             $peng_PERIOD = Period::where('type', 'Pengeluaran')
+                ->where('kbli', $kbli)
                 ->orderBy('year', 'desc')
                 ->orderBy('quarter', 'desc')
                 ->orderBy('created_at', 'desc')
                 ->first();
         }
-        $peng_period = $peng_PERIOD->id;
+        $peng_period = $peng_PERIOD?->id;
 
-        $peng_period_before = Period::where('type', 'Pengeluaran')
-            ->where('year', $peng_PERIOD->year - 1)
-            ->where('quarter', 4)
-            ->orderBy('created_at', 'desc')
-            ->value('id');
-        $dataset = Dataset::where('period_id', $lapus_period)
-            ->orWhere('period_id', $peng_period)
-            ->pluck('id');
-        $dataset_before =  Dataset::where('period_id', $lapus_period_before)
-            ->orWhere('period_id', $peng_period_before)
-            ->pluck('id');
+        $peng_period_before = $peng_PERIOD
+            ? Period::where('type', 'Pengeluaran')
+                ->where('kbli', $kbli)
+                ->where('year', $peng_PERIOD->year - 1)
+                ->where('quarter', 4)
+                ->orderBy('created_at', 'desc')
+                ->value('id')
+            : null;
+
+        $periodIds = array_filter([$lapus_period, $peng_period]);
+        $periodIdsBefore = array_filter([$lapus_period_before, $peng_period_before]);
+
+        $dataset = !empty($periodIds)
+            ? Dataset::whereIn('period_id', $periodIds)->pluck('id')
+            : collect([]);
+        $dataset_before = !empty($periodIdsBefore)
+            ? Dataset::whereIn('period_id', $periodIdsBefore)->pluck('id')
+            : collect([]);
 
         $setup = $request->setup;
         if ($setup == 'category') {
-            $result_cat =  $this->setupCategory($dataset_before, $dataset, $request->region_id);
+            $result_cat =  $this->setupCategory($dataset_before, $dataset, $request->region_id, $kbli);
         } else if ($setup == 'sector') {
-            $result_set =  $this->setupSector($dataset_before, $dataset, $request->region_id);
+            $result_set =  $this->setupSector($dataset_before, $dataset, $request->region_id, $kbli);
         } else if ($setup == 'subsector') {
-            $result_sub = $this->setupSubsector($dataset_before, $dataset, $request->region_id);
+            $result_sub = $this->setupSubsector($dataset_before, $dataset, $request->region_id, $kbli);
         } else {
-            $dataset_lapus = Dataset::where('period_id', $lapus_period)
-                ->pluck('id');
-            $dataset_peng = Dataset::where('period_id', $peng_period)
-                ->pluck('id');
-            $dataset_lapus_before = Dataset::where('period_id', $lapus_period_before)
-                ->pluck('id');
-            $dataset_peng_before = Dataset::where('period_id', $peng_period_before)
-                ->pluck('id');
-            $result_tot = $this->setupTotal($dataset_lapus_before, $dataset_lapus, $dataset_peng_before, $dataset_peng,  $request->region_id);
+            $dataset_lapus = $lapus_period ? Dataset::where('period_id', $lapus_period)->pluck('id') : collect([]);
+            $dataset_peng = $peng_period ? Dataset::where('period_id', $peng_period)->pluck('id') : collect([]);
+            $dataset_lapus_before = $lapus_period_before ? Dataset::where('period_id', $lapus_period_before)->pluck('id') : collect([]);
+            $dataset_peng_before = $peng_period_before ? Dataset::where('period_id', $peng_period_before)->pluck('id') : collect([]);
+            $result_tot = $this->setupTotal($dataset_lapus_before, $dataset_lapus, $dataset_peng_before, $dataset_peng, $request->region_id, $kbli);
         }
 
 
-        $targetQuarter = $request->quarter ?? $lapus_PERIOD->quarter;
+        $targetQuarter = $request->quarter ?? $lapus_PERIOD?->quarter ?? $peng_PERIOD?->quarter ?? 1;
 
-        $this->calculateDistributions($request->region_id, $targetQuarter);
+        $this->calculateDistributions($request->region_id, $targetQuarter, $kbli);
 
         return response()->json([
             'message' => $setup . ' done',
@@ -117,19 +134,24 @@ class SummaryController extends Controller
         ]);
     }
 
-    public function calculateDistributions($region_id, $quarter)
+    public function calculateDistributions($region_id, $quarter, $kbli = 'kbli_2020')
     {
-        $lapus_total = SummaryPdrb::where('region_id', $region_id)
+        $lapus_total = SummaryPdrb::where('kbli', $kbli)
+            ->where('region_id', $region_id)
             ->where('quarter', $quarter)
             ->where('subsector_id', 98)
             ->value('adhb');
 
-        $peng_total = SummaryPdrb::where('region_id', $region_id)
+        $peng_total = SummaryPdrb::where('kbli', $kbli)
+            ->where('region_id', $region_id)
             ->where('quarter', $quarter)
             ->where('subsector_id', 99)
             ->value('adhb');
 
-        $data = SummaryPdrb::where('region_id', $region_id)
+        $categoryTypes = Category::where('kbli', $kbli)->pluck('type', 'id');
+
+        $data = SummaryPdrb::where('kbli', $kbli)
+            ->where('region_id', $region_id)
             ->where('quarter', $quarter)
             ->where(function ($query) {
                 $query->whereNotIn('subsector_id', [98, 99])
@@ -139,23 +161,25 @@ class SummaryController extends Controller
 
         foreach ($data as $value) {
             $dist = 0;
-            if ($value->category_id < 18) {
+            $catType = $categoryTypes[$value->category_id] ?? ($value->category_id < 18 ? 'Lapangan Usaha' : 'Pengeluaran');
+            if ($catType === 'Lapangan Usaha') {
                 $dist = ($value->adhb != 0 && $lapus_total != 0) ? ($value->adhb / $lapus_total) * 100 : 0;
-            } else if ($value->category_id > 17) {
+            } else if ($catType === 'Pengeluaran') {
                 $dist = ($value->adhb != 0 && $peng_total != 0) ? ($value->adhb / $peng_total) * 100 : 0;
             }
             SummaryPdrb::where('id', $value->id)->update(['dist' => $dist]);
         }
 
-        SummaryPdrb::where('region_id', $region_id)
+        SummaryPdrb::where('kbli', $kbli)
+            ->where('region_id', $region_id)
             ->where('quarter', $quarter)
             ->whereIn('subsector_id', [98, 99])
             ->update(['dist' => 100]);
     }
 
-    private function setupCategory($dataset_before, $dataset, $region)
+    private function setupCategory($dataset_before, $dataset, $region, $kbli = 'kbli_2020')
     {
-        $category = Category::pluck('id');
+        $category = Category::where('kbli', $kbli)->pluck('id');
         $super_result = [];
         foreach ($category as $keyCat => $cat) {
             # code...
@@ -252,12 +276,15 @@ class SummaryController extends Controller
                     $this_data = $data->where('quarter', $qt)->first();
                     $result = $this->buildValue($data_before, $this_data, $data, 'category_id', 'category');
                     array_push($super_result, $this_data);
-                    $updating_summary = SummaryPdrb::where('region_id', $this_data['region_id'])
-                        ->where('quarter', $this_data['quarter'])
-                        ->where('category_id', $this_data['category_id'])
-                        ->where('sector_id', null)
-                        ->where('subsector_id', null);
-                    $updating_summary->update(
+                    SummaryPdrb::updateOrCreate(
+                        [
+                            'kbli' => $kbli,
+                            'region_id' => $this_data['region_id'],
+                            'quarter' => $this_data['quarter'],
+                            'category_id' => $this_data['category_id'],
+                            'sector_id' => null,
+                            'subsector_id' => null,
+                        ],
                         [
                             'adhb' => $this_data['adhb'],
                             'adhk' => $this_data['adhk'],
@@ -275,9 +302,10 @@ class SummaryController extends Controller
         return $super_result;
     }
 
-    private function setupSector($dataset_before, $dataset, $region)
+    private function setupSector($dataset_before, $dataset, $region, $kbli = 'kbli_2020')
     {
-        $sector = Sector::pluck('id');
+        $sectorMap = Sector::where('kbli', $kbli)->pluck('category_id', 'id');
+        $sector = $sectorMap->keys();
         $super_result = [];
         foreach ($sector as $keySet => $set) {
             # code...
@@ -554,31 +582,36 @@ class SummaryController extends Controller
                     $this_data = $data->where('quarter', $qt)->first();
                     $result = $this->buildValue($data_before, $this_data, $data, 'sector_id', 'sector');
                     array_push($super_result, $this_data);
-                    $updating_summary = SummaryPdrb::where('region_id', $this_data['region_id'])
-                        ->where('quarter', $this_data['quarter'])
-                        ->where('sector_id', $this_data['sector_id'])
-                        ->where('subsector_id', null)
-                        ->update(
-                            [
-                                'adhb' => $this_data['adhb'],
-                                'adhk' => $this_data['adhk'],
-                                'qtoq' => $result['qtoq'],
-                                'yony' => $result['yony'],
-                                'ctoc' => $result['ctoc'],
-                                'idx' => $result['idx'],
-                                'iqtoq' => $result['iqtoq'],
-                                'iyony' => $result['iyony']
-                            ]
-                        );
+                    SummaryPdrb::updateOrCreate(
+                        [
+                            'kbli' => $kbli,
+                            'region_id' => $this_data['region_id'],
+                            'quarter' => $this_data['quarter'],
+                            'category_id' => $sectorMap[$this_data['sector_id']] ?? null,
+                            'sector_id' => $this_data['sector_id'],
+                            'subsector_id' => null,
+                        ],
+                        [
+                            'adhb' => $this_data['adhb'],
+                            'adhk' => $this_data['adhk'],
+                            'qtoq' => $result['qtoq'],
+                            'yony' => $result['yony'],
+                            'ctoc' => $result['ctoc'],
+                            'idx' => $result['idx'],
+                            'iqtoq' => $result['iqtoq'],
+                            'iyony' => $result['iyony']
+                        ]
+                    );
                 }
             }
         }
         return $super_result;
     }
 
-    private function setupSubsector($dataset_before, $dataset, $region)
+    private function setupSubsector($dataset_before, $dataset, $region, $kbli = 'kbli_2020')
     {
-        $subsector = Subsector::pluck('id');
+        $subsectorModels = Subsector::where('kbli', $kbli)->with('sector:id,category_id')->get(['id', 'sector_id'])->keyBy('id');
+        $subsector = $subsectorModels->keys();
         $super_result = [];
         foreach ($subsector as $keySub => $sub) {
             # code...
@@ -676,28 +709,34 @@ class SummaryController extends Controller
                     $this_data = $data->where('quarter', $qt)->first();
                     $result = $this->buildValue($data_before, $this_data, $data, 'subsector_id', 'subsector');
                     array_push($super_result, $result);
-                    $updating_summary = SummaryPdrb::where('region_id', $this_data['region_id'])
-                        ->where('quarter', $this_data['quarter'])
-                        ->where('subsector_id', $this_data['subsector_id'])
-                        ->update(
-                            [
-                                'adhb' => $this_data['adhb'],
-                                'adhk' => $this_data['adhk'],
-                                'qtoq' => $result['qtoq'],
-                                'yony' => $result['yony'],
-                                'ctoc' => $result['ctoc'],
-                                'idx' => $result['idx'],
-                                'iqtoq' => $result['iqtoq'],
-                                'iyony' => $result['iyony']
-                            ]
-                        );
+                    $subModel = $subsectorModels->get($this_data['subsector_id']);
+                    SummaryPdrb::updateOrCreate(
+                        [
+                            'kbli' => $kbli,
+                            'region_id' => $this_data['region_id'],
+                            'quarter' => $this_data['quarter'],
+                            'category_id' => $subModel?->sector?->category_id,
+                            'sector_id' => $subModel?->sector_id,
+                            'subsector_id' => $this_data['subsector_id'],
+                        ],
+                        [
+                            'adhb' => $this_data['adhb'],
+                            'adhk' => $this_data['adhk'],
+                            'qtoq' => $result['qtoq'],
+                            'yony' => $result['yony'],
+                            'ctoc' => $result['ctoc'],
+                            'idx' => $result['idx'],
+                            'iqtoq' => $result['iqtoq'],
+                            'iyony' => $result['iyony']
+                        ]
+                    );
                 }
             }
         }
         return $super_result;
     }
 
-    private function setupTotal($lapus_before, $lapus, $peng_before, $peng,  $region)
+    private function setupTotal($lapus_before, $lapus, $peng_before, $peng, $region, $kbli = 'kbli_2020')
     {
         // lapus
         $query_lapus_before = Pdrb::query();
@@ -1185,45 +1224,51 @@ class SummaryController extends Controller
             # code...
             $result = $this->buildTotal($group_lapus_before, $value, $group_lapus_now);
             array_push($super_result, $value);
-            $updating_summary = SummaryPdrb::where('region_id', $value['region_id'])
-                ->where('quarter', $value['quarter'])
-                ->where('category_id', 98)
-                ->where('sector_id', 98)
-                ->where('subsector_id', 98)
-                ->update(
-                    [
-                        'adhb' => $value['adhb'],
-                        'adhk' => $value['adhk'],
-                        'qtoq' => $result['qtoq'],
-                        'yony' => $result['yony'],
-                        'ctoc' => $result['ctoc'],
-                        'idx' => $result['idx'],
-                        'iqtoq' => $result['iqtoq'],
-                        'iyony' => $result['iyony']
-                    ]
-                );
+            SummaryPdrb::updateOrCreate(
+                [
+                    'kbli' => $kbli,
+                    'region_id' => $value['region_id'],
+                    'quarter' => $value['quarter'],
+                    'category_id' => 98,
+                    'sector_id' => 98,
+                    'subsector_id' => 98,
+                ],
+                [
+                    'adhb' => $value['adhb'],
+                    'adhk' => $value['adhk'],
+                    'qtoq' => $result['qtoq'],
+                    'yony' => $result['yony'],
+                    'ctoc' => $result['ctoc'],
+                    'idx' => $result['idx'],
+                    'iqtoq' => $result['iqtoq'],
+                    'iyony' => $result['iyony']
+                ]
+            );
         }
         foreach ($group_peng_now as $key => $value) {
             # code...
             $result = $this->buildTotal($group_peng_before, $value, $group_peng_now);
             array_push($super_result, $value);
-            $updating_summary = SummaryPdrb::where('region_id', $value['region_id'])
-                ->where('quarter', $value['quarter'])
-                ->where('category_id', 99)
-                ->where('sector_id', 99)
-                ->where('subsector_id', 99)
-                ->update(
-                    [
-                        'adhb' => $value['adhb'],
-                        'adhk' => $value['adhk'],
-                        'qtoq' => $result['qtoq'],
-                        'yony' => $result['yony'],
-                        'ctoc' => $result['ctoc'],
-                        'idx' => $result['idx'],
-                        'iqtoq' => $result['iqtoq'],
-                        'iyony' => $result['iyony']
-                    ]
-                );
+            SummaryPdrb::updateOrCreate(
+                [
+                    'kbli' => $kbli,
+                    'region_id' => $value['region_id'],
+                    'quarter' => $value['quarter'],
+                    'category_id' => 99,
+                    'sector_id' => 99,
+                    'subsector_id' => 99,
+                ],
+                [
+                    'adhb' => $value['adhb'],
+                    'adhk' => $value['adhk'],
+                    'qtoq' => $result['qtoq'],
+                    'yony' => $result['yony'],
+                    'ctoc' => $result['ctoc'],
+                    'idx' => $result['idx'],
+                    'iqtoq' => $result['iqtoq'],
+                    'iyony' => $result['iyony']
+                ]
+            );
         }
         return $super_result;
     }
