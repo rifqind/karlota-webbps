@@ -32,13 +32,16 @@ class FenomenaController extends Controller
     public function show(Request $request)
     {
         $validated = $request->validate([
+            'kbli' => ['sometimes', 'nullable', 'string'],
             'type' => ['required', 'string'],
             'year' => ['required', 'integer'],
             'quarter' => ['required', 'integer'],
             'regions' => ['required', 'integer'],
         ]);
+        $kbli = $validated['kbli'] ?? 'kbli_2020';
         $notification = [];
-        $fenomena_set = FenomenaSet::where('type', $validated['type'])
+        $fenomena_set = FenomenaSet::where('kbli', $kbli)
+            ->where('type', $validated['type'])
             ->where('region_id', $validated['regions'])
             ->where('year', $validated['year'])
             ->where('quarter', $validated['quarter'])
@@ -53,11 +56,13 @@ class FenomenaController extends Controller
             array_push($notification, $message);
         } else {
             $fenomena_set = FenomenaSet::firstOrCreate([
+                'kbli' => $kbli,
                 'type' => $validated['type'],
                 'region_id' => $validated['regions'],
                 'year' => $validated['year'],
                 'quarter' => $validated['quarter'],
             ], [
+                'kbli' => $kbli,
                 'type' => $validated['type'],
                 'region_id' => $validated['regions'],
                 'year' => $validated['year'],
@@ -96,6 +101,7 @@ class FenomenaController extends Controller
                 'dataContents.*.subsector_id' => ['sometimes', 'nullable', 'integer'],
                 'dataContents.*.qtoq' => ['sometimes', 'string', 'nullable'],
                 'dataContents.*.yony' => ['sometimes', 'string', 'nullable'],
+                'dataContents.*.ctoc' => ['sometimes', 'string', 'nullable'],
                 'dataContents.*.implisit' => ['sometimes', 'string', 'nullable'],
             ]);
             foreach ($data['dataContents'] as $key => $value) {
@@ -109,10 +115,11 @@ class FenomenaController extends Controller
                         'subsector_id' => $value['subsector_id'],
                         'qtoq' => $value['qtoq'] ?? null,
                         'yony' => $value['yony'] ?? null,
+                        'ctoc' => $value['ctoc'] ?? null,
                         'implisit' => $value['implisit'] ?? null,
                     ]);
                 } else {
-                    if ($value['qtoq'] || $value['yony'] || $value['implisit']) {
+                    if (!empty($value['qtoq']) || !empty($value['yony']) || !empty($value['ctoc']) || !empty($value['implisit'])) {
                         Fenomena::updateOrCreate(
                             [
                                 'fenomena_sets' => $request->fenomena_sets,
@@ -123,6 +130,7 @@ class FenomenaController extends Controller
                             [
                                 'qtoq'      => $value['qtoq'] ?? null,
                                 'yony'      => $value['yony'] ?? null,
+                                'ctoc'      => $value['ctoc'] ?? null,
                                 'implisit'  => $value['implisit'] ?? null,
                             ]
                         );
@@ -175,6 +183,7 @@ class FenomenaController extends Controller
                 'dataContents.*.subsector_id' => ['sometimes', 'nullable', 'integer'],
                 'dataContents.*.qtoq' => ['sometimes', 'string', 'nullable'],
                 'dataContents.*.yony' => ['sometimes', 'string', 'nullable'],
+                'dataContents.*.ctoc' => ['sometimes', 'string', 'nullable'],
                 'dataContents.*.implisit' => ['sometimes', 'string', 'nullable'],
             ]);
             foreach ($data['dataContents'] as $key => $value) {
@@ -188,10 +197,11 @@ class FenomenaController extends Controller
                         'subsector_id' => $value['subsector_id'],
                         'qtoq' => $value['qtoq'] ?? null,
                         'yony' => $value['yony'] ?? null,
+                        'ctoc' => $value['ctoc'] ?? null,
                         'implisit' => $value['implisit'] ?? null,
                     ]);
                 } else {
-                    if ($value['qtoq'] || $value['yony'] || $value['implisit']) {
+                    if (!empty($value['qtoq']) || !empty($value['yony']) || !empty($value['ctoc']) || !empty($value['implisit'])) {
                         Fenomena::updateOrCreate(
                             [
                                 'fenomena_sets' => $request->id,
@@ -202,6 +212,7 @@ class FenomenaController extends Controller
                             [
                                 'qtoq'      => $value['qtoq'] ?? null,
                                 'yony'      => $value['yony'] ?? null,
+                                'ctoc'      => $value['ctoc'] ?? null,
                                 'implisit'  => $value['implisit'] ?? null,
                             ]
                         );
@@ -285,15 +296,18 @@ class FenomenaController extends Controller
     public function getMonitoring(Request $request)
     {
         $validated = $request->validate([
+            'kbli' => ['sometimes', 'nullable', 'string'],
             'type' => ['required', 'string'],
             'year' => ['required', 'integer'],
             'quarter' => ['required', 'integer'],
         ]);
+        $kbli = $validated['kbli'] ?? 'kbli_2020';
         $notification = [];
         $regions = Region::getMyRegion();
         try {
             //code...
-            $fenomena_set = FenomenaSet::where('type', $validated['type'])
+            $fenomena_set = FenomenaSet::where('kbli', $kbli)
+                ->where('type', $validated['type'])
                 ->where('year', $validated['year'])
                 ->where('quarter', $validated['quarter'])
                 ->whereIn('region_id', $regions->pluck('value'))
@@ -336,26 +350,33 @@ class FenomenaController extends Controller
     public function getIndex(Request $request)
     {
         $validated = $request->validate([
+            'kbli' => ['sometimes', 'nullable', 'string'],
             'type' => ['required', 'string'],
-            'year' => ['required', 'integer']
+            'year' => ['required', 'integer'],
+            'quarter' => ['sometimes', 'nullable', 'integer'],
         ]);
+        $kbli = $validated['kbli'] ?? 'kbli_2020';
         $notification = [];
-        $fenomenasets = FenomenaSet::where('type', $validated['type'])
+        $query = FenomenaSet::where('kbli', $kbli)
+            ->where('type', $validated['type'])
             ->where('year', $validated['year'])
-            ->where('status', 'Submitted')
-            ->pluck('id');
-        $quarterList = FenomenaSet::where('type', $validated['type'])
-            ->where('year', $validated['year'])
-            ->where('status', 'Submitted')
-            ->pluck('quarter');
+            ->where('status', 'Submitted');
+
+        if (!empty($validated['quarter'])) {
+            $query->where('quarter', $validated['quarter']);
+        }
+
+        $fenomenasets = $query->get(['id', 'quarter']);
+        $fenomenasetIds = $fenomenasets->pluck('id');
+        $quarterList = $fenomenasets->pluck('quarter')->unique()->values();
         $data = Fenomena::join('fenomena_sets as fs', 'fs.id', '=', 'fenomenas.fenomena_sets')
-            ->whereIn('fenomena_sets', $fenomenasets)
+            ->whereIn('fenomena_sets', $fenomenasetIds)
             ->select(['fenomenas.*', 'region_id', 'quarter'])
             ->get();
         if ($data->isEmpty()) {
             $message = [
                 'type' => 'error',
-                'message' => 'Fenomena tahun ini belum dientri'
+                'message' => 'Fenomena periode ini belum disubmit'
             ];
             array_push($notification, $message);
         } else {
