@@ -11,7 +11,7 @@ class FenomenaSet extends Model
     use HasFactory;
     protected $guarded = ['id'];
     protected $fillable = [
-        'type', 'region_id', 'year', 'quarter', 'status'
+        'kbli', 'type', 'region_id', 'year', 'quarter', 'status'
     ];
     protected $table = 'fenomena_sets';
     public function region() {

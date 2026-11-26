@@ -19,6 +19,7 @@ class Fenomena extends Model
         'subsector_id',
         'qtoq',
         'yony',
+        'ctoc',
         'implisit'
     ];
     public function fenomenaSet() {
